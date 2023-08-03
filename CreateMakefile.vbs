@@ -232,7 +232,7 @@ Sub WriteFbcFlags(MakefileStream, SubSystem)
 	MakefileStream.WriteLine "FBCFLAGS+=-w error -maxerr 1"
 	MakefileStream.WriteLine "FBCFLAGS+=-i src"
 	MakefileStream.WriteLine "ifneq ($(INC_DIR),)"
-	MakefileStream.WriteLine "FBCFLAGS+=-i $(INC_DIR)"
+	MakefileStream.WriteLine "FBCFLAGS+=-i ""$(INC_DIR)"""
 	MakefileStream.WriteLine "endif"
 	MakefileStream.WriteLine "FBCFLAGS+=-r"
 	If SubSystem = SUBSYSTEM_WINDOW Then
@@ -284,7 +284,7 @@ Sub WriteLinkerFlags(MakefileStream, SubSystem)
 	MakefileStream.WriteLine "LDFLAGS+=-e $(ENTRY_POINT)"
 	MakefileStream.WriteLine "LDFLAGS+=-L $(LIB_DIR)"
 	MakefileStream.WriteLine "ifneq ($(LD_SCRIPT),)"
-	MakefileStream.WriteLine "LDFLAGS+=-T $(LD_SCRIPT)"
+	MakefileStream.WriteLine "LDFLAGS+=-T ""$(LD_SCRIPT)"""
 	MakefileStream.WriteLine "endif"
 	MakefileStream.WriteLine 
 End Sub
