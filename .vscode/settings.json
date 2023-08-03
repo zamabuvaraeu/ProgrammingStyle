@@ -45,7 +45,7 @@
 		{
 			"name": "x64 GCC-13.1.0 FBC-1.10.0",
 			"makeArgs": [
-				"FBC_VER=FBC1090",
+				"FBC_VER=FBC1100",
 				"GCC_VER=GCC1310",
 				"PROCESSOR_ARCHITECTURE=AMD64",
 				"MARCH=native",
@@ -65,7 +65,7 @@
 		{
 			"name": "x86 GCC-13.1.0 FBC-1.10.0",
 			"makeArgs": [
-				"FBC_VER=FBC1090",
+				"FBC_VER=FBC1100",
 				"GCC_VER=GCC1310",
 				"PROCESSOR_ARCHITECTURE=x86",
 				"MARCH=atom",
