@@ -254,6 +254,7 @@ Sub WriteGccFlags(MakefileStream)
 	MakefileStream.WriteLine "CFLAGS+=-Wall -Werror -Wextra -pedantic"
 	MakefileStream.WriteLine "CFLAGS+=-Wno-unused-label -Wno-unused-function -Wno-unused-parameter -Wno-unused-variable"
 	MakefileStream.WriteLine "CFLAGS+=-Wno-dollar-in-identifier-extension -Wno-language-extension-token"
+	MakefileStream.WriteLine "CFLAGS+=-Wno-parentheses-equality"
 	MakefileStream.WriteLine "CFLAGS_DEBUG+=-g -O0"
 	MakefileStream.WriteLine "FLTO ?="
 	MakefileStream.WriteLine 
