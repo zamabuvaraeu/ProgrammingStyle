@@ -136,6 +136,8 @@ End If
 
 ## Условный оператор
 
+### Однострочный условный оператор
+
 Однострочный условный оператор не используется:
 
 ```FreeBASIC
@@ -148,6 +150,37 @@ If Variable = 1 Then Foo()
 If Variable = 1 Then
 	Foo()
 End If
+```
+
+### Оператор `ElseIf`
+
+Не следует использовать оператор `ElseIf`:
+
+```FreeBASIC
+If Variable = 1 Then
+	Foo()
+ElseIf Variable = 2 Then
+	Bar()
+ElseIf Variable = 3 Then
+	Baz()
+End If
+```
+
+Вместо этого следует использовать оператор выбора чемоданов:
+
+```FreeBASIC
+Select Case Variable
+	
+	Case 1
+		Foo()
+		
+	Case 2
+		Bar()
+		
+	Case 3
+		Baz()
+		
+End Select
 ```
 
 ## Передача параметров в функцию
