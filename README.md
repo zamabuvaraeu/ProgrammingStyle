@@ -40,6 +40,22 @@ Function Foo( _
 End Function
 ```
 
+### Возвращаемое значение
+
+Последнюю строку функции с оператором возврата следует отбивать пустыми строками:
+
+```FreeBASIC
+Function Foo( _
+		ByVal Param1 As Integer, _
+		ByVal Param2 As Integer, _
+		ByVal Param3 As Integer _
+	)As Integer
+	
+	Return 0
+	
+End Function
+```
+
 ### Выбор чемоданов
 
 Каждый чемодан следует отделять пустой строкой:
