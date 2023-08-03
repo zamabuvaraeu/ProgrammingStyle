@@ -159,3 +159,25 @@ Bar(Foo())
 Dim x As Integer = Foo()
 Bar(x)
 ```
+
+## Объявление переменных
+
+Объявлять переменные следует сразу же с присваиванием в одной строке:
+
+```FreeBASIC
+Dim x As Integer = 265
+Dim y As Integer = Foo()
+```
+
+Переменные, которые в дальнейшем будут использованы для получения значения по указателю (retval), следует объявлять без инициализации:
+
+```FreeBASIC
+Dim Buffer As ZString * 512 = Any
+FillBuffer(@Buffer)
+```
+
+Не следует объявлять переменные в строчку:
+
+```FreeBASIC
+Dim As Integer a, b, c, d, e
+```
