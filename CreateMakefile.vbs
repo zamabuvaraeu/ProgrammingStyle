@@ -323,6 +323,7 @@ Sub WriteLinkerFlags(MakefileStream, SubSystem)
 	End Select
 	MakefileStream.WriteLine "LDFLAGS+=--no-seh --nxcompat"
 	MakefileStream.WriteLine "LDFLAGS+=-e $(ENTRY_POINT)"
+	MakefileStream.WriteLine "LDFLAGS+=-L ."
 	MakefileStream.WriteLine "LDFLAGS+=-L ""$(LIB_DIR)"""
 	MakefileStream.WriteLine "ifneq ($(LD_SCRIPT),)"
 	MakefileStream.WriteLine "LDFLAGS+=-T ""$(LD_SCRIPT)"""
