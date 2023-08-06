@@ -40,7 +40,12 @@ Dim ExeType
 ExeType = OUTPUT_FILETYPE_EXE
 Dim FileSubsystem
 FileSubsystem = SUBSYSTEM_CONSOLE
-
+Dim Emit
+Emit = CODE_EMITTER_GCC
+Dim Unicode
+Unicode = DEFINE_UNICODE
+Dim Runtime
+Runtime = DEFINE_WITHOUT_RUNTIME
 
 Dim FSO
 Set FSO = CreateObject("Scripting.FileSystemObject")
@@ -53,18 +58,17 @@ WriteCompilerToolChain MakefileFileStream
 WriteProcessorArch MakefileFileStream
 WriteOutputFilename MakefileFileStream, OutputFileName, ExeType
 WriteUtilsPath MakefileFileStream
-WriteCodeEmitter MakefileFileStream
 WriteArchSpecifiedFlags MakefileFileStream
 WriteArchSpecifiedPath MakefileFileStream
-WriteFbcFlags MakefileFileStream, FileSubsystem
+WriteFbcFlags MakefileFileStream, Emit, Unicode, Runtime, FileSubsystem
 WriteGccFlags MakefileFileStream
 WriteAsmFlags MakefileFileStream
 WriteGorcFlags MakefileFileStream
 WriteLinkerFlags MakefileFileStream, FileSubsystem
 WriteLinkerLibraryes MakefileFileStream
 WriteIncludeFile MakefileFileStream
-WriteReleaseFlags MakefileFileStream
-WriteDebugFlags MakefileFileStream
+WriteReleaseTarget MakefileFileStream
+WriteDebugTarget MakefileFileStream
 WriteCleanTarget MakefileFileStream
 WriteCreateDirsTarget MakefileFileStream
 WriteReleaseRule MakefileFileStream
@@ -90,20 +94,20 @@ Function CreateCompilerParams(Emitter, Unicode, Runtime, SubSystem)
 			EmitterParam = "-gen llvm"
 	End Select
 	
-	Dim UnicodeParam
+	Dim UnicodeFlag
 	Select Case Unicode
 		Case DEFINE_ANSI
-			UnicodeParam = ""
+			UnicodeFlag = ""
 		Case DEFINE_UNICODE
-			UnicodeParam = "-d UNICODE"
+			UnicodeFlag = "-d UNICODE"
 	End Select
 	
-	Dim RuntimeParam
-	Select Case Unicode
+	Dim RuntimeFlag
+	Select Case Runtime
 		Case DEFINE_RUNTIME
-			RuntimeParam = ""
+			RuntimeFlag = ""
 		Case DEFINE_WITHOUT_RUNTIME
-			RuntimeParam = "-d WITHOUT_RUNTIME"
+			RuntimeFlag = "-d WITHOUT_RUNTIME"
 	End Select
 	
 	Dim SubSystemParam
@@ -114,8 +118,8 @@ Function CreateCompilerParams(Emitter, Unicode, Runtime, SubSystem)
 	End If
 	
 	Dim CompilerParam
-	CompilerParam = EmitterParam & " " & UnicodeParam & " " & _
-		RuntimeParam & " " & SubSystemParam & " " & _
+	CompilerParam = EmitterParam & " " & UnicodeFlag & " " & _
+		RuntimeFlag & " " & SubSystemParam & " " & _
 	"-maxerr 1 -r -O 0 -showincludes"
 	
 	CreateCompilerParams = CompilerParam
@@ -178,15 +182,6 @@ Sub WriteUtilsPath(MakefileStream)
 	MakefileStream.WriteLine 
 End Sub
 
-Sub WriteCodeEmitter(MakefileStream)
-	MakefileStream.WriteLine "ifeq ($(CODE_EMITTER),gcc)"
-	MakefileStream.WriteLine "FBCFLAGS+=-gen gcc"
-	MakefileStream.WriteLine "else"
-	MakefileStream.WriteLine "FBCFLAGS+=-gen gcc"
-	MakefileStream.WriteLine "endif"
-	MakefileStream.WriteLine 
-End Sub
-
 Sub WriteArchSpecifiedFlags(MakefileStream)
 	MakefileStream.WriteLine "ifeq ($(PROCESSOR_ARCHITECTURE),AMD64)"
 	MakefileStream.WriteLine "CFLAGS+=-m64"
@@ -227,21 +222,55 @@ Sub WriteArchSpecifiedPath(MakefileStream)
 	MakefileStream.WriteLine 
 End Sub
 
-Sub WriteFbcFlags(MakefileStream, SubSystem)
-	MakefileStream.WriteLine "FBCFLAGS+=-d UNICODE -d WITHOUT_RUNTIME"
+Sub WriteFbcFlags(MakefileStream, Emitter, Unicode, Runtime, SubSystem)
+	Dim EmitterParam
+	Select Case Emitter
+		Case CODE_EMITTER_GCC
+			EmitterParam = "-gen gcc"
+		Case CODE_EMITTER_GAS
+			EmitterParam = "-gen gas"
+		Case CODE_EMITTER_GAS64
+			EmitterParam = "-gen gas64"
+		Case CODE_EMITTER_LLVM
+			EmitterParam = "-gen llvm"
+	End Select
+	
+	Dim UnicodeFlag
+	Select Case Unicode
+		Case DEFINE_ANSI
+			UnicodeFlag = ""
+		Case DEFINE_UNICODE
+			UnicodeFlag = "FBCFLAGS+=-d UNICODE"
+	End Select
+	
+	Dim RuntimeFlag
+	Select Case Runtime
+		Case DEFINE_RUNTIME
+			RuntimeFlag = ""
+		Case DEFINE_WITHOUT_RUNTIME
+			RuntimeFlag = "FBCFLAGS+=-d WITHOUT_RUNTIME"
+	End Select
+	
+	Dim SubSystemParam
+	If SubSystem = SUBSYSTEM_WINDOW Then
+		SubSystemParam = "-s gui"
+	Else
+		SubSystemParam = "-s console"
+	End If
+	
+	MakefileStream.WriteLine "FBCFLAGS+=" & EmitterParam
+	MakefileStream.WriteLine UnicodeFlag
+	MakefileStream.WriteLine RuntimeFlag
 	MakefileStream.WriteLine "FBCFLAGS+=-w error -maxerr 1"
-	MakefileStream.WriteLine "FBCFLAGS+=-i src"
+	MakefileStream.WriteLine "FBCFLAGS+=-i " & SourceFolder
 	MakefileStream.WriteLine "ifneq ($(INC_DIR),)"
 	MakefileStream.WriteLine "FBCFLAGS+=-i ""$(INC_DIR)"""
 	MakefileStream.WriteLine "endif"
 	MakefileStream.WriteLine "FBCFLAGS+=-r"
-	If SubSystem = SUBSYSTEM_WINDOW Then
-		MakefileStream.WriteLine "FBCFLAGS+=-s gui"
-	Else
-		MakefileStream.WriteLine "FBCFLAGS+=-s console"
-	End If
+	MakefileStream.WriteLine "FBCFLAGS+=" & SubSystemParam
 	MakefileStream.WriteLine "FBCFLAGS+=-O 0"
 	MakefileStream.WriteLine "FBCFLAGS_DEBUG+=-g"
+	MakefileStream.WriteLine "debug: FBCFLAGS+=$(FBCFLAGS_DEBUG)"
 	MakefileStream.WriteLine 
 End Sub
 
@@ -257,18 +286,29 @@ Sub WriteGccFlags(MakefileStream)
 	MakefileStream.WriteLine "CFLAGS+=-Wno-parentheses-equality"
 	MakefileStream.WriteLine "CFLAGS_DEBUG+=-g -O0"
 	MakefileStream.WriteLine "FLTO ?="
+	MakefileStream.WriteLine "release: CFLAGS+=$(CFLAGS_RELEASE)"
+	MakefileStream.WriteLine "release: CFLAGS+=-fno-math-errno -fno-exceptions"
+	MakefileStream.WriteLine "release: CFLAGS+=-fno-unwind-tables -fno-asynchronous-unwind-tables"
+	MakefileStream.WriteLine "release: CFLAGS+=-O3 -fno-ident -fdata-sections -ffunction-sections"
+	MakefileStream.WriteLine "ifneq ($(FLTO),)"
+	MakefileStream.WriteLine "release: CFLAGS+=$(FLTO)"
+	MakefileStream.WriteLine "endif"
+	MakefileStream.WriteLine "debug: CFLAGS+=$(CFLAGS_DEBUG)"
 	MakefileStream.WriteLine 
 End Sub
 
 Sub WriteAsmFlags(MakefileStream)
 	MakefileStream.WriteLine "ASFLAGS+="
 	MakefileStream.WriteLine "ASFLAGS_DEBUG+="
+	MakefileStream.WriteLine "release: ASFLAGS+=--strip-local-absolute"
+	MakefileStream.WriteLine "debug: ASFLAGS+=$(ASFLAGS_DEBUG)"
 	MakefileStream.WriteLine 
 End Sub
 
 Sub WriteGorcFlags(MakefileStream)
 	MakefileStream.WriteLine "GORCFLAGS+=/ni /o /d FROM_MAKEFILE"
 	MakefileStream.WriteLine "GORCFLAGS_DEBUG=/d DEBUG"
+	MakefileStream.WriteLine "debug: GORCFLAGS+=$(GORCFLAGS_DEBUG)"
 	MakefileStream.WriteLine 
 End Sub
 
@@ -287,6 +327,9 @@ Sub WriteLinkerFlags(MakefileStream, SubSystem)
 	MakefileStream.WriteLine "ifneq ($(LD_SCRIPT),)"
 	MakefileStream.WriteLine "LDFLAGS+=-T ""$(LD_SCRIPT)"""
 	MakefileStream.WriteLine "endif"
+	MakefileStream.WriteLine "release: LDFLAGS+=-s --gc-sections"
+	MakefileStream.WriteLine "debug: LDFLAGS+=$(LDFLAGS_DEBUG)"
+	MakefileStream.WriteLine "debug: LDLIBS+=$(LDLIBS_DEBUG)"
 	MakefileStream.WriteLine 
 End Sub
 
@@ -298,9 +341,6 @@ Sub WriteLinkerLibraryes(MakefileStream)
 End Sub
 
 Sub WriteIncludeFile(MakefileStream)
-	' MakefileStream.WriteLine "# Object files are loaded from a file ""dependencies.mk"""
-	' MakefileStream.WriteLine "include dependencies.mk"
-	
 	Dim SrcFolder
 	Set SrcFolder = FSO.GetFolder(SourceFolder)
 	
@@ -316,27 +356,12 @@ Sub WriteIncludeFile(MakefileStream)
 	MakefileStream.WriteLine 
 End Sub
 
-Sub WriteReleaseFlags(MakefileStream)
-	MakefileStream.WriteLine "release: CFLAGS+=$(CFLAGS_RELEASE)"
-	MakefileStream.WriteLine "release: CFLAGS+=-fno-math-errno -fno-exceptions"
-	MakefileStream.WriteLine "release: CFLAGS+=-fno-unwind-tables -fno-asynchronous-unwind-tables"
-	MakefileStream.WriteLine "release: CFLAGS+=-O3 -fno-ident -fdata-sections -ffunction-sections"
-	MakefileStream.WriteLine "ifneq ($(FLTO),)"
-	MakefileStream.WriteLine "release: CFLAGS+=$(FLTO)"
-	MakefileStream.WriteLine "endif"
-	MakefileStream.WriteLine "release: ASFLAGS+=--strip-local-absolute"
-	MakefileStream.WriteLine "release: LDFLAGS+=-s --gc-sections"
+Sub WriteReleaseTarget(MakefileStream)
 	MakefileStream.WriteLine "release: $(BIN_RELEASE_DIR)$(PATH_SEP)$(OUTPUT_FILE_NAME)"
 	MakefileStream.WriteLine 
 End Sub
 
-Sub WriteDebugFlags(MakefileStream)
-	MakefileStream.WriteLine "debug: FBCFLAGS+=$(FBCFLAGS_DEBUG)"
-	MakefileStream.WriteLine "debug: CFLAGS+=$(CFLAGS_DEBUG)"
-	MakefileStream.WriteLine "debug: ASFLAGS+=$(ASFLAGS_DEBUG)"
-	MakefileStream.WriteLine "debug: GORCFLAGS+=$(GORCFLAGS_DEBUG)"
-	MakefileStream.WriteLine "debug: LDFLAGS+=$(LDFLAGS_DEBUG)"
-	MakefileStream.WriteLine "debug: LDLIBS+=$(LDLIBS_DEBUG)"
+Sub WriteDebugTarget(MakefileStream)
 	MakefileStream.WriteLine "debug: $(BIN_DEBUG_DIR)$(PATH_SEP)$(OUTPUT_FILE_NAME)"
 	MakefileStream.WriteLine 
 End Sub
@@ -556,9 +581,17 @@ Sub WriteTextFile(MakefileStream, BasFile, DependenciesLine)
 End Sub
 
 Function GetIncludesFromBasFile(Filepath)
+	Dim FbcParam
+	FbcParam = CreateCompilerParams( _
+		CODE_EMITTER_GCC, _
+		DEFINE_UNICODE, _
+		DEFINE_WITHOUT_RUNTIME, _
+		SUBSYSTEM_CONSOLE _
+	)
+	
 	Dim ProgramName
 	ProgramName = """" & CompilerPath & Solidus & FbcCompilerName & """" & " " & _
-		CreateCompilerParams(CODE_EMITTER_GCC, DEFINE_UNICODE, DEFINE_WITHOUT_RUNTIME, SUBSYSTEM_CONSOLE) & _
+		FbcParam & _
 		" -i " & SourceFolder & _
 		" -i " & """" & CompilerPath & Solidus & "inc" & """" & " """ & Filepath & """"
 	WScript.Echo ProgramName
