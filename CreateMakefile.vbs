@@ -19,6 +19,9 @@ Const DEFINE_UNICODE = 1
 Const DEFINE_RUNTIME = 0
 Const DEFINE_WITHOUT_RUNTIME = 1
 
+Const LARGE_ADDRESS_UNAWARE = 0
+Const LARGE_ADDRESS_AWARE = 1
+
 Const SourceFolder = "src"
 Const CompilerPath = "C:\Program Files (x86)\FreeBASIC-1.10.0-winlibs-gcc-9.3.0"
 Const FbcCompilerName = "fbc64.exe"
@@ -46,6 +49,8 @@ Dim Unicode
 Unicode = DEFINE_UNICODE
 Dim Runtime
 Runtime = DEFINE_WITHOUT_RUNTIME
+Dim AddressAware
+AddressAware = LARGE_ADDRESS_AWARE
 
 Dim FSO
 Set FSO = CreateObject("Scripting.FileSystemObject")
@@ -58,7 +63,7 @@ WriteCompilerToolChain MakefileFileStream
 WriteProcessorArch MakefileFileStream
 WriteOutputFilename MakefileFileStream, OutputFileName, ExeType
 WriteUtilsPath MakefileFileStream
-WriteArchSpecifiedFlags MakefileFileStream
+WriteArchSpecifiedFlags MakefileFileStream, AddressAware
 WriteArchSpecifiedPath MakefileFileStream
 WriteFbcFlags MakefileFileStream, Emit, Unicode, Runtime, FileSubsystem
 WriteGccFlags MakefileFileStream
@@ -182,7 +187,7 @@ Sub WriteUtilsPath(MakefileStream)
 	MakefileStream.WriteLine 
 End Sub
 
-Sub WriteArchSpecifiedFlags(MakefileStream)
+Sub WriteArchSpecifiedFlags(MakefileStream, LargeAddress)
 	MakefileStream.WriteLine "ifeq ($(PROCESSOR_ARCHITECTURE),AMD64)"
 	MakefileStream.WriteLine "CFLAGS+=-m64"
 	MakefileStream.WriteLine "ASFLAGS+=--64"
@@ -193,7 +198,12 @@ Sub WriteArchSpecifiedFlags(MakefileStream)
 	MakefileStream.WriteLine "CFLAGS+=-m32"
 	MakefileStream.WriteLine "ASFLAGS+=--32"
 	MakefileStream.WriteLine "ENTRY_POINT=_EntryPoint@0"
-	MakefileStream.WriteLine "LDFLAGS+=-m i386pe --large-address-aware"
+	MakefileStream.WriteLine "LDFLAGS+=-m i386pe"
+	Select Case LargeAddress
+		Case LARGE_ADDRESS_UNAWARE
+		Case LARGE_ADDRESS_AWARE
+			MakefileStream.WriteLine "LDFLAGS+=--large-address-aware"
+	End Select
 	MakefileStream.WriteLine "GORCFLAGS+="
 	MakefileStream.WriteLine "endif"
 	MakefileStream.WriteLine 
