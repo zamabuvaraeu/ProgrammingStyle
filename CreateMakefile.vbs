@@ -188,16 +188,15 @@ Sub WriteUtilsPath(MakefileStream)
 End Sub
 
 Sub WriteArchSpecifiedFlags(MakefileStream, LargeAddress)
+	' Use standart entry point name "mainCRTStartup"
 	MakefileStream.WriteLine "ifeq ($(PROCESSOR_ARCHITECTURE),AMD64)"
 	MakefileStream.WriteLine "CFLAGS+=-m64"
 	MakefileStream.WriteLine "ASFLAGS+=--64"
-	MakefileStream.WriteLine "ENTRY_POINT=EntryPoint"
 	MakefileStream.WriteLine "LDFLAGS+=-m i386pep"
 	MakefileStream.WriteLine "GORCFLAGS+=/machine X64"
 	MakefileStream.WriteLine "else"
 	MakefileStream.WriteLine "CFLAGS+=-m32"
 	MakefileStream.WriteLine "ASFLAGS+=--32"
-	MakefileStream.WriteLine "ENTRY_POINT=_EntryPoint@0"
 	MakefileStream.WriteLine "LDFLAGS+=-m i386pe"
 	Select Case LargeAddress
 		Case LARGE_ADDRESS_UNAWARE
@@ -332,7 +331,6 @@ Sub WriteLinkerFlags(MakefileStream, SubSystem)
 			MakefileStream.WriteLine "LDFLAGS+=-subsystem native"
 	End Select
 	MakefileStream.WriteLine "LDFLAGS+=--no-seh --nxcompat"
-	MakefileStream.WriteLine "LDFLAGS+=-e $(ENTRY_POINT)"
 	MakefileStream.WriteLine "LDFLAGS+=-L ."
 	MakefileStream.WriteLine "LDFLAGS+=-L ""$(LIB_DIR)"""
 	MakefileStream.WriteLine "ifneq ($(LD_SCRIPT),)"
