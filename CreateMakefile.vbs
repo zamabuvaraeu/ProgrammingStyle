@@ -169,9 +169,9 @@ Sub WriteOutputFilename(MakefileStream, OutputFilename, FileType)
 			Extension = ".a"
 	End Select
 	
-	MakefileStream.WriteLine "FBC_VER ?= FBC1100"
-	MakefileStream.WriteLine "GCC_VER ?= GCC0930"
-	MakefileStream.WriteLine "FILE_SUFFIX=_$(GCC_VER)_$(FBC_VER)"
+	MakefileStream.WriteLine "FBC_VER ?= _FBC1100"
+	MakefileStream.WriteLine "GCC_VER ?= _GCC0930"
+	MakefileStream.WriteLine "FILE_SUFFIX=$(GCC_VER)$(FBC_VER)"
 	MakefileStream.WriteLine "OUTPUT_FILE_NAME=" & OutputFilename & "$(FILE_SUFFIX)" & Extension
 	MakefileStream.WriteLine 
 End Sub
