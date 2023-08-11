@@ -19,6 +19,9 @@ Const DEFINE_UNICODE = 1
 Const DEFINE_RUNTIME = 0
 Const DEFINE_WITHOUT_RUNTIME = 1
 
+Const DEFINE_SINGLETHREADING_RUNTIME = 0
+Const DEFINE_MULTITHREADING_RUNTIME = 1
+
 Const LARGE_ADDRESS_UNAWARE = 0
 Const LARGE_ADDRESS_AWARE = 1
 
@@ -51,6 +54,8 @@ Dim Runtime
 Runtime = DEFINE_WITHOUT_RUNTIME
 Dim AddressAware
 AddressAware = LARGE_ADDRESS_AWARE
+Dim ThreadingMode
+ThreadingMode = DEFINE_SINGLETHREADING_RUNTIME
 
 Dim FSO
 Set FSO = CreateObject("Scripting.FileSystemObject")
@@ -70,7 +75,7 @@ WriteGccFlags MakefileFileStream
 WriteAsmFlags MakefileFileStream
 WriteGorcFlags MakefileFileStream
 WriteLinkerFlags MakefileFileStream, FileSubsystem
-WriteLinkerLibraryes MakefileFileStream
+WriteLinkerLibraryes MakefileFileStream, ThreadingMode
 WriteIncludeFile MakefileFileStream
 WriteReleaseTarget MakefileFileStream
 WriteDebugTarget MakefileFileStream
@@ -171,6 +176,7 @@ Sub WriteOutputFilename(MakefileStream, OutputFilename, FileType)
 	
 	MakefileStream.WriteLine "FBC_VER ?= _FBC1100"
 	MakefileStream.WriteLine "GCC_VER ?= _GCC0930"
+	MakefileStream.WriteLine "USE_RUNTIME ?= FALSE"
 	MakefileStream.WriteLine "FILE_SUFFIX=$(GCC_VER)$(FBC_VER)"
 	MakefileStream.WriteLine "OUTPUT_FILE_NAME=" & OutputFilename & "$(FILE_SUFFIX)" & Extension
 	MakefileStream.WriteLine 
@@ -188,15 +194,20 @@ Sub WriteUtilsPath(MakefileStream)
 End Sub
 
 Sub WriteArchSpecifiedFlags(MakefileStream, LargeAddress)
-	' Use standart entry point name "mainCRTStartup"
 	MakefileStream.WriteLine "ifeq ($(PROCESSOR_ARCHITECTURE),AMD64)"
 	MakefileStream.WriteLine "CFLAGS+=-m64"
 	MakefileStream.WriteLine "ASFLAGS+=--64"
+	MakefileStream.WriteLine "ifeq ($(USE_RUNTIME),FALSE)"
+	MakefileStream.WriteLine "LDFLAGS+=-e EntryPoint"
+	MakefileStream.WriteLine "endif"
 	MakefileStream.WriteLine "LDFLAGS+=-m i386pep"
 	MakefileStream.WriteLine "GORCFLAGS+=/machine X64"
 	MakefileStream.WriteLine "else"
 	MakefileStream.WriteLine "CFLAGS+=-m32"
 	MakefileStream.WriteLine "ASFLAGS+=--32"
+	MakefileStream.WriteLine "ifeq ($(USE_RUNTIME),FALSE)"
+	MakefileStream.WriteLine "LDFLAGS+=-e _EntryPoint@0"
+	MakefileStream.WriteLine "endif"
 	MakefileStream.WriteLine "LDFLAGS+=-m i386pe"
 	Select Case LargeAddress
 		Case LARGE_ADDRESS_UNAWARE
@@ -342,10 +353,34 @@ Sub WriteLinkerFlags(MakefileStream, SubSystem)
 	MakefileStream.WriteLine 
 End Sub
 
-Sub WriteLinkerLibraryes(MakefileStream)
-	MakefileStream.WriteLine "LDLIBS+=-ladvapi32 -lkernel32 -lmsvcrt -lmswsock -lcrypt32 -loleaut32"
-	MakefileStream.WriteLine "LDLIBS+=-lole32 -lshell32 -lshlwapi -lws2_32 -luser32"
-	MakefileStream.WriteLine "LDLIBS_DEBUG+=-lgcc -lmingw32 -lmingwex -lmoldname -lgcc_eh -lucrt -lucrtbase"
+Sub WriteLinkerLibraryes(MakefileStream, Multithreading)
+	MakefileStream.WriteLine "ifneq ($(USE_RUNTIME),FALSE)"
+	' For profile
+	' MakefileStream.WriteLine "LDLIBSBEGIN+=crt2.o gcrt2.o crtbegin.o fbrt0.o"
+	MakefileStream.WriteLine "LDLIBSBEGIN+=crt2.o crtbegin.o fbrt0.o"
+	MakefileStream.WriteLine "endif"
+	MakefileStream.WriteLine "LDLIBS+=-ladvapi32 -lcrypt32 -lgdi32 -lkernel32"
+	MakefileStream.WriteLine "LDLIBS+=-lmsvcrt -lmswsock -lole32 -loleaut32"
+	MakefileStream.WriteLine "LDLIBS+=-lshell32 -lshlwapi -lws2_32 -luser32"
+	
+	MakefileStream.WriteLine "ifneq ($(USE_RUNTIME),FALSE)"
+	
+	' For Multithreading
+	Select Case Multithreading
+		Case DEFINE_SINGLETHREADING_RUNTIME
+			MakefileStream.WriteLine "LDLIBS+=-lfb"
+		Case DEFINE_MULTITHREADING_RUNTIME
+			MakefileStream.WriteLine "LDLIBS+=-lfbmt"
+	End Select
+	
+	MakefileStream.WriteLine "endif"
+	
+	' For profile
+	' MakefileStream.WriteLine "LDLIBS_DEBUG+=-lgcc -lmingw32 -lmingwex -lmoldname -lgcc_eh -lgmon"
+	MakefileStream.WriteLine "LDLIBS_DEBUG+=-lgcc -lmingw32 -lmingwex -lmoldname -lgcc_eh"
+	MakefileStream.WriteLine "ifneq ($(USE_RUNTIME),FALSE)"
+	MakefileStream.WriteLine "LDLIBSEND+=crtend.o"
+	MakefileStream.WriteLine "endif"
 	MakefileStream.WriteLine 
 End Sub
 
@@ -366,6 +401,13 @@ Sub WriteIncludeFile(MakefileStream)
 End Sub
 
 Sub WriteReleaseTarget(MakefileStream)
+	' MakefileStream.WriteLine 
+	' MakefileStream.WriteLine "# $@ - target name"
+	' MakefileStream.WriteLine "# $^ - set of dependent files"
+	' MakefileStream.WriteLine "# $< - name of first dependency"
+	' MakefileStream.WriteLine "# % - pattern"
+	' MakefileStream.WriteLine "# $* - variable pattern"
+	' MakefileStream.WriteLine 
 	MakefileStream.WriteLine "release: $(BIN_RELEASE_DIR)$(PATH_SEP)$(OUTPUT_FILE_NAME)"
 	MakefileStream.WriteLine 
 End Sub
@@ -401,10 +443,10 @@ End Sub
 
 Sub WriteReleaseRule(MakefileStream)
 	MakefileStream.WriteLine "$(BIN_RELEASE_DIR)$(PATH_SEP)$(OUTPUT_FILE_NAME): $(OBJECTFILES_RELEASE)"
-	MakefileStream.WriteLine "	$(LD) $(LDFLAGS) $^ $(LDLIBS) -o $@"
+	MakefileStream.WriteLine "	$(LD) $(LDFLAGS) $(LDLIBSBEGIN) $^ $(LDLIBS) $(LDLIBSEND) -o $@"
 	MakefileStream.WriteLine 
 	MakefileStream.WriteLine "$(BIN_DEBUG_DIR)$(PATH_SEP)$(OUTPUT_FILE_NAME):   $(OBJECTFILES_DEBUG)"
-	MakefileStream.WriteLine "	$(LD) $(LDFLAGS) $^ $(LDLIBS) -o $@"
+	MakefileStream.WriteLine "	$(LD) $(LDFLAGS) $(LDLIBSBEGIN) $^ $(LDLIBS) $(LDLIBSEND) -o $@"
 	MakefileStream.WriteLine 
 End Sub
 
