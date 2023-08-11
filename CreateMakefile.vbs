@@ -68,13 +68,12 @@ WriteCompilerToolChain MakefileFileStream
 WriteProcessorArch MakefileFileStream
 WriteOutputFilename MakefileFileStream, OutputFileName, ExeType
 WriteUtilsPath MakefileFileStream
-WriteArchSpecifiedFlags MakefileFileStream, AddressAware
 WriteArchSpecifiedPath MakefileFileStream
 WriteFbcFlags MakefileFileStream, Emit, Unicode, Runtime, FileSubsystem
 WriteGccFlags MakefileFileStream
 WriteAsmFlags MakefileFileStream
 WriteGorcFlags MakefileFileStream
-WriteLinkerFlags MakefileFileStream, FileSubsystem
+WriteLinkerFlags MakefileFileStream, FileSubsystem, AddressAware
 WriteLinkerLibraryes MakefileFileStream, ThreadingMode
 WriteIncludeFile MakefileFileStream
 WriteReleaseTarget MakefileFileStream
@@ -193,32 +192,6 @@ Sub WriteUtilsPath(MakefileStream)
 	MakefileStream.WriteLine 
 End Sub
 
-Sub WriteArchSpecifiedFlags(MakefileStream, LargeAddress)
-	MakefileStream.WriteLine "ifeq ($(PROCESSOR_ARCHITECTURE),AMD64)"
-	MakefileStream.WriteLine "CFLAGS+=-m64"
-	MakefileStream.WriteLine "ASFLAGS+=--64"
-	MakefileStream.WriteLine "ifeq ($(USE_RUNTIME),FALSE)"
-	MakefileStream.WriteLine "LDFLAGS+=-e EntryPoint"
-	MakefileStream.WriteLine "endif"
-	MakefileStream.WriteLine "LDFLAGS+=-m i386pep"
-	MakefileStream.WriteLine "GORCFLAGS+=/machine X64"
-	MakefileStream.WriteLine "else"
-	MakefileStream.WriteLine "CFLAGS+=-m32"
-	MakefileStream.WriteLine "ASFLAGS+=--32"
-	MakefileStream.WriteLine "ifeq ($(USE_RUNTIME),FALSE)"
-	MakefileStream.WriteLine "LDFLAGS+=-e _EntryPoint@0"
-	MakefileStream.WriteLine "endif"
-	MakefileStream.WriteLine "LDFLAGS+=-m i386pe"
-	Select Case LargeAddress
-		Case LARGE_ADDRESS_UNAWARE
-		Case LARGE_ADDRESS_AWARE
-			MakefileStream.WriteLine "LDFLAGS+=--large-address-aware"
-	End Select
-	MakefileStream.WriteLine "GORCFLAGS+="
-	MakefileStream.WriteLine "endif"
-	MakefileStream.WriteLine 
-End Sub
-
 Sub WriteArchSpecifiedPath(MakefileStream)
 	MakefileStream.WriteLine "ifeq ($(PROCESSOR_ARCHITECTURE),AMD64)"
 	MakefileStream.WriteLine "BIN_DEBUG_DIR ?= bin$(PATH_SEP)Debug$(PATH_SEP)x64"
@@ -295,6 +268,11 @@ Sub WriteFbcFlags(MakefileStream, Emitter, Unicode, Runtime, SubSystem)
 End Sub
 
 Sub WriteGccFlags(MakefileStream)
+	MakefileStream.WriteLine "ifeq ($(PROCESSOR_ARCHITECTURE),AMD64)"
+	MakefileStream.WriteLine "CFLAGS+=-m64"
+	MakefileStream.WriteLine "else"
+	MakefileStream.WriteLine "CFLAGS+=-m32"
+	MakefileStream.WriteLine "endif"
 	MakefileStream.WriteLine "CFLAGS+=-march=$(MARCH)"
 	MakefileStream.WriteLine "ifneq ($(TARGET_TRIPLET),)"
 	MakefileStream.WriteLine "CFLAGS+=--target=$(TARGET_TRIPLET)"
@@ -318,7 +296,11 @@ Sub WriteGccFlags(MakefileStream)
 End Sub
 
 Sub WriteAsmFlags(MakefileStream)
-	MakefileStream.WriteLine "ASFLAGS+="
+	MakefileStream.WriteLine "ifeq ($(PROCESSOR_ARCHITECTURE),AMD64)"
+	MakefileStream.WriteLine "ASFLAGS+=--64"
+	MakefileStream.WriteLine "else"
+	MakefileStream.WriteLine "ASFLAGS+=--32"
+	MakefileStream.WriteLine "endif"
 	MakefileStream.WriteLine "ASFLAGS_DEBUG+="
 	MakefileStream.WriteLine "release: ASFLAGS+=--strip-local-absolute"
 	MakefileStream.WriteLine "debug: ASFLAGS+=$(ASFLAGS_DEBUG)"
@@ -326,13 +308,35 @@ Sub WriteAsmFlags(MakefileStream)
 End Sub
 
 Sub WriteGorcFlags(MakefileStream)
+	MakefileStream.WriteLine "ifeq ($(PROCESSOR_ARCHITECTURE),AMD64)"
+	MakefileStream.WriteLine "GORCFLAGS+=/machine X64"
+	MakefileStream.WriteLine "endif"
 	MakefileStream.WriteLine "GORCFLAGS+=/ni /o /d FROM_MAKEFILE"
 	MakefileStream.WriteLine "GORCFLAGS_DEBUG=/d DEBUG"
 	MakefileStream.WriteLine "debug: GORCFLAGS+=$(GORCFLAGS_DEBUG)"
 	MakefileStream.WriteLine 
 End Sub
 
-Sub WriteLinkerFlags(MakefileStream, SubSystem)
+Sub WriteLinkerFlags(MakefileStream, SubSystem, LargeAddress)
+	MakefileStream.WriteLine "ifeq ($(PROCESSOR_ARCHITECTURE),AMD64)"
+	MakefileStream.WriteLine "ifeq ($(USE_RUNTIME),FALSE)"
+	MakefileStream.WriteLine "LDFLAGS+=-e EntryPoint"
+	MakefileStream.WriteLine "endif"
+	MakefileStream.WriteLine "LDFLAGS+=-m i386pep"
+	MakefileStream.WriteLine "else"
+	MakefileStream.WriteLine "ifeq ($(USE_RUNTIME),FALSE)"
+	MakefileStream.WriteLine "LDFLAGS+=-e _EntryPoint@0"
+	MakefileStream.WriteLine "endif"
+	MakefileStream.WriteLine "LDFLAGS+=-m i386pe"
+	
+	Select Case LargeAddress
+		Case LARGE_ADDRESS_UNAWARE
+		Case LARGE_ADDRESS_AWARE
+			MakefileStream.WriteLine "LDFLAGS+=--large-address-aware"
+	End Select
+	
+	MakefileStream.WriteLine "endif"
+	
 	Select Case SubSystem
 		Case SUBSYSTEM_CONSOLE
 			MakefileStream.WriteLine "LDFLAGS+=-subsystem console"
