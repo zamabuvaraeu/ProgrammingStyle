@@ -450,10 +450,10 @@ End Sub
 
 Sub WriteReleaseRule(MakefileStream)
 	MakefileStream.WriteLine "$(BIN_RELEASE_DIR)$(PATH_SEP)$(OUTPUT_FILE_NAME): $(OBJECTFILES_RELEASE)"
-	MakefileStream.WriteLine "	$(LD) $(LDFLAGS) $(LDLIBSBEGIN) $^ $(LDLIBS) $(LDLIBSEND) -o $@"
+	MakefileStream.WriteLine "	$(LD) $(LDFLAGS) $(LDLIBSBEGIN) $^ ""-("" $(LDLIBS) ""-)"" $(LDLIBSEND) -o $@"
 	MakefileStream.WriteLine 
 	MakefileStream.WriteLine "$(BIN_DEBUG_DIR)$(PATH_SEP)$(OUTPUT_FILE_NAME):   $(OBJECTFILES_DEBUG)"
-	MakefileStream.WriteLine "	$(LD) $(LDFLAGS) $(LDLIBSBEGIN) $^ $(LDLIBS) $(LDLIBSEND) -o $@"
+	MakefileStream.WriteLine "	$(LD) $(LDFLAGS) $(LDLIBSBEGIN) $^ ""-("" $(LDLIBS) ""-)"" $(LDLIBSEND) -o $@"
 	MakefileStream.WriteLine 
 End Sub
 
@@ -499,7 +499,7 @@ End Sub
 
 Sub RemoveVerticalLine(LinesArray)
 	Const VSPattern = "|"
-	' Удалим все вхождения "|"
+	' РЈРґР°Р»РёРј РІСЃРµ РІС…РѕР¶РґРµРЅРёСЏ "|"
 	Dim i
 	For i = LBound(LinesArray) To UBound(LinesArray)
 		Dim Finded
@@ -513,8 +513,8 @@ Sub RemoveVerticalLine(LinesArray)
 End Sub
 
 Sub RemoveOmmittedIncludes(LinesArray)
-	' Если строка в списке в виде "(filename.bi)"
-	' мы её обнуляем
+	' Р•СЃР»Рё СЃС‚СЂРѕРєР° РІ СЃРїРёСЃРєРµ РІ РІРёРґРµ "(filename.bi)"
+	' РјС‹ РµС‘ РѕР±РЅСѓР»СЏРµРј
 	Dim i
 	For i = LBound(LinesArray) To UBound(LinesArray)
 		Dim First
@@ -532,7 +532,7 @@ Sub RemoveOmmittedIncludes(LinesArray)
 End Sub
 
 Sub RemoveDefaultIncludes(LinesArray)
-	' заголовочные файлы в системном каталоге обнуляем
+	' Р·Р°РіРѕР»РѕРІРѕС‡РЅС‹Рµ С„Р°Р№Р»С‹ РІ СЃРёСЃС‚РµРјРЅРѕРј РєР°С‚Р°Р»РѕРіРµ РѕР±РЅСѓР»СЏРµРј
 	Dim i
 	For i = LBound(LinesArray) To UBound(LinesArray)
 		Dim Finded
@@ -544,7 +544,7 @@ Sub RemoveDefaultIncludes(LinesArray)
 End Sub
 
 Sub ReplaceSolidusToPathSeparator(LinesArray)
-	' заменяем "\" на "$(PATH_SEP)"
+	' Р·Р°РјРµРЅСЏРµРј "\" РЅР° "$(PATH_SEP)"
 	Dim i
 	For i = LBound(LinesArray) To UBound(LinesArray)
 		Dim Finded
@@ -557,7 +557,7 @@ Sub ReplaceSolidusToPathSeparator(LinesArray)
 End Sub
 
 Sub AddSpaces(LinesArray)
-	' Добавляем пробел в конце каждой строки
+	' Р”РѕР±Р°РІР»СЏРµРј РїСЂРѕР±РµР» РІ РєРѕРЅС†Рµ РєР°Р¶РґРѕР№ СЃС‚СЂРѕРєРё
 	Dim i
 	For i = LBound(LinesArray) To UBound(LinesArray)
 		Dim Length
@@ -569,7 +569,7 @@ Sub AddSpaces(LinesArray)
 End Sub
 
 Function ReadTextFile(FileName)
-	' читаем текстовый файл и возвращаем строку
+	' С‡РёС‚Р°РµРј С‚РµРєСЃС‚РѕРІС‹Р№ С„Р°Р№Р» Рё РІРѕР·РІСЂР°С‰Р°РµРј СЃС‚СЂРѕРєСѓ
 	Dim TextStream
 	Set TextStream = FSO.OpenTextFile(FileName, 1)
 	
@@ -583,7 +583,7 @@ Function ReadTextFile(FileName)
 End Function
 
 Function ReadTextStream(Stream)
-	' Читаем текстовый поток и возвращаем строку
+	' Р§РёС‚Р°РµРј С‚РµРєСЃС‚РѕРІС‹Р№ РїРѕС‚РѕРє Рё РІРѕР·РІСЂР°С‰Р°РµРј СЃС‚СЂРѕРєСѓ
 	Dim Lines
 	Lines = ""
 	Do While Not Stream.AtEndOfStream
@@ -630,7 +630,7 @@ Sub WriteTextFile(MakefileStream, BasFile, DependenciesLine)
 	Dim ResultReleaseString
 	ResultReleaseString = FileNameWithRelease & ": " & DependenciesLine
 	
-	' записываем строку в текстовый файл
+	' Р·Р°РїРёСЃС‹РІР°РµРј СЃС‚СЂРѕРєСѓ РІ С‚РµРєСЃС‚РѕРІС‹Р№ С„Р°Р№Р»
 	MakefileStream.WriteLine ObjectFileNameWithDebug
 	MakefileStream.WriteLine ObjectFileNameRelease
 	MakefileStream.WriteLine ResultDebugString
@@ -702,7 +702,7 @@ Function CreateDependencies(MakefileStream, oFile, FileExtension, Filepath)
 		Dim Original
 		Original = LinesArray(0)
 		
-		' Первая строка не нужна — там имя самого файла
+		' РџРµСЂРІР°СЏ СЃС‚СЂРѕРєР° РЅРµ РЅСѓР¶РЅР° вЂ” С‚Р°Рј РёРјСЏ СЃР°РјРѕРіРѕ С„Р°Р№Р»Р°
 		LinesArray(0) = ""
 		
 		RemoveVerticalLine LinesArray
@@ -711,7 +711,7 @@ Function CreateDependencies(MakefileStream, oFile, FileExtension, Filepath)
 		ReplaceSolidusToPathSeparator LinesArray
 		AddSpaces LinesArray
 		
-		' Весь массив в одну линию
+		' Р’РµСЃСЊ РјР°СЃСЃРёРІ РІ РѕРґРЅСѓ Р»РёРЅРёСЋ
 		Dim OneLine
 		OneLine = Join(LinesArray, "")
 		
