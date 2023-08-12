@@ -222,7 +222,7 @@ Sub WriteArchSpecifiedPath(MakefileStream)
 	MakefileStream.WriteLine 
 End Sub
 
-Sub WriteFbcFlags(MakefileStream, Emitter, Unicode, SubSystem)
+Sub WriteFbcFlags(MakefileStream, MainModule, Emitter, Unicode, SubSystem)
 	Dim EmitterParam
 	Select Case Emitter
 		Case CODE_EMITTER_GCC
@@ -504,7 +504,7 @@ End Sub
 
 Sub RemoveVerticalLine(LinesArray)
 	Const VSPattern = "|"
-	' РЈРґР°Р»РёРј РІСЃРµ РІС…РѕР¶РґРµРЅРёСЏ "|"
+	' Удалим все вхождения "|"
 	Dim i
 	For i = LBound(LinesArray) To UBound(LinesArray)
 		Dim Finded
@@ -518,8 +518,8 @@ Sub RemoveVerticalLine(LinesArray)
 End Sub
 
 Sub RemoveOmmittedIncludes(LinesArray)
-	' Р•СЃР»Рё СЃС‚СЂРѕРєР° РІ СЃРїРёСЃРєРµ РІ РІРёРґРµ "(filename.bi)"
-	' РјС‹ РµС‘ РѕР±РЅСѓР»СЏРµРј
+	' Если строка в списке в виде "(filename.bi)"
+	' мы её обнуляем
 	Dim i
 	For i = LBound(LinesArray) To UBound(LinesArray)
 		Dim First
@@ -537,7 +537,7 @@ Sub RemoveOmmittedIncludes(LinesArray)
 End Sub
 
 Sub RemoveDefaultIncludes(LinesArray)
-	' Р·Р°РіРѕР»РѕРІРѕС‡РЅС‹Рµ С„Р°Р№Р»С‹ РІ СЃРёСЃС‚РµРјРЅРѕРј РєР°С‚Р°Р»РѕРіРµ РѕР±РЅСѓР»СЏРµРј
+	' заголовочные файлы в системном каталоге обнуляем
 	Dim i
 	For i = LBound(LinesArray) To UBound(LinesArray)
 		Dim Finded
@@ -549,7 +549,7 @@ Sub RemoveDefaultIncludes(LinesArray)
 End Sub
 
 Sub ReplaceSolidusToPathSeparator(LinesArray)
-	' Р·Р°РјРµРЅСЏРµРј "\" РЅР° "$(PATH_SEP)"
+	' заменяем "\" на "$(PATH_SEP)"
 	Dim i
 	For i = LBound(LinesArray) To UBound(LinesArray)
 		Dim Finded
@@ -562,7 +562,7 @@ Sub ReplaceSolidusToPathSeparator(LinesArray)
 End Sub
 
 Sub AddSpaces(LinesArray)
-	' Р”РѕР±Р°РІР»СЏРµРј РїСЂРѕР±РµР» РІ РєРѕРЅС†Рµ РєР°Р¶РґРѕР№ СЃС‚СЂРѕРєРё
+	' Добавляем пробел в конце каждой строки
 	Dim i
 	For i = LBound(LinesArray) To UBound(LinesArray)
 		Dim Length
@@ -574,7 +574,7 @@ Sub AddSpaces(LinesArray)
 End Sub
 
 Function ReadTextFile(FileName)
-	' С‡РёС‚Р°РµРј С‚РµРєСЃС‚РѕРІС‹Р№ С„Р°Р№Р» Рё РІРѕР·РІСЂР°С‰Р°РµРј СЃС‚СЂРѕРєСѓ
+	' читаем текстовый файл и возвращаем строку
 	Dim TextStream
 	Set TextStream = FSO.OpenTextFile(FileName, 1)
 	
@@ -588,7 +588,7 @@ Function ReadTextFile(FileName)
 End Function
 
 Function ReadTextStream(Stream)
-	' Р§РёС‚Р°РµРј С‚РµРєСЃС‚РѕРІС‹Р№ РїРѕС‚РѕРє Рё РІРѕР·РІСЂР°С‰Р°РµРј СЃС‚СЂРѕРєСѓ
+	' Читаем текстовый поток и возвращаем строку
 	Dim Lines
 	Lines = ""
 	Do While Not Stream.AtEndOfStream
@@ -635,7 +635,7 @@ Sub WriteTextFile(MakefileStream, BasFile, DependenciesLine)
 	Dim ResultReleaseString
 	ResultReleaseString = FileNameWithRelease & ": " & DependenciesLine
 	
-	' Р·Р°РїРёСЃС‹РІР°РµРј СЃС‚СЂРѕРєСѓ РІ С‚РµРєСЃС‚РѕРІС‹Р№ С„Р°Р№Р»
+	' записываем строку в текстовый файл
 	MakefileStream.WriteLine ObjectFileNameWithDebug
 	MakefileStream.WriteLine ObjectFileNameRelease
 	MakefileStream.WriteLine ResultDebugString
@@ -707,7 +707,7 @@ Function CreateDependencies(MakefileStream, oFile, FileExtension, Filepath)
 		Dim Original
 		Original = LinesArray(0)
 		
-		' РџРµСЂРІР°СЏ СЃС‚СЂРѕРєР° РЅРµ РЅСѓР¶РЅР° вЂ” С‚Р°Рј РёРјСЏ СЃР°РјРѕРіРѕ С„Р°Р№Р»Р°
+		' Первая строка не нужна — там имя самого файла
 		LinesArray(0) = ""
 		
 		RemoveVerticalLine LinesArray
@@ -716,7 +716,7 @@ Function CreateDependencies(MakefileStream, oFile, FileExtension, Filepath)
 		ReplaceSolidusToPathSeparator LinesArray
 		AddSpaces LinesArray
 		
-		' Р’РµСЃСЊ РјР°СЃСЃРёРІ РІ РѕРґРЅСѓ Р»РёРЅРёСЋ
+		' Весь массив в одну линию
 		Dim OneLine
 		OneLine = Join(LinesArray, "")
 		
