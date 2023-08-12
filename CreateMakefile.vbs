@@ -361,7 +361,9 @@ Sub WriteLinkerLibraryes(MakefileStream, Multithreading)
 	MakefileStream.WriteLine "ifneq ($(USE_RUNTIME),FALSE)"
 	' For profile
 	' MakefileStream.WriteLine "LDLIBSBEGIN+=crt2.o gcrt2.o crtbegin.o fbrt0.o"
-	MakefileStream.WriteLine "LDLIBSBEGIN+=crt2.o crtbegin.o fbrt0.o"
+	MakefileStream.WriteLine "LDLIBSBEGIN+=""$(LIB_DIR)\crt2.o"""
+	MakefileStream.WriteLine "LDLIBSBEGIN+=""$(LIB_DIR)\crtbegin.o"""
+	MakefileStream.WriteLine "LDLIBSBEGIN+=""$(LIB_DIR)\fbrt0.o"""
 	MakefileStream.WriteLine "endif"
 	MakefileStream.WriteLine "LDLIBS+=-ladvapi32 -lcrypt32 -lgdi32 -lkernel32"
 	MakefileStream.WriteLine "LDLIBS+=-lmsvcrt -lmswsock -lole32 -loleaut32"
@@ -383,7 +385,7 @@ Sub WriteLinkerLibraryes(MakefileStream, Multithreading)
 	' MakefileStream.WriteLine "LDLIBS_DEBUG+=-lgcc -lmingw32 -lmingwex -lmoldname -lgcc_eh -lgmon"
 	MakefileStream.WriteLine "LDLIBS_DEBUG+=-lgcc -lmingw32 -lmingwex -lmoldname -lgcc_eh"
 	MakefileStream.WriteLine "ifneq ($(USE_RUNTIME),FALSE)"
-	MakefileStream.WriteLine "LDLIBSEND+=crtend.o"
+	MakefileStream.WriteLine "LDLIBSEND+=""$(LIB_DIR)\crtend.o"""
 	MakefileStream.WriteLine "endif"
 	MakefileStream.WriteLine 
 End Sub
