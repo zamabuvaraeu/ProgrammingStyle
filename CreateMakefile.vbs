@@ -69,7 +69,7 @@ WriteProcessorArch MakefileFileStream
 WriteOutputFilename MakefileFileStream, OutputFileName, ExeType
 WriteUtilsPath MakefileFileStream
 WriteArchSpecifiedPath MakefileFileStream
-WriteFbcFlags MakefileFileStream, Emit, Unicode, Runtime, FileSubsystem
+WriteFbcFlags MakefileFileStream, Emit, Unicode, FileSubsystem
 WriteGccFlags MakefileFileStream
 WriteAsmFlags MakefileFileStream
 WriteGorcFlags MakefileFileStream
@@ -173,10 +173,15 @@ Sub WriteOutputFilename(MakefileStream, OutputFilename, FileType)
 			Extension = ".a"
 	End Select
 	
+	MakefileStream.WriteLine "USE_RUNTIME ?= TRUE"
 	MakefileStream.WriteLine "FBC_VER ?= _FBC1100"
 	MakefileStream.WriteLine "GCC_VER ?= _GCC0930"
-	MakefileStream.WriteLine "USE_RUNTIME ?= FALSE"
-	MakefileStream.WriteLine "FILE_SUFFIX=$(GCC_VER)$(FBC_VER)"
+	MakefileStream.WriteLine "ifeq ($(USE_RUNTIME),TRUE)"
+	MakefileStream.WriteLine "RUNTIME = _RT"
+	MakefileStream.WriteLine "else"
+	MakefileStream.WriteLine "RUNTIME = _WRT"
+	MakefileStream.WriteLine "endif"
+	MakefileStream.WriteLine "FILE_SUFFIX=$(GCC_VER)$(FBC_VER)$(RUNTIME)"
 	MakefileStream.WriteLine "OUTPUT_FILE_NAME=" & OutputFilename & "$(FILE_SUFFIX)" & Extension
 	MakefileStream.WriteLine 
 End Sub
@@ -215,7 +220,7 @@ Sub WriteArchSpecifiedPath(MakefileStream)
 	MakefileStream.WriteLine 
 End Sub
 
-Sub WriteFbcFlags(MakefileStream, Emitter, Unicode, Runtime, SubSystem)
+Sub WriteFbcFlags(MakefileStream, Emitter, Unicode, SubSystem)
 	Dim EmitterParam
 	Select Case Emitter
 		Case CODE_EMITTER_GCC
@@ -236,14 +241,6 @@ Sub WriteFbcFlags(MakefileStream, Emitter, Unicode, Runtime, SubSystem)
 			UnicodeFlag = "FBCFLAGS+=-d UNICODE"
 	End Select
 	
-	Dim RuntimeFlag
-	Select Case Runtime
-		Case DEFINE_RUNTIME
-			RuntimeFlag = ""
-		Case DEFINE_WITHOUT_RUNTIME
-			RuntimeFlag = "FBCFLAGS+=-d WITHOUT_RUNTIME"
-	End Select
-	
 	Dim SubSystemParam
 	If SubSystem = SUBSYSTEM_WINDOW Then
 		SubSystemParam = "-s gui"
@@ -253,7 +250,10 @@ Sub WriteFbcFlags(MakefileStream, Emitter, Unicode, Runtime, SubSystem)
 	
 	MakefileStream.WriteLine "FBCFLAGS+=" & EmitterParam
 	MakefileStream.WriteLine UnicodeFlag
-	MakefileStream.WriteLine RuntimeFlag
+	MakefileStream.WriteLine "ifeq ($(USE_RUNTIME),TRUE)"
+	MakefileStream.WriteLine "else"
+	MakefileStream.WriteLine "FBCFLAGS+=-d WITHOUT_RUNTIME"
+	MakefileStream.WriteLine "endif"
 	MakefileStream.WriteLine "FBCFLAGS+=-w error -maxerr 1"
 	MakefileStream.WriteLine "FBCFLAGS+=-i " & SourceFolder
 	MakefileStream.WriteLine "ifneq ($(INC_DIR),)"
@@ -345,6 +345,7 @@ Sub WriteLinkerFlags(MakefileStream, SubSystem, LargeAddress)
 		Case SUBSYSTEM_NATIVE
 			MakefileStream.WriteLine "LDFLAGS+=-subsystem native"
 	End Select
+	
 	MakefileStream.WriteLine "LDFLAGS+=--no-seh --nxcompat"
 	MakefileStream.WriteLine "LDFLAGS+=-L ."
 	MakefileStream.WriteLine "LDFLAGS+=-L ""$(LIB_DIR)"""
@@ -358,7 +359,7 @@ Sub WriteLinkerFlags(MakefileStream, SubSystem, LargeAddress)
 End Sub
 
 Sub WriteLinkerLibraryes(MakefileStream, Multithreading)
-	MakefileStream.WriteLine "ifneq ($(USE_RUNTIME),FALSE)"
+	MakefileStream.WriteLine "ifeq ($(USE_RUNTIME),TRUE)"
 	' For profile
 	' MakefileStream.WriteLine "LDLIBSBEGIN+=crt2.o gcrt2.o crtbegin.o fbrt0.o"
 	MakefileStream.WriteLine "LDLIBSBEGIN+=""$(LIB_DIR)\crt2.o"""
@@ -384,7 +385,7 @@ Sub WriteLinkerLibraryes(MakefileStream, Multithreading)
 	' For profile
 	' MakefileStream.WriteLine "LDLIBS_DEBUG+=-lgcc -lmingw32 -lmingwex -lmoldname -lgcc_eh -lgmon"
 	MakefileStream.WriteLine "LDLIBS_DEBUG+=-lgcc -lmingw32 -lmingwex -lmoldname -lgcc_eh"
-	MakefileStream.WriteLine "ifneq ($(USE_RUNTIME),FALSE)"
+	MakefileStream.WriteLine "ifeq ($(USE_RUNTIME),TRUE)"
 	MakefileStream.WriteLine "LDLIBSEND+=""$(LIB_DIR)\crtend.o"""
 	MakefileStream.WriteLine "endif"
 	MakefileStream.WriteLine 
