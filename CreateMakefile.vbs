@@ -42,6 +42,8 @@ Const MakefileFileName = "Makefile"
 
 Dim OutputFileName
 OutputFileName = "Station922"
+Dim MainModuleName
+MainModuleName = "Station922"
 Dim ExeType
 ExeType = OUTPUT_FILETYPE_EXE
 Dim FileSubsystem
@@ -69,7 +71,7 @@ WriteProcessorArch MakefileFileStream
 WriteOutputFilename MakefileFileStream, OutputFileName, ExeType
 WriteUtilsPath MakefileFileStream
 WriteArchSpecifiedPath MakefileFileStream
-WriteFbcFlags MakefileFileStream, Emit, Unicode, FileSubsystem
+WriteFbcFlags MakefileFileStream, MainModuleName, Emit, Unicode, FileSubsystem
 WriteGccFlags MakefileFileStream
 WriteAsmFlags MakefileFileStream
 WriteGorcFlags MakefileFileStream
@@ -251,6 +253,7 @@ Sub WriteFbcFlags(MakefileStream, Emitter, Unicode, SubSystem)
 	MakefileStream.WriteLine "FBCFLAGS+=" & EmitterParam
 	MakefileStream.WriteLine UnicodeFlag
 	MakefileStream.WriteLine "ifeq ($(USE_RUNTIME),TRUE)"
+	MakefileStream.WriteLine "FBCFLAGS+=-m " & MainModule
 	MakefileStream.WriteLine "else"
 	MakefileStream.WriteLine "FBCFLAGS+=-d WITHOUT_RUNTIME"
 	MakefileStream.WriteLine "endif"
