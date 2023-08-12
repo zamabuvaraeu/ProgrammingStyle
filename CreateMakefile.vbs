@@ -370,7 +370,7 @@ Sub WriteLinkerLibraryes(MakefileStream, Multithreading)
 	MakefileStream.WriteLine "LDLIBS+=-lmsvcrt -lmswsock -lole32 -loleaut32"
 	MakefileStream.WriteLine "LDLIBS+=-lshell32 -lshlwapi -lws2_32 -luser32"
 	
-	MakefileStream.WriteLine "ifneq ($(USE_RUNTIME),FALSE)"
+	MakefileStream.WriteLine "ifeq ($(USE_RUNTIME),TRUE)"
 	
 	' For Multithreading
 	Select Case Multithreading
@@ -379,6 +379,8 @@ Sub WriteLinkerLibraryes(MakefileStream, Multithreading)
 		Case DEFINE_MULTITHREADING_RUNTIME
 			MakefileStream.WriteLine "LDLIBS+=-lfbmt"
 	End Select
+	
+	MakefileStream.WriteLine "LDLIBS+=-luuid"
 	
 	MakefileStream.WriteLine "endif"
 	
