@@ -1,5 +1,23 @@
 Option Explicit
 
+Dim FSO
+Set FSO = CreateObject("Scripting.FileSystemObject")
+
+Dim Lines
+Lines = ReadTextFile(WScript.Arguments(1))
+
+Dim LinesArray
+LinesArray = Split(Lines, vbCrLf)
+
+ParseFile
+
+Dim OneLine
+OneLine = Join(LinesArray, vbCrLf)
+
+WriteTextFile WScript.Arguments(1), OneLine
+
+Set FSO = Nothing
+
 Function ReadTextFile(FileName)
 	Dim TextStream
 	Set TextStream = FSO.OpenTextFile(FileName, 1)
@@ -62,9 +80,13 @@ Function FixWinApiDeclaration(strLine)
 	
 End Function
 
-Function RemoveZeroedFunctionRetval(strLine)
+Function RemoveZeroedFunctionRetval(strLine, InsideMain)
 	If InStr(strLine, "__builtin_memset( &fb$result") Then
-		RemoveZeroedFunctionRetval = CommentLine(strLine)
+		If InsideMain = True Then
+			RemoveZeroedFunctionRetval = strLine
+		Else
+			RemoveZeroedFunctionRetval = CommentLine(strLine)
+		End If
 	Else
 		RemoveZeroedFunctionRetval = strLine
 	End If
@@ -82,12 +104,23 @@ Sub ParseFile()
 	Dim RemarkFlag
 	RemarkFlag = False
 	
+	Dim InsideMainFunction
+	InsideMainFunction = False
+	
 	Dim i
 	For i = 0 To UBound(LinesArray)
 		
+		If LinesArray(i) = "int32 main( int32 __FB_ARGC__, char** __FB_ARGV__ )" Then
+			InsideMainFunction = True
+		End If
+		
+		If LinesArray(i) = "}" Then
+			InsideMainFunction = False
+		End If
+		
 		If WScript.Arguments(0) = "/debug" Then
 			LinesArray(i) = FixWinApiDeclaration(LinesArray(i))
-			LinesArray(i) = RemoveZeroedFunctionRetval(LinesArray(i))
+			LinesArray(i) = RemoveZeroedFunctionRetval(LinesArray(i), InsideMainFunction)
 			LinesArray(i) = RemoveStaticAssert(LinesArray(i))
 		Else
 			Dim LastChar
@@ -109,7 +142,7 @@ Sub ParseFile()
 			Else
 				
 				LinesArray(i) = FixWinApiDeclaration(LinesArray(i))
-				LinesArray(i) = RemoveZeroedFunctionRetval(LinesArray(i))
+				LinesArray(i) = RemoveZeroedFunctionRetval(LinesArray(i), InsideMainFunction)
 				LinesArray(i) = RemoveStaticAssert(LinesArray(i))
 				
 				If InStr(LinesArray(i), "__attribute__") Then
@@ -132,21 +165,3 @@ Sub ParseFile()
 		End If
 	Next
 End Sub
-
-Dim FSO
-Set FSO = CreateObject("Scripting.FileSystemObject")
-
-Dim Lines
-Lines = ReadTextFile(WScript.Arguments(1))
-
-Dim LinesArray
-LinesArray = Split(Lines, vbCrLf)
-
-ParseFile
-
-Dim OneLine
-OneLine = Join(LinesArray, vbCrLf)
-
-WriteTextFile WScript.Arguments(1), OneLine
-
-Set FSO = Nothing
