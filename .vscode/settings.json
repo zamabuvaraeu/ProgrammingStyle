@@ -108,15 +108,15 @@
 	],
 	"makefile.launchConfigurations": [
 		{
-			"cwd": "R:\\Programming\\FreeBASIC Projects\\Station922\\bin\\Debug\\x64",
-			"binaryPath": "R:\\Programming\\FreeBASIC Projects\\Station922\\bin\\Debug\\x64\\Station922_GCC1220_FBC1090.exe",
+			"cwd": "C:\\Programming\\FreeBASIC Projects\\Station922\\bin\\Debug\\x64",
+			"binaryPath": "C:\\Programming\\FreeBASIC Projects\\Station922\\bin\\Debug\\x64\\Station922_GCC1220_FBC1090.exe",
 			"binaryArgs": []
 		}
 	]
 	/*
 	"terminal.integrated.env.windows": {
-		"PATH": "R:\\Programming\\mingw64\\bin;${env:PATH}",
+		"PATH": "C:\\Programming\\mingw64\\bin;${env:PATH}",
 	},
-	"makefile.preConfigureScript": "Z:\\Programming\\setcompilerpath_gcc-12.2.0_x64.cmd",
+	"makefile.preConfigureScript": "C:\\Programming\\setcompilerpath_gcc-12.2.0_x64.cmd",
 	*/
 }
