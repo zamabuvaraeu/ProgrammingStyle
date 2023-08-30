@@ -39,25 +39,142 @@ Const ObjectFilesDebug = "OBJECTFILES_DEBUG"
 
 Const MakefileFileName = "Makefile"
 
+Dim colArgs
+Set colArgs = WScript.Arguments.Named
 
 Dim OutputFileName
-OutputFileName = "Station922"
+If colArgs.Exists("out") Then
+	OutputFileName = colArgs.Item("out") 
+Else
+	OutputFileName = "Station922"
+End If
+
 Dim MainModuleName
-MainModuleName = "Station922"
+If colArgs.Exists("module") Then
+	MainModuleName = colArgs.Item("module") 
+Else
+	MainModuleName = OutputFileName
+End If
+
 Dim ExeType
-ExeType = OUTPUT_FILETYPE_EXE
+If colArgs.Exists("exetype") Then
+	Dim t1
+	t1 = colArgs.Item("exetype")
+	Select Case t1
+		Case "exe"
+			ExeType = OUTPUT_FILETYPE_EXE
+		Case "dll"
+			ExeType = OUTPUT_FILETYPE_DLL
+		Case "lib"
+			ExeType = OUTPUT_FILETYPE_LIBRARY
+		Case Else
+			ExeType = OUTPUT_FILETYPE_EXE
+	End Select
+Else
+	ExeType = OUTPUT_FILETYPE_EXE
+End If
+
 Dim FileSubsystem
-FileSubsystem = SUBSYSTEM_CONSOLE
+If colArgs.Exists("subsystem") Then
+	Dim t2
+	t2 = colArgs.Item("subsystem")
+	Select Case t2
+		Case "console"
+			FileSubsystem = SUBSYSTEM_CONSOLE
+		Case "windows"
+			FileSubsystem = SUBSYSTEM_WINDOW
+		Case "native"
+			FileSubsystem = SUBSYSTEM_NATIVE
+		Case Else
+			FileSubsystem = SUBSYSTEM_CONSOLE
+	End Select
+Else
+	FileSubsystem = SUBSYSTEM_CONSOLE
+End If
+
 Dim Emit
-Emit = CODE_EMITTER_GCC
+If colArgs.Exists("emitter") Then
+	Dim t3
+	t3 = colArgs.Item("emitter")
+	Select Case t3
+		Case "gcc"
+			Emit = CODE_EMITTER_GCC
+		Case "gas"
+			Emit = CODE_EMITTER_GAS
+		Case "gas64"
+			Emit = CODE_EMITTER_GAS64
+		Case "llvm"
+			Emit = CODE_EMITTER_LLVM
+		Case Else
+			Emit = CODE_EMITTER_GCC
+	End Select
+Else
+	Emit = CODE_EMITTER_GCC
+End If
+
 Dim Unicode
-Unicode = DEFINE_UNICODE
+If colArgs.Exists("unicode") Then
+	Dim t4
+	t4 = colArgs.Item("unicode")
+	Select Case t4
+		Case "true"
+			Unicode = DEFINE_UNICODE
+		Case "false"
+			Unicode = DEFINE_ANSI
+		Case Else
+			Unicode = DEFINE_ANSI
+	End Select
+Else
+	Unicode = DEFINE_ANSI
+End If
+
 Dim Runtime
-Runtime = DEFINE_WITHOUT_RUNTIME
+If colArgs.Exists("wrt") Then
+	Dim t5
+	t5 = colArgs.Item("wrt")
+	Select Case t5
+		Case "true"
+			Runtime = DEFINE_WITHOUT_RUNTIME
+		Case "false"
+			Runtime = DEFINE_RUNTIME
+		Case Else
+			Runtime = DEFINE_RUNTIME
+	End Select
+Else
+	Runtime = DEFINE_RUNTIME
+End If
+
 Dim AddressAware
-AddressAware = LARGE_ADDRESS_AWARE
+If colArgs.Exists("addressaware") Then
+	Dim t6
+	t6 = colArgs.Item("addressaware")
+	Select Case t6
+		Case "true"
+			AddressAware = LARGE_ADDRESS_AWARE
+		Case "false"
+			AddressAware = LARGE_ADDRESS_UNAWARE
+		Case Else
+			AddressAware = LARGE_ADDRESS_UNAWARE
+	End Select
+Else
+	AddressAware = LARGE_ADDRESS_UNAWARE
+End If
+
 Dim ThreadingMode
-ThreadingMode = DEFINE_SINGLETHREADING_RUNTIME
+If colArgs.Exists("multithreading") Then
+	Dim t7
+	t7 = colArgs.Item("multithreading")
+	Select Case t7
+		Case "true"
+			ThreadingMode = DEFINE_MULTITHREADING_RUNTIME
+		Case "false"
+			ThreadingMode = DEFINE_SINGLETHREADING_RUNTIME
+		Case Else
+			ThreadingMode = DEFINE_SINGLETHREADING_RUNTIME
+	End Select
+Else
+	ThreadingMode = DEFINE_SINGLETHREADING_RUNTIME
+End If
 
 Dim FSO
 Set FSO = CreateObject("Scripting.FileSystemObject")
@@ -369,9 +486,10 @@ Sub WriteLinkerLibraryes(MakefileStream, Multithreading)
 	MakefileStream.WriteLine "LDLIBSBEGIN+=""$(LIB_DIR)\crtbegin.o"""
 	MakefileStream.WriteLine "LDLIBSBEGIN+=""$(LIB_DIR)\fbrt0.o"""
 	MakefileStream.WriteLine "endif"
-	MakefileStream.WriteLine "LDLIBS+=-ladvapi32 -lcrypt32 -lgdi32 -lkernel32"
-	MakefileStream.WriteLine "LDLIBS+=-lmsvcrt -lmswsock -lole32 -loleaut32"
-	MakefileStream.WriteLine "LDLIBS+=-lshell32 -lshlwapi -lws2_32 -luser32"
+	MakefileStream.WriteLine "LDLIBS+=-ladvapi32 -lcrypt32 -lkernel32 -lmsvcrt"
+	MakefileStream.WriteLine "LDLIBS+=-lole32 -loleaut32"
+	MakefileStream.WriteLine "LDLIBS+=-lmswsock -lws2_32"
+	MakefileStream.WriteLine "LDLIBS+=-lshell32 -lshlwapi -lgdi32 -luser32 -lcomctl32"
 	
 	MakefileStream.WriteLine "ifeq ($(USE_RUNTIME),TRUE)"
 	
