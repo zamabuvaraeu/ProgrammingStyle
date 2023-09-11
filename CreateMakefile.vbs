@@ -43,138 +43,31 @@ Dim colArgs
 Set colArgs = WScript.Arguments.Named
 
 Dim OutputFileName
-If colArgs.Exists("out") Then
-	OutputFileName = colArgs.Item("out") 
-Else
-	OutputFileName = "Station922"
-End If
+OutputFileName = GetOutputFileName()
 
 Dim MainModuleName
-If colArgs.Exists("module") Then
-	MainModuleName = colArgs.Item("module") 
-Else
-	MainModuleName = OutputFileName
-End If
+MainModuleName = GetMainModuleName()
 
 Dim ExeType
-If colArgs.Exists("exetype") Then
-	Dim t1
-	t1 = colArgs.Item("exetype")
-	Select Case t1
-		Case "exe"
-			ExeType = OUTPUT_FILETYPE_EXE
-		Case "dll"
-			ExeType = OUTPUT_FILETYPE_DLL
-		Case "lib"
-			ExeType = OUTPUT_FILETYPE_LIBRARY
-		Case Else
-			ExeType = OUTPUT_FILETYPE_EXE
-	End Select
-Else
-	ExeType = OUTPUT_FILETYPE_EXE
-End If
+ExeType = GetExeType()
 
 Dim FileSubsystem
-If colArgs.Exists("subsystem") Then
-	Dim t2
-	t2 = colArgs.Item("subsystem")
-	Select Case t2
-		Case "console"
-			FileSubsystem = SUBSYSTEM_CONSOLE
-		Case "windows"
-			FileSubsystem = SUBSYSTEM_WINDOW
-		Case "native"
-			FileSubsystem = SUBSYSTEM_NATIVE
-		Case Else
-			FileSubsystem = SUBSYSTEM_CONSOLE
-	End Select
-Else
-	FileSubsystem = SUBSYSTEM_CONSOLE
-End If
+FileSubsystem = GetFileSubsystem()
 
 Dim Emit
-If colArgs.Exists("emitter") Then
-	Dim t3
-	t3 = colArgs.Item("emitter")
-	Select Case t3
-		Case "gcc"
-			Emit = CODE_EMITTER_GCC
-		Case "gas"
-			Emit = CODE_EMITTER_GAS
-		Case "gas64"
-			Emit = CODE_EMITTER_GAS64
-		Case "llvm"
-			Emit = CODE_EMITTER_LLVM
-		Case Else
-			Emit = CODE_EMITTER_GCC
-	End Select
-Else
-	Emit = CODE_EMITTER_GCC
-End If
+Emit = GetEmitter()
 
 Dim Unicode
-If colArgs.Exists("unicode") Then
-	Dim t4
-	t4 = colArgs.Item("unicode")
-	Select Case t4
-		Case "true"
-			Unicode = DEFINE_UNICODE
-		Case "false"
-			Unicode = DEFINE_ANSI
-		Case Else
-			Unicode = DEFINE_ANSI
-	End Select
-Else
-	Unicode = DEFINE_ANSI
-End If
+Unicode = GetUnicode()
 
 Dim Runtime
-If colArgs.Exists("wrt") Then
-	Dim t5
-	t5 = colArgs.Item("wrt")
-	Select Case t5
-		Case "true"
-			Runtime = DEFINE_WITHOUT_RUNTIME
-		Case "false"
-			Runtime = DEFINE_RUNTIME
-		Case Else
-			Runtime = DEFINE_RUNTIME
-	End Select
-Else
-	Runtime = DEFINE_RUNTIME
-End If
+Runtime = GetRuntime()
 
 Dim AddressAware
-If colArgs.Exists("addressaware") Then
-	Dim t6
-	t6 = colArgs.Item("addressaware")
-	Select Case t6
-		Case "true"
-			AddressAware = LARGE_ADDRESS_AWARE
-		Case "false"
-			AddressAware = LARGE_ADDRESS_UNAWARE
-		Case Else
-			AddressAware = LARGE_ADDRESS_UNAWARE
-	End Select
-Else
-	AddressAware = LARGE_ADDRESS_UNAWARE
-End If
+AddressAware = GetAddressAware()
 
 Dim ThreadingMode
-If colArgs.Exists("multithreading") Then
-	Dim t7
-	t7 = colArgs.Item("multithreading")
-	Select Case t7
-		Case "true"
-			ThreadingMode = DEFINE_MULTITHREADING_RUNTIME
-		Case "false"
-			ThreadingMode = DEFINE_SINGLETHREADING_RUNTIME
-		Case Else
-			ThreadingMode = DEFINE_SINGLETHREADING_RUNTIME
-	End Select
-Else
-	ThreadingMode = DEFINE_SINGLETHREADING_RUNTIME
-End If
+ThreadingMode = GetThreadingMode()
 
 Dim FSO
 Set FSO = CreateObject("Scripting.FileSystemObject")
@@ -207,6 +100,149 @@ WriteResourceRule MakefileFileStream
 
 Set MakefileFileStream = Nothing
 Set FSO = Nothing
+
+Function GetMainModuleName()
+	If colArgs.Exists("module") Then
+		GetMainModuleName = colArgs.Item("module") 
+	Else
+		GetMainModuleName = OutputFileName
+	End If
+End Function
+
+Function GetExeType()
+	If colArgs.Exists("exetype") Then
+		Dim t1
+		t1 = colArgs.Item("exetype")
+		Select Case t1
+			Case "exe"
+				GetExeType = OUTPUT_FILETYPE_EXE
+			Case "dll"
+				GetExeType = OUTPUT_FILETYPE_DLL
+			Case "lib"
+				GetExeType = OUTPUT_FILETYPE_LIBRARY
+			Case Else
+				GetExeType = OUTPUT_FILETYPE_EXE
+		End Select
+	Else
+		GetExeType = OUTPUT_FILETYPE_EXE
+	End If
+End Function
+
+Function GetFileSubsystem()
+	If colArgs.Exists("subsystem") Then
+		Dim t2
+		t2 = colArgs.Item("subsystem")
+		Select Case t2
+			Case "console"
+				GetFileSubsystem = SUBSYSTEM_CONSOLE
+			Case "windows"
+				GetFileSubsystem = SUBSYSTEM_WINDOW
+			Case "native"
+				GetFileSubsystem = SUBSYSTEM_NATIVE
+			Case Else
+				GetFileSubsystem = SUBSYSTEM_CONSOLE
+		End Select
+	Else
+		GetFileSubsystem = SUBSYSTEM_CONSOLE
+	End If
+End Function
+
+Function GetEmitter()
+	If colArgs.Exists("emitter") Then
+		Dim t3
+		t3 = colArgs.Item("emitter")
+		Select Case t3
+			Case "gcc"
+				GetEmitter = CODE_EMITTER_GCC
+			Case "gas"
+				GetEmitter = CODE_EMITTER_GAS
+			Case "gas64"
+				GetEmitter = CODE_EMITTER_GAS64
+			Case "llvm"
+				GetEmitter = CODE_EMITTER_LLVM
+			Case Else
+				GetEmitter = CODE_EMITTER_GCC
+		End Select
+	Else
+		GetEmitter = CODE_EMITTER_GCC
+	End If
+End Function
+
+Function GetUnicode()
+	If colArgs.Exists("unicode") Then
+		Dim t4
+		t4 = colArgs.Item("unicode")
+		Select Case t4
+			Case "true"
+				GetUnicode = DEFINE_UNICODE
+			Case "false"
+				GetUnicode = DEFINE_ANSI
+			Case Else
+				GetUnicode = DEFINE_ANSI
+		End Select
+	Else
+		GetUnicode = DEFINE_ANSI
+	End If
+End Function
+
+Function GetRuntime()
+	If colArgs.Exists("wrt") Then
+		Dim t5
+		t5 = colArgs.Item("wrt")
+		Select Case t5
+			Case "true"
+				GetRuntime = DEFINE_WITHOUT_RUNTIME
+			Case "false"
+				GetRuntime = DEFINE_RUNTIME
+			Case Else
+				GetRuntime = DEFINE_RUNTIME
+		End Select
+	Else
+		GetRuntime = DEFINE_RUNTIME
+	End If
+End Function
+
+Function GetAddressAware()
+	If colArgs.Exists("addressaware") Then
+		Dim t6
+		t6 = colArgs.Item("addressaware")
+		Select Case t6
+			Case "true"
+				GetAddressAware = LARGE_ADDRESS_AWARE
+			Case "false"
+				GetAddressAware = LARGE_ADDRESS_UNAWARE
+			Case Else
+				GetAddressAware = LARGE_ADDRESS_UNAWARE
+		End Select
+	Else
+		GetAddressAware = LARGE_ADDRESS_UNAWARE
+	End If
+End Function
+
+Function GetThreadingMode()
+	If colArgs.Exists("multithreading") Then
+		Dim t7
+		t7 = colArgs.Item("multithreading")
+		Select Case t7
+			Case "true"
+				GetThreadingMode = DEFINE_MULTITHREADING_RUNTIME
+			Case "false"
+				GetThreadingMode = DEFINE_SINGLETHREADING_RUNTIME
+			Case Else
+				GetThreadingMode = DEFINE_SINGLETHREADING_RUNTIME
+		End Select
+	Else
+		GetThreadingMode = DEFINE_SINGLETHREADING_RUNTIME
+	End If
+End Function
+
+Function GetOutputFileName()
+	If colArgs.Exists("out") Then
+		GetOutputFileName = colArgs.Item("out") 
+	Else
+		GetOutputFileName = "Station922"
+	End If
+End Function
 
 Function CreateCompilerParams(Emitter, Unicode, Runtime, SubSystem)
 	
