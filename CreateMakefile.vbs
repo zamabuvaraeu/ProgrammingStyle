@@ -25,10 +25,6 @@ Const DEFINE_MULTITHREADING_RUNTIME = 1
 Const LARGE_ADDRESS_UNAWARE = 0
 Const LARGE_ADDRESS_AWARE = 1
 
-Const SourceFolder = "src"
-Const CompilerPath = "C:\Program Files (x86)\FreeBASIC-1.10.0-winlibs-gcc-9.3.0"
-Const FbcCompilerName = "fbc64.exe"
-
 Const Solidus = "\"
 Const MakefilePathSeparator = "$(PATH_SEP)"
 Const ReleaseDirPrefix = "$(OBJ_RELEASE_DIR)$(PATH_SEP)"
@@ -41,6 +37,15 @@ Const MakefileFileName = "Makefile"
 
 Dim colArgs
 Set colArgs = WScript.Arguments.Named
+
+Dim SourceFolder
+SourceFolder = GetSourceFolder()
+
+Dim CompilerPath
+CompilerPath = GetCompilerPath()
+
+Dim FbcCompilerName
+FbcCompilerName = GetFbcCompilerName()
 
 Dim OutputFileName
 OutputFileName = GetOutputFileName()
@@ -101,9 +106,33 @@ WriteResourceRule MakefileFileStream
 Set MakefileFileStream = Nothing
 Set FSO = Nothing
 
+Function GetFbcCompilerName()
+	If colArgs.Exists("fbc") Then
+		GetFbcCompilerName = colArgs.Item("fbc")
+	Else
+		GetFbcCompilerName = "fbc64.exe"
+	End If
+End Function
+
+Function GetCompilerPath()
+	If colArgs.Exists("fbc-path") Then
+		GetCompilerPath = colArgs.Item("fbc-path")
+	Else
+		GetCompilerPath = "C:\Program Files (x86)\FreeBASIC-1.10.0-winlibs-gcc-9.3.0"
+	End If
+End Function
+
+Function GetSourceFolder()
+	If colArgs.Exists("src") Then
+		GetSourceFolder = colArgs.Item("src")
+	Else
+		GetSourceFolder = "src"
+	End If
+End Function
+
 Function GetMainModuleName()
 	If colArgs.Exists("module") Then
-		GetMainModuleName = colArgs.Item("module") 
+		GetMainModuleName = colArgs.Item("module")
 	Else
 		GetMainModuleName = OutputFileName
 	End If
