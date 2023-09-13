@@ -33,7 +33,8 @@ Const FileSuffix = "$(FILE_SUFFIX)"
 Const ObjectFilesRelease = "OBJECTFILES_RELEASE"
 Const ObjectFilesDebug = "OBJECTFILES_DEBUG"
 
-Const MakefileFileName = "Makefile"
+Dim MakefileFileName
+MakefileFileName = GetMakefileName()
 
 Dim colArgs
 Set colArgs = WScript.Arguments.Named
@@ -105,6 +106,14 @@ WriteResourceRule MakefileFileStream
 
 Set MakefileFileStream = Nothing
 Set FSO = Nothing
+
+Function GetMakefileName()
+	If colArgs.Exists("makefile") Then
+		GetFbcCompilerName = colArgs.Item("makefile")
+	Else
+		GetFbcCompilerName = "Makefile"
+	End If
+End Function
 
 Function GetFbcCompilerName()
 	If colArgs.Exists("fbc") Then
