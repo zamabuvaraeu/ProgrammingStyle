@@ -33,11 +33,11 @@ Const FileSuffix = "$(FILE_SUFFIX)"
 Const ObjectFilesRelease = "OBJECTFILES_RELEASE"
 Const ObjectFilesDebug = "OBJECTFILES_DEBUG"
 
-Dim MakefileFileName
-MakefileFileName = GetMakefileName()
-
 Dim colArgs
 Set colArgs = WScript.Arguments.Named
+
+Dim MakefileFileName
+MakefileFileName = GetMakefileName()
 
 Dim SourceFolder
 SourceFolder = GetSourceFolder()
