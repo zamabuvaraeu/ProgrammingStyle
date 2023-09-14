@@ -109,9 +109,9 @@ Set FSO = Nothing
 
 Function GetMakefileName()
 	If colArgs.Exists("makefile") Then
-		GetFbcCompilerName = colArgs.Item("makefile")
+		GetMakefileName = colArgs.Item("makefile")
 	Else
-		GetFbcCompilerName = "Makefile"
+		GetMakefileName = "Makefile"
 	End If
 End Function
 
