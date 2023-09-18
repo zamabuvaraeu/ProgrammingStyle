@@ -7,14 +7,40 @@ Const SUBSYSTEM_NATIVE = 2
 Const OUTPUT_FILETYPE_EXE = 0
 Const OUTPUT_FILETYPE_DLL = 1
 Const OUTPUT_FILETYPE_LIBRARY = 2
+Const OUTPUT_FILETYPE_WASM32 = 3
+Const OUTPUT_FILETYPE_WASM64 = 4
 
 Const CODE_EMITTER_GCC = 0
 Const CODE_EMITTER_GAS = 1
 Const CODE_EMITTER_GAS64 = 2
 Const CODE_EMITTER_LLVM = 3
+Const CODE_EMITTER_WASM32 = 4
+Const CODE_EMITTER_WASM64 = 5
 
 Const DEFINE_ANSI = 0
 Const DEFINE_UNICODE = 1
+
+Const WINVER_DEFAULT = 0
+Const WINVER_XP = 0
+
+' #define WINVER 0x0A00
+' #define _WIN32_WINNT 0x0A00
+
+' _WIN32_WINNT version constants
+
+' #define _WIN32_WINNT_NT4                    0x0400 // Windows NT 4.0
+' #define _WIN32_WINNT_WIN2K                  0x0500 // Windows 2000
+' #define _WIN32_WINNT_WINXP                  0x0501 // Windows XP
+' #define _WIN32_WINNT_WS03                   0x0502 // Windows Server 2003
+' #define _WIN32_WINNT_WIN6                   0x0600 // Windows Vista
+' #define _WIN32_WINNT_VISTA                  0x0600 // Windows Vista
+' #define _WIN32_WINNT_WS08                   0x0600 // Windows Server 2008
+' #define _WIN32_WINNT_LONGHORN               0x0600 // Windows Vista
+' #define _WIN32_WINNT_WIN7                   0x0601 // Windows 7
+' #define _WIN32_WINNT_WIN8                   0x0602 // Windows 8
+' #define _WIN32_WINNT_WINBLUE                0x0603 // Windows 8.1
+' #define _WIN32_WINNT_WINTHRESHOLD           0x0A00 // Windows 10
+' #define _WIN32_WINNT_WIN10                  0x0A00 // Windows 10
 
 Const DEFINE_RUNTIME = 0
 Const DEFINE_WITHOUT_RUNTIME = 1
@@ -88,11 +114,11 @@ WriteOutputFilename MakefileFileStream, OutputFileName, ExeType
 WriteUtilsPath MakefileFileStream
 WriteArchSpecifiedPath MakefileFileStream
 WriteFbcFlags MakefileFileStream, MainModuleName, Emit, Unicode, FileSubsystem
-WriteGccFlags MakefileFileStream
+WriteGccFlags MakefileFileStream, Emit
 WriteAsmFlags MakefileFileStream
 WriteGorcFlags MakefileFileStream
-WriteLinkerFlags MakefileFileStream, FileSubsystem, AddressAware
-WriteLinkerLibraryes MakefileFileStream, ThreadingMode
+WriteLinkerFlags MakefileFileStream, FileSubsystem, AddressAware, Emit
+WriteLinkerLibraryes MakefileFileStream, ThreadingMode, Emit
 WriteIncludeFile MakefileFileStream
 WriteReleaseTarget MakefileFileStream
 WriteDebugTarget MakefileFileStream
@@ -106,6 +132,14 @@ WriteResourceRule MakefileFileStream
 
 Set MakefileFileStream = Nothing
 Set FSO = Nothing
+
+Function GetMinimalWindowsVersion()
+	If colArgs.Exists("winver") Then
+		GetMinimalWindowsVersion = colArgs.Item("winver")
+	Else
+		GetMinimalWindowsVersion = "Makefile"
+	End If
+End Function
 
 Function GetMakefileName()
 	If colArgs.Exists("makefile") Then
@@ -158,6 +192,10 @@ Function GetExeType()
 				GetExeType = OUTPUT_FILETYPE_DLL
 			Case "lib"
 				GetExeType = OUTPUT_FILETYPE_LIBRARY
+			Case "wasm32"
+				GetExeType = OUTPUT_FILETYPE_WASM32
+			Case "wasm64"
+				GetExeType = OUTPUT_FILETYPE_WASM64
 			Case Else
 				GetExeType = OUTPUT_FILETYPE_EXE
 		End Select
@@ -198,6 +236,10 @@ Function GetEmitter()
 				GetEmitter = CODE_EMITTER_GAS64
 			Case "llvm"
 				GetEmitter = CODE_EMITTER_LLVM
+			Case "wasm32"
+				GetEmitter = CODE_EMITTER_WASM32
+			Case "wasm64"
+				GetEmitter = CODE_EMITTER_WASM64
 			Case Else
 				GetEmitter = CODE_EMITTER_GCC
 		End Select
@@ -282,9 +324,10 @@ Function GetOutputFileName()
 	End If
 End Function
 
-Function CreateCompilerParams(Emitter, Unicode, Runtime, SubSystem)
+Function GetCodeGeneration(Emitter)
 	
 	Dim EmitterParam
+	
 	Select Case Emitter
 		Case CODE_EMITTER_GCC
 			EmitterParam = "-gen gcc"
@@ -294,7 +337,20 @@ Function CreateCompilerParams(Emitter, Unicode, Runtime, SubSystem)
 			EmitterParam = "-gen gas64"
 		Case CODE_EMITTER_LLVM
 			EmitterParam = "-gen llvm"
+		Case CODE_EMITTER_WASM32
+			EmitterParam = "-gen gcc"
+		Case CODE_EMITTER_WASM64
+			EmitterParam = "-gen gcc"
 	End Select
+	
+	GetCodeGeneration = EmitterParam
+	
+End Function
+
+Function CreateCompilerParams(Emitter, Unicode, Runtime, SubSystem)
+	
+	Dim EmitterParam
+	EmitterParam = GetCodeGeneration(Emitter)
 	
 	Dim UnicodeFlag
 	Select Case Unicode
@@ -356,6 +412,7 @@ Sub WriteProcessorArch(MakefileStream)
 End Sub
 
 Sub WriteOutputFilename(MakefileStream, OutputFilename, FileType)
+	
 	Dim Extension
 	Select Case FileType
 		Case OUTPUT_FILETYPE_EXE
@@ -364,6 +421,10 @@ Sub WriteOutputFilename(MakefileStream, OutputFilename, FileType)
 			Extension = ".dll"
 		Case OUTPUT_FILETYPE_LIBRARY
 			Extension = ".a"
+		Case OUTPUT_FILETYPE_WASM32
+			Extension = ".wasm"
+		Case OUTPUT_FILETYPE_WASM64
+			Extension = ".wasm"
 	End Select
 	
 	MakefileStream.WriteLine "USE_RUNTIME ?= TRUE"
@@ -374,6 +435,8 @@ Sub WriteOutputFilename(MakefileStream, OutputFilename, FileType)
 	MakefileStream.WriteLine "else"
 	MakefileStream.WriteLine "RUNTIME = _WRT"
 	MakefileStream.WriteLine "endif"
+	' TODO Add UNICODE and _UNICODE to file suffix
+	' TODO Add WINVER and _WIN32_WINNT to file suffix
 	MakefileStream.WriteLine "FILE_SUFFIX=$(GCC_VER)$(FBC_VER)$(RUNTIME)"
 	MakefileStream.WriteLine "OUTPUT_FILE_NAME=" & OutputFilename & "$(FILE_SUFFIX)" & Extension
 	MakefileStream.WriteLine 
@@ -414,17 +477,9 @@ Sub WriteArchSpecifiedPath(MakefileStream)
 End Sub
 
 Sub WriteFbcFlags(MakefileStream, MainModule, Emitter, Unicode, SubSystem)
+	
 	Dim EmitterParam
-	Select Case Emitter
-		Case CODE_EMITTER_GCC
-			EmitterParam = "-gen gcc"
-		Case CODE_EMITTER_GAS
-			EmitterParam = "-gen gas"
-		Case CODE_EMITTER_GAS64
-			EmitterParam = "-gen gas64"
-		Case CODE_EMITTER_LLVM
-			EmitterParam = "-gen llvm"
-	End Select
+	EmitterParam = GetCodeGeneration(Emitter)
 	
 	Dim UnicodeFlag
 	Select Case Unicode
@@ -461,31 +516,55 @@ Sub WriteFbcFlags(MakefileStream, MainModule, Emitter, Unicode, SubSystem)
 	MakefileStream.WriteLine 
 End Sub
 
-Sub WriteGccFlags(MakefileStream)
-	MakefileStream.WriteLine "ifeq ($(PROCESSOR_ARCHITECTURE),AMD64)"
-	MakefileStream.WriteLine "CFLAGS+=-m64"
-	MakefileStream.WriteLine "else"
-	MakefileStream.WriteLine "CFLAGS+=-m32"
-	MakefileStream.WriteLine "endif"
-	MakefileStream.WriteLine "CFLAGS+=-march=$(MARCH)"
-	MakefileStream.WriteLine "ifneq ($(TARGET_TRIPLET),)"
-	MakefileStream.WriteLine "CFLAGS+=--target=$(TARGET_TRIPLET)"
-	MakefileStream.WriteLine "endif"
+Sub WriteGccFlags(MakefileStream, Emitter)
+	
+	Select Case Emitter
+		Case CODE_EMITTER_WASM32, CODE_EMITTER_WASM64
+			' MakefileStream.WriteLine "CFLAGS+=-emit-llvm"
+		Case Else
+			MakefileStream.WriteLine "ifeq ($(PROCESSOR_ARCHITECTURE),AMD64)"
+			MakefileStream.WriteLine "CFLAGS+=-m64"
+			MakefileStream.WriteLine "else"
+			MakefileStream.WriteLine "CFLAGS+=-m32"
+			MakefileStream.WriteLine "endif"
+			
+			MakefileStream.WriteLine "CFLAGS+=-march=$(MARCH)"
+			
+	End Select
+	
+	Select Case Emitter
+		
+		Case CODE_EMITTER_WASM32
+			MakefileStream.WriteLine "CFLAGS+=--target=wasm32"
+			
+		Case CODE_EMITTER_WASM64
+			MakefileStream.WriteLine "CFLAGS+=--target=wasm64"
+			
+		Case Else
+		
+	End Select
+	
 	MakefileStream.WriteLine "CFLAGS+=-pipe"
 	MakefileStream.WriteLine "CFLAGS+=-Wall -Werror -Wextra -pedantic"
 	MakefileStream.WriteLine "CFLAGS+=-Wno-unused-label -Wno-unused-function -Wno-unused-parameter -Wno-unused-variable"
 	MakefileStream.WriteLine "CFLAGS+=-Wno-dollar-in-identifier-extension -Wno-language-extension-token"
 	MakefileStream.WriteLine "CFLAGS+=-Wno-parentheses-equality"
+	
 	MakefileStream.WriteLine "CFLAGS_DEBUG+=-g -O0"
+	
 	MakefileStream.WriteLine "FLTO ?="
+	
 	MakefileStream.WriteLine "release: CFLAGS+=$(CFLAGS_RELEASE)"
 	MakefileStream.WriteLine "release: CFLAGS+=-fno-math-errno -fno-exceptions"
 	MakefileStream.WriteLine "release: CFLAGS+=-fno-unwind-tables -fno-asynchronous-unwind-tables"
 	MakefileStream.WriteLine "release: CFLAGS+=-O3 -fno-ident -fdata-sections -ffunction-sections"
+	
 	MakefileStream.WriteLine "ifneq ($(FLTO),)"
 	MakefileStream.WriteLine "release: CFLAGS+=$(FLTO)"
 	MakefileStream.WriteLine "endif"
+	
 	MakefileStream.WriteLine "debug: CFLAGS+=$(CFLAGS_DEBUG)"
+	
 	MakefileStream.WriteLine 
 End Sub
 
@@ -511,86 +590,126 @@ Sub WriteGorcFlags(MakefileStream)
 	MakefileStream.WriteLine 
 End Sub
 
-Sub WriteLinkerFlags(MakefileStream, SubSystem, LargeAddress)
-	MakefileStream.WriteLine "ifeq ($(PROCESSOR_ARCHITECTURE),AMD64)"
-	MakefileStream.WriteLine "ifeq ($(USE_RUNTIME),FALSE)"
-	MakefileStream.WriteLine "LDFLAGS+=-e EntryPoint"
-	MakefileStream.WriteLine "endif"
-	MakefileStream.WriteLine "LDFLAGS+=-m i386pep"
-	MakefileStream.WriteLine "else"
-	MakefileStream.WriteLine "ifeq ($(USE_RUNTIME),FALSE)"
-	MakefileStream.WriteLine "LDFLAGS+=-e _EntryPoint@0"
-	MakefileStream.WriteLine "endif"
-	MakefileStream.WriteLine "LDFLAGS+=-m i386pe"
+Sub WriteLinkerFlags(MakefileStream, SubSystem, LargeAddress, Emitter)
 	
-	Select Case LargeAddress
-		Case LARGE_ADDRESS_UNAWARE
-		Case LARGE_ADDRESS_AWARE
-			MakefileStream.WriteLine "LDFLAGS+=--large-address-aware"
+	Select Case Emitter
+		Case CODE_EMITTER_WASM32, CODE_EMITTER_WASM64
+			' Set maximum stack size to 8MiB
+			' -z stack-size=8388608
+			
+			' --initial-memory=<value> Initial size of the linear memory
+			' --max-memory=<value>     Maximum size of the linear memory
+			' --max-memory=8388608
+			
+			MakefileStream.WriteLine "LDFLAGS+=-m wasm32"
+			MakefileStream.WriteLine "LDFLAGS+=--allow-undefined"
+			MakefileStream.WriteLine "LDFLAGS+=--no-entry"
+			MakefileStream.WriteLine "LDFLAGS+=--export-all"
+			
+			MakefileStream.WriteLine "LDFLAGS+=-L ."
+			MakefileStream.WriteLine "LDFLAGS+=-L ""$(LIB_DIR)"""
+			
+			MakefileStream.WriteLine "release: LDFLAGS+=--lto-O3 --gc-sections"
+		Case Else
+			MakefileStream.WriteLine "ifeq ($(PROCESSOR_ARCHITECTURE),AMD64)"
+			MakefileStream.WriteLine "ifeq ($(USE_RUNTIME),FALSE)"
+			MakefileStream.WriteLine "LDFLAGS+=-e EntryPoint"
+			MakefileStream.WriteLine "endif"
+			MakefileStream.WriteLine "LDFLAGS+=-m i386pep"
+			MakefileStream.WriteLine "else"
+			MakefileStream.WriteLine "ifeq ($(USE_RUNTIME),FALSE)"
+			MakefileStream.WriteLine "LDFLAGS+=-e _EntryPoint@0"
+			MakefileStream.WriteLine "endif"
+			MakefileStream.WriteLine "LDFLAGS+=-m i386pe"
+			
+			Select Case LargeAddress
+				Case LARGE_ADDRESS_UNAWARE
+				Case LARGE_ADDRESS_AWARE
+					MakefileStream.WriteLine "LDFLAGS+=--large-address-aware"
+			End Select
+			
+			MakefileStream.WriteLine "endif"
+			
+			Select Case SubSystem
+				Case SUBSYSTEM_CONSOLE
+					MakefileStream.WriteLine "LDFLAGS+=-subsystem console"
+				Case SUBSYSTEM_WINDOW
+					MakefileStream.WriteLine "LDFLAGS+=-subsystem windows"
+				Case SUBSYSTEM_NATIVE
+					MakefileStream.WriteLine "LDFLAGS+=-subsystem native"
+			End Select
+			
+			MakefileStream.WriteLine "LDFLAGS+=--no-seh --nxcompat"
+			
+			MakefileStream.WriteLine "LDFLAGS+=-L ."
+			MakefileStream.WriteLine "LDFLAGS+=-L ""$(LIB_DIR)"""
+			
+			MakefileStream.WriteLine "ifneq ($(LD_SCRIPT),)"
+			MakefileStream.WriteLine "LDFLAGS+=-T ""$(LD_SCRIPT)"""
+			MakefileStream.WriteLine "endif"
+			
+			MakefileStream.WriteLine "release: LDFLAGS+=-s --gc-sections"
+			
+			MakefileStream.WriteLine "debug: LDFLAGS+=$(LDFLAGS_DEBUG)"
+			MakefileStream.WriteLine "debug: LDLIBS+=$(LDLIBS_DEBUG)"
 	End Select
 	
-	MakefileStream.WriteLine "endif"
-	
-	Select Case SubSystem
-		Case SUBSYSTEM_CONSOLE
-			MakefileStream.WriteLine "LDFLAGS+=-subsystem console"
-		Case SUBSYSTEM_WINDOW
-			MakefileStream.WriteLine "LDFLAGS+=-subsystem windows"
-		Case SUBSYSTEM_NATIVE
-			MakefileStream.WriteLine "LDFLAGS+=-subsystem native"
-	End Select
-	
-	MakefileStream.WriteLine "LDFLAGS+=--no-seh --nxcompat"
-	MakefileStream.WriteLine "LDFLAGS+=-L ."
-	MakefileStream.WriteLine "LDFLAGS+=-L ""$(LIB_DIR)"""
-	MakefileStream.WriteLine "ifneq ($(LD_SCRIPT),)"
-	MakefileStream.WriteLine "LDFLAGS+=-T ""$(LD_SCRIPT)"""
-	MakefileStream.WriteLine "endif"
-	MakefileStream.WriteLine "release: LDFLAGS+=-s --gc-sections"
-	MakefileStream.WriteLine "debug: LDFLAGS+=$(LDFLAGS_DEBUG)"
-	MakefileStream.WriteLine "debug: LDLIBS+=$(LDLIBS_DEBUG)"
 	MakefileStream.WriteLine 
+	
 End Sub
 
-Sub WriteLinkerLibraryes(MakefileStream, Multithreading)
-	MakefileStream.WriteLine "ifeq ($(USE_RUNTIME),TRUE)"
-	' For profile
-	' MakefileStream.WriteLine "LDLIBSBEGIN+=crt2.o gcrt2.o crtbegin.o fbrt0.o"
-	MakefileStream.WriteLine "LDLIBSBEGIN+=""$(LIB_DIR)\crt2.o"""
-	MakefileStream.WriteLine "LDLIBSBEGIN+=""$(LIB_DIR)\crtbegin.o"""
-	MakefileStream.WriteLine "LDLIBSBEGIN+=""$(LIB_DIR)\fbrt0.o"""
-	MakefileStream.WriteLine "endif"
-	MakefileStream.WriteLine "LDLIBS+=-ladvapi32 -lcrypt32 -lkernel32 -lmsvcrt"
-	MakefileStream.WriteLine "LDLIBS+=-lole32 -loleaut32"
-	MakefileStream.WriteLine "LDLIBS+=-lmswsock -lws2_32"
-	MakefileStream.WriteLine "LDLIBS+=-lshell32 -lshlwapi -lgdi32 -luser32 -lcomctl32"
+Sub WriteLinkerLibraryes(MakefileStream, Multithreading, Emitter)
 	
-	MakefileStream.WriteLine "ifeq ($(USE_RUNTIME),TRUE)"
-	
-	' For Multithreading
-	Select Case Multithreading
-		Case DEFINE_SINGLETHREADING_RUNTIME
-			MakefileStream.WriteLine "LDLIBS+=-lfb"
-		Case DEFINE_MULTITHREADING_RUNTIME
-			MakefileStream.WriteLine "LDLIBS+=-lfbmt"
+	Select Case Emitter
+		Case CODE_EMITTER_WASM32, CODE_EMITTER_WASM64
+			
+		Case Else
+			MakefileStream.WriteLine "ifeq ($(USE_RUNTIME),TRUE)"
+			' For profile
+			' MakefileStream.WriteLine "LDLIBSBEGIN+=crt2.o gcrt2.o crtbegin.o fbrt0.o"
+			MakefileStream.WriteLine "LDLIBSBEGIN+=""$(LIB_DIR)\crt2.o"""
+			MakefileStream.WriteLine "LDLIBSBEGIN+=""$(LIB_DIR)\crtbegin.o"""
+			MakefileStream.WriteLine "LDLIBSBEGIN+=""$(LIB_DIR)\fbrt0.o"""
+			MakefileStream.WriteLine "endif"
+			
+			
+			MakefileStream.WriteLine "LDLIBS+=--start-group"
+			MakefileStream.WriteLine "LDLIBS+=-ladvapi32 -lcrypt32 -lkernel32 -lmsvcrt"
+			MakefileStream.WriteLine "LDLIBS+=-lole32 -loleaut32"
+			MakefileStream.WriteLine "LDLIBS+=-lmswsock -lws2_32"
+			MakefileStream.WriteLine "LDLIBS+=-lshell32 -lshlwapi -lgdi32 -luser32 -lcomctl32"
+			
+			MakefileStream.WriteLine "ifeq ($(USE_RUNTIME),TRUE)"
+			
+			' For Multithreading
+			Select Case Multithreading
+				Case DEFINE_SINGLETHREADING_RUNTIME
+					MakefileStream.WriteLine "LDLIBS+=-lfb"
+				Case DEFINE_MULTITHREADING_RUNTIME
+					MakefileStream.WriteLine "LDLIBS+=-lfbmt"
+			End Select
+			
+			MakefileStream.WriteLine "LDLIBS+=-luuid"
+			
+			MakefileStream.WriteLine "endif"
+			
+			' For profile
+			' MakefileStream.WriteLine "LDLIBS_DEBUG+=-lgcc -lmingw32 -lmingwex -lmoldname -lgcc_eh -lgmon"
+			MakefileStream.WriteLine "LDLIBS_DEBUG+=-lgcc -lmingw32 -lmingwex -lmoldname -lgcc_eh"
+			
+			MakefileStream.WriteLine "ifeq ($(USE_RUNTIME),TRUE)"
+			MakefileStream.WriteLine "LDLIBS+=-lgcc -lmingw32 -lmingwex -lmoldname -lgcc_eh"
+			MakefileStream.WriteLine "endif"
+
+			MakefileStream.WriteLine "LDLIBS+=--end-group"
+			
+			MakefileStream.WriteLine "ifeq ($(USE_RUNTIME),TRUE)"
+			MakefileStream.WriteLine "LDLIBSEND+=""$(LIB_DIR)\crtend.o"""
+			MakefileStream.WriteLine "endif"
 	End Select
 	
-	MakefileStream.WriteLine "LDLIBS+=-luuid"
+	MakefileStream.WriteLine
 	
-	MakefileStream.WriteLine "endif"
-	
-	' For profile
-	' MakefileStream.WriteLine "LDLIBS_DEBUG+=-lgcc -lmingw32 -lmingwex -lmoldname -lgcc_eh -lgmon"
-	MakefileStream.WriteLine "LDLIBS_DEBUG+=-lgcc -lmingw32 -lmingwex -lmoldname -lgcc_eh"
-	
-	MakefileStream.WriteLine "ifeq ($(USE_RUNTIME),TRUE)"
-	MakefileStream.WriteLine "LDLIBS+=-lgcc -lmingw32 -lmingwex -lmoldname -lgcc_eh"
-	MakefileStream.WriteLine "endif"
-
-	MakefileStream.WriteLine "ifeq ($(USE_RUNTIME),TRUE)"
-	MakefileStream.WriteLine "LDLIBSEND+=""$(LIB_DIR)\crtend.o"""
-	MakefileStream.WriteLine "endif"
-	MakefileStream.WriteLine 
 End Sub
 
 Sub WriteIncludeFile(MakefileStream)
@@ -652,10 +771,10 @@ End Sub
 
 Sub WriteReleaseRule(MakefileStream)
 	MakefileStream.WriteLine "$(BIN_RELEASE_DIR)$(PATH_SEP)$(OUTPUT_FILE_NAME): $(OBJECTFILES_RELEASE)"
-	MakefileStream.WriteLine "	$(LD) $(LDFLAGS) $(LDLIBSBEGIN) $^ --start-group $(LDLIBS) --end-group $(LDLIBSEND) -o $@"
+	MakefileStream.WriteLine "	$(LD) $(LDFLAGS) $(LDLIBSBEGIN) $^ $(LDLIBS) $(LDLIBSEND) -o $@"
 	MakefileStream.WriteLine 
-	MakefileStream.WriteLine "$(BIN_DEBUG_DIR)$(PATH_SEP)$(OUTPUT_FILE_NAME):   $(OBJECTFILES_DEBUG)"
-	MakefileStream.WriteLine "	$(LD) $(LDFLAGS) $(LDLIBSBEGIN) $^ --start-group $(LDLIBS) --end-group $(LDLIBSEND) -o $@"
+	MakefileStream.WriteLine "$(BIN_DEBUG_DIR)$(PATH_SEP)$(OUTPUT_FILE_NAME): $(OBJECTFILES_DEBUG)"
+	MakefileStream.WriteLine "	$(LD) $(LDFLAGS) $(LDLIBSBEGIN) $^ $(LDLIBS) $(LDLIBSEND) -o $@"
 	MakefileStream.WriteLine 
 End Sub
 
@@ -701,7 +820,7 @@ End Sub
 
 Sub RemoveVerticalLine(LinesArray)
 	Const VSPattern = "|"
-	' РЈРґР°Р»РёРј РІСЃРµ РІС…РѕР¶РґРµРЅРёСЏ "|"
+	' Удалим все вхождения "|"
 	Dim i
 	For i = LBound(LinesArray) To UBound(LinesArray)
 		Dim Finded
@@ -715,8 +834,8 @@ Sub RemoveVerticalLine(LinesArray)
 End Sub
 
 Sub RemoveOmmittedIncludes(LinesArray)
-	' Р•СЃР»Рё СЃС‚СЂРѕРєР° РІ СЃРїРёСЃРєРµ РІ РІРёРґРµ "(filename.bi)"
-	' РјС‹ РµС‘ РѕР±РЅСѓР»СЏРµРј
+	' Если строка в списке в виде "(filename.bi)"
+	' мы её обнуляем
 	Dim i
 	For i = LBound(LinesArray) To UBound(LinesArray)
 		Dim First
@@ -734,7 +853,7 @@ Sub RemoveOmmittedIncludes(LinesArray)
 End Sub
 
 Sub RemoveDefaultIncludes(LinesArray)
-	' Р·Р°РіРѕР»РѕРІРѕС‡РЅС‹Рµ С„Р°Р№Р»С‹ РІ СЃРёСЃС‚РµРјРЅРѕРј РєР°С‚Р°Р»РѕРіРµ РѕР±РЅСѓР»СЏРµРј
+	' заголовочные файлы в системном каталоге обнуляем
 	Dim i
 	For i = LBound(LinesArray) To UBound(LinesArray)
 		Dim Finded
@@ -746,7 +865,7 @@ Sub RemoveDefaultIncludes(LinesArray)
 End Sub
 
 Sub ReplaceSolidusToPathSeparator(LinesArray)
-	' Р·Р°РјРµРЅСЏРµРј "\" РЅР° "$(PATH_SEP)"
+	' заменяем "\" на "$(PATH_SEP)"
 	Dim i
 	For i = LBound(LinesArray) To UBound(LinesArray)
 		Dim Finded
@@ -759,7 +878,7 @@ Sub ReplaceSolidusToPathSeparator(LinesArray)
 End Sub
 
 Sub AddSpaces(LinesArray)
-	' Р”РѕР±Р°РІР»СЏРµРј РїСЂРѕР±РµР» РІ РєРѕРЅС†Рµ РєР°Р¶РґРѕР№ СЃС‚СЂРѕРєРё
+	' Добавляем пробел в конце каждой строки
 	Dim i
 	For i = LBound(LinesArray) To UBound(LinesArray)
 		Dim Length
@@ -771,7 +890,7 @@ Sub AddSpaces(LinesArray)
 End Sub
 
 Function ReadTextFile(FileName)
-	' С‡РёС‚Р°РµРј С‚РµРєСЃС‚РѕРІС‹Р№ С„Р°Р№Р» Рё РІРѕР·РІСЂР°С‰Р°РµРј СЃС‚СЂРѕРєСѓ
+	' читаем текстовый файл и возвращаем строку
 	Dim TextStream
 	Set TextStream = FSO.OpenTextFile(FileName, 1)
 	
@@ -785,7 +904,7 @@ Function ReadTextFile(FileName)
 End Function
 
 Function ReadTextStream(Stream)
-	' Р§РёС‚Р°РµРј С‚РµРєСЃС‚РѕРІС‹Р№ РїРѕС‚РѕРє Рё РІРѕР·РІСЂР°С‰Р°РµРј СЃС‚СЂРѕРєСѓ
+	' Читаем текстовый поток и возвращаем строку
 	Dim Lines
 	Lines = ""
 	Do While Not Stream.AtEndOfStream
@@ -832,7 +951,7 @@ Sub WriteTextFile(MakefileStream, BasFile, DependenciesLine)
 	Dim ResultReleaseString
 	ResultReleaseString = FileNameWithRelease & ": " & DependenciesLine
 	
-	' Р·Р°РїРёСЃС‹РІР°РµРј СЃС‚СЂРѕРєСѓ РІ С‚РµРєСЃС‚РѕРІС‹Р№ С„Р°Р№Р»
+	' записываем строку в текстовый файл
 	MakefileStream.WriteLine ObjectFileNameWithDebug
 	MakefileStream.WriteLine ObjectFileNameRelease
 	MakefileStream.WriteLine ResultDebugString
@@ -904,7 +1023,7 @@ Function CreateDependencies(MakefileStream, oFile, FileExtension, Filepath)
 		Dim Original
 		Original = LinesArray(0)
 		
-		' РџРµСЂРІР°СЏ СЃС‚СЂРѕРєР° РЅРµ РЅСѓР¶РЅР° вЂ” С‚Р°Рј РёРјСЏ СЃР°РјРѕРіРѕ С„Р°Р№Р»Р°
+		' Первая строка не нужна — там имя самого файла
 		LinesArray(0) = ""
 		
 		RemoveVerticalLine LinesArray
@@ -913,7 +1032,7 @@ Function CreateDependencies(MakefileStream, oFile, FileExtension, Filepath)
 		ReplaceSolidusToPathSeparator LinesArray
 		AddSpaces LinesArray
 		
-		' Р’РµСЃСЊ РјР°СЃСЃРёРІ РІ РѕРґРЅСѓ Р»РёРЅРёСЋ
+		' Весь массив в одну линию
 		Dim OneLine
 		OneLine = Join(LinesArray, "")
 		
