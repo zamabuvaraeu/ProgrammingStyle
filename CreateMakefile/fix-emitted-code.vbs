@@ -47,6 +47,10 @@ Function CommentLine(strLine)
 End Function
 
 Function FixWinApiDeclaration(strLine)
+	
+	' Add "const" keyword to parameters
+	' Add "volatile" keyword to parameters
+	
 	Select Case strLine
 		
 		Case "int32 memcmp( void*, void*, uint64 );"

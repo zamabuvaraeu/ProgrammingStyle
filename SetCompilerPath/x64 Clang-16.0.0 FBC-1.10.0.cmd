@@ -9,6 +9,8 @@ set FBC_DIR=C:\Program Files (x86)\FreeBASIC-1.10.0-winlibs-gcc-9.3.0
 set FBC="C:\Programming\FreeBASIC Projects\fbc\src\compiler\fbc64_icase.exe"
 set CC="C:\Program Files\LLVM\bin\clang.exe"
 set AS="C:\LLVM\bin\as.exe"
+rem for wasm
+rem set LD="C:\Program Files\LLVM\bin\wasm-ld.exe"
 set LD="C:\Program Files\LLVM\bin\ld.lld.exe"
 set AR="C:\LLVM\bin\ar.exe"
 set GORC="%FBC_DIR%\bin\win64\GoRC.exe"
@@ -21,5 +23,7 @@ set INC_DIR=%FBC_DIR%\inc
 set USE_RUNTIME=FALSE
 
 rem Only for Clang
+rem for wasm
+rem set TARGET_TRIPLET=wasm32
 set TARGET_TRIPLET=x86_64-w64-pc-windows-msvc
 set FLTO=-flto
