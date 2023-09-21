@@ -6,219 +6,175 @@
 
 Утилита `make` используется для сборки чего‐нибудь по рецепту. Сама по себе утилита ничего не собирает, она читает «файл рецепта» и вызывает команды, чтобы «приготовить блюдо». Чаще всего `make` используют для компиляции программ, но это совсем необязательно.
 
-Так почему нам следует использовать `make` и усложнять сборку программы, когда достаточно выполнить одну простую команду `fbc *.bas`? Да, иногда можно и вовсе обойтись компиляцией через перетаскивание мышью значка файла на значок компилятора.
+Так почему нам следует использовать `make` и усложнять сборку программы, когда достаточно выполнить одну простую команду `fbc *.bas`? Утилита `make` имеет неоспоримое преимущество: нет нужды пересобирать то, что не изменилось.
 
-Утилита `make` имеет неоспоримое преимущество: нет нужды пересобирать то, что уже собрано. Когда мы изменяем одну строку кода в файле, то команда `fbc *.bas` требует перекомпиляции всех файлов. Утилита `make` пересобирает только изменившиеся файлы.
+Предположим, наш проект состоит из сотни файлов. Когда мы изменяем одну строку кода в файле, то команда `fbc *.bas` перекомпилирует все файлы. Это занимает время, нагружает процессор и изнашивает диск. Утилита `make` пересобирает только изменившиеся файлы.
 
 ## Подготовления
 
-Чтобы создать зависимости, все файлы проекта следует располагать в одном каталоге.
+Генератор требует, чтобы проект был организован определённым образом.
+
+Проект:
+
+```
+MyProject:
+	bin\          — каталог для исполняемых файлов
+		Debug\    — отладочная версия
+			x64\  — для Windows 64 бит
+			x86\  — для Windows 64 бит
+		Release   — окончательная версия
+			x64\
+			x86\
+	obj\          — каталог для объектных файлов
+		Debug\
+			x64\
+			x86\
+		Release
+			x64\
+			x86\
+	src\          — каталог для файлов исходного кода
+		main.bas  — все файлы исходного кода
+		main.bi
+	
+	CreateMakefile.vbs — Генератор makefile
+	
+	fix-emitted-code.vbs — сценарий для исправления промежуточного си‐кода
+	
+	Makefile           — сгенерированный файл
+```
 
 ## Параметры
 
 Параметры для сценария указываются в именованном виде: `/параметр:значение`.
 
-### Имя исполняемого файла
+### out
 
-(без расширения .exe или .dll)
+Имя исполняемого файла.
 
-Function GetOutputFileName()
-	If colArgs.Exists("out") Then
-		GetOutputFileName = colArgs.Item("out") 
-	Else
-		GetOutputFileName = "Station922"
-	End If
-End Function
+Имя файла указывается без расширения. Например, скомпилированная программа должна иметь имя `HelloWorld.exe`, указываем здесь `HelloWorld`.
 
-"command": "cscript.exe",
-"args": [
-	"//nologo",
-	"CreateMakefile.vbs",
-	"/out:TestGui",
-	"/subsystem:windows",
-	"/unicode:true",
-	"/wrt:true",
-	"/addressaware:true"
-],
+По умолчанию равно `a`.
 
+### makefile
 
-Имя фала компилятора
+Имя генерируемого файла для утилиты `make`.
 
-	If colArgs.Exists("fbc") Then
-		GetFbcCompilerName = colArgs.Item("fbc")
-	Else
-		GetFbcCompilerName = "fbc64.exe"
-	End If
-End Function
+По умолчанию равно `Makefile`.
 
-Путь к компилятору
+### fbc
 
-Function GetCompilerPath()
-	If colArgs.Exists("fbc-path") Then
-		GetCompilerPath = colArgs.Item("fbc-path")
-	Else
-		GetCompilerPath = "C:\Program Files (x86)\FreeBASIC-1.10.0-winlibs-gcc-9.3.0"
-	End If
-End Function
+Имя файла компилятора.
 
-Путь к каталогу src
+По умолчанию равно `fbc64.exe`.
 
-Function GetSourceFolder()
-	If colArgs.Exists("src") Then
-		GetSourceFolder = colArgs.Item("src")
-	Else
-		GetSourceFolder = "src"
-	End If
-End Function
+### fbc-path
 
-Имя главного модуля программы (без расширения .bas)
+Путь к файлу компилятора.
 
-Function GetMainModuleName()
-	If colArgs.Exists("module") Then
-		GetMainModuleName = colArgs.Item("module")
-	Else
-		GetMainModuleName = OutputFileName
-	End If
-End Function
+По умолчанию равно `C:\Program Files (x86)\FreeBASIC-1.10.0-winlibs-gcc-9.3.0`.
 
-Тип исполняемого файла
+### src
 
-Function GetExeType()
-	If colArgs.Exists("exetype") Then
-		Dim t1
-		t1 = colArgs.Item("exetype")
-		Select Case t1
-			Case "exe"
-				GetExeType = OUTPUT_FILETYPE_EXE
-			Case "dll"
-				GetExeType = OUTPUT_FILETYPE_DLL
-			Case "lib"
-				GetExeType = OUTPUT_FILETYPE_LIBRARY
-			Case Else
-				GetExeType = OUTPUT_FILETYPE_EXE
-		End Select
-	Else
-		GetExeType = OUTPUT_FILETYPE_EXE
-	End If
-End Function
+Каталог с исходными кодами.
 
-Подсистема
+По умолчанию равен `src`.
 
-Function GetFileSubsystem()
-	If colArgs.Exists("subsystem") Then
-		Dim t2
-		t2 = colArgs.Item("subsystem")
-		Select Case t2
-			Case "console"
-				GetFileSubsystem = SUBSYSTEM_CONSOLE
-			Case "windows"
-				GetFileSubsystem = SUBSYSTEM_WINDOW
-			Case "native"
-				GetFileSubsystem = SUBSYSTEM_NATIVE
-			Case Else
-				GetFileSubsystem = SUBSYSTEM_CONSOLE
-		End Select
-	Else
-		GetFileSubsystem = SUBSYSTEM_CONSOLE
-	End If
-End Function
+### module
 
-Кодогенератор
+Главный модуль программы.
 
-Function GetEmitter()
-	If colArgs.Exists("emitter") Then
-		Dim t3
-		t3 = colArgs.Item("emitter")
-		Select Case t3
-			Case "gcc"
-				GetEmitter = CODE_EMITTER_GCC
-			Case "gas"
-				GetEmitter = CODE_EMITTER_GAS
-			Case "gas64"
-				GetEmitter = CODE_EMITTER_GAS64
-			Case "llvm"
-				GetEmitter = CODE_EMITTER_LLVM
-			Case Else
-				GetEmitter = CODE_EMITTER_GCC
-		End Select
-	Else
-		GetEmitter = CODE_EMITTER_GCC
-	End If
-End Function
+По умолчанию равен названию программы (без расширения).
 
-Юникод (для винапи)
+### exetype
 
-Function GetUnicode()
-	If colArgs.Exists("unicode") Then
-		Dim t4
-		t4 = colArgs.Item("unicode")
-		Select Case t4
-			Case "true"
-				GetUnicode = DEFINE_UNICODE
-			Case "false"
-				GetUnicode = DEFINE_ANSI
-			Case Else
-				GetUnicode = DEFINE_ANSI
-		End Select
-	Else
-		GetUnicode = DEFINE_ANSI
-	End If
-End Function
+Тип генерируемого исполняемого файла.
 
-Рантайм
+Может принимать следующий значения:
 
-Function GetRuntime()
-	If colArgs.Exists("wrt") Then
-		Dim t5
-		t5 = colArgs.Item("wrt")
-		Select Case t5
-			Case "true"
-				GetRuntime = DEFINE_WITHOUT_RUNTIME
-			Case "false"
-				GetRuntime = DEFINE_RUNTIME
-			Case Else
-				GetRuntime = DEFINE_RUNTIME
-		End Select
-	Else
-		GetRuntime = DEFINE_RUNTIME
-	End If
-End Function
+| Тип | Описание                          |
+|-----|-----------------------------------|
+| exe | Исполняемый файл |
+| dll | Динамически загружаемая библиотека |
+| lib | Статически загружаемая библиотека |
+| wasm32 | WebAssembly |
+| wasm64 | WebAssembly 64 бита |
 
-Большие адреса (на x86)
+По умолчанию равен `exe`.
 
-Function GetAddressAware()
-	If colArgs.Exists("addressaware") Then
-		Dim t6
-		t6 = colArgs.Item("addressaware")
-		Select Case t6
-			Case "true"
-				GetAddressAware = LARGE_ADDRESS_AWARE
-			Case "false"
-				GetAddressAware = LARGE_ADDRESS_UNAWARE
-			Case Else
-				GetAddressAware = LARGE_ADDRESS_UNAWARE
-		End Select
-	Else
-		GetAddressAware = LARGE_ADDRESS_UNAWARE
-	End If
-End Function
+Примечание: поддержка wasm64 в браузерах находится в экспериментальном режиме, и может не работать корректно.
 
-Многопоточная или однопоточная модель
+### subsystem
 
-Function GetThreadingMode()
-	If colArgs.Exists("multithreading") Then
-		Dim t7
-		t7 = colArgs.Item("multithreading")
-		Select Case t7
-			Case "true"
-				GetThreadingMode = DEFINE_MULTITHREADING_RUNTIME
-			Case "false"
-				GetThreadingMode = DEFINE_SINGLETHREADING_RUNTIME
-			Case Else
-				GetThreadingMode = DEFINE_SINGLETHREADING_RUNTIME
-		End Select
-	Else
-		GetThreadingMode = DEFINE_SINGLETHREADING_RUNTIME
-	End If
-End Function
+Подсистема исполняемого файла. Применимо только к файлам типа `exe`.
 
+| Подсистема | Описание                          |
+|-----|-----------------------------------|
+| console | Консольная программа для WinAPI |
+| windows | Оконная программа для WinAPI |
+| native | Программа для NT API |
+
+По умолчанию равен `console`.
+
+### emitter
+
+Задаёт генератор промежуточного кода для цепочки инструментов.
+
+| Генератор | Описание                          |
+|-----|-----------------------------------|
+| gcc | Кодогенератор для компилятора Си. |
+| gas | Кодогенератор для ассемблера |
+| gas64 | 64‐битный ассемблер |
+| llvm | Низкоуровневая виртуальная машина |
+| wasm32 | WebAssembly 32 бит |
+| wasm64 | WebAssembly 64 бит |
+
+По умолчанию равен `gcc`.
+
+Примечание: поддержка wasm64 в браузерах находится в экспериментальном режиме, и может не работать корректно.
+
+### unicode
+
+Задаёт константу `UNICODE` для WinAPI.
+
+| Юникод | Описание                          |
+|-----|-----------------------------------|
+| true | Включает `UNICODE` |
+| false | Выключает `UNICODE` |
+
+По умолчанию равен `false`.
+
+### wrt
+
+Выключает библиотеки времени выполнения. Чтобы выключить библиотеки, установите этот параметр в `true`.
+
+По умолчанию равен `false`.
+
+### addressaware
+
+Включает использование адресного пространства больше 2 гигабайт.
+
+Чтобы использовать адресное пространство больше двух гигабайт, исполняемый файл должен быть отмечен этим флагом. Установите это значение в `true`. Применимо только для 32‐битных программ.
+
+По умолчанию равен `false`.
+
+### multithreading
+
+Включает многопоточные библиотеки времени выполнения.
+
+По умолчанию равен `false`.
+
+## Примеры
+
+### GUI Программа
+
+Оконная программа с поддержкой юникода, библиотеками времени выполнения и адресного пространства больше 2 гигабайт:
+
+```
+cscript.exe //nologo CreateMakefile.vbs /out:TestGui /subsystem:windows /unicode:true /addressaware:true
+```
+
+### WebAssembly
+
+```
+cscript //nologo CreateMakefile.vbs /out:add /emitter:wasm32 /exetype:wasm32
+```
