@@ -320,7 +320,7 @@ Function GetOutputFileName()
 	If colArgs.Exists("out") Then
 		GetOutputFileName = colArgs.Item("out") 
 	Else
-		GetOutputFileName = "Station922"
+		GetOutputFileName = "a"
 	End If
 End Function
 
