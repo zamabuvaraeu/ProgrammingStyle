@@ -132,6 +132,14 @@ MyProject:
 
 Примечание: поддержка wasm64 в браузерах находится в экспериментальном режиме, и может не работать корректно.
 
+### fix
+
+Добавляет сценарий исправления сгенерированного промежуточного кода.
+
+Компилятор фрибейсика генерирует промежуточный код для GCC и использует расширения GCC. Некоторые конструкции не будут работать для другого компилятора, например шланга.
+
+По умолчанию `false`.
+
 ### unicode
 
 Задаёт константу `UNICODE` для WinAPI.
@@ -163,6 +171,18 @@ MyProject:
 
 По умолчанию равен `false`.
 
+### usefilesuffix
+
+Включает использование файлового суффикса.
+
+По умолчанию равен `true`.
+
+## Пути к цепочке инструментов
+
+Переменные среды, которые нужны для запуска.
+
+Ресурсные файлы: RC, манифесты.
+
 ## Примеры
 
 ### GUI Программа
@@ -176,5 +196,5 @@ cscript.exe //nologo CreateMakefile.vbs /out:TestGui /subsystem:windows /unicode
 ### WebAssembly
 
 ```
-cscript //nologo CreateMakefile.vbs /out:add /emitter:wasm32 /exetype:wasm32
+cscript //nologo CreateMakefile.vbs /out:add /fix:true /emitter:wasm32 /exetype:wasm32
 ```

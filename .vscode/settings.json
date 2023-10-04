@@ -1,13 +1,13 @@
 {
 	"makefile.configurations": [
 		{
-			"name": "x64 Clang-16.0.0 FBC-1.10.0",
+			"name": "x64 Clang-17.0.1 FBC-1.10.0",
 			"makeArgs": [
 				"FBC_VER=_FBC1100",
-				"GCC_VER=_Clang1600",
+				"GCC_VER=_Clang1701",
 				"PROCESSOR_ARCHITECTURE=AMD64",
 				"MARCH=native",
-				"FBC=\"C:\\Programming\\FreeBASIC Projects\\fbc\\src\\compiler\\fbc64_icase.exe\"",
+				"FBC=\"C:\\Programming\\FreeBASIC Projects\\fbc-modified\\src\\compiler\\fbc64_icase.exe\"",
 				"CC=\"C:\\Program Files\\LLVM\\bin\\clang.exe\"",
 				"AS=\"C:\\LLVM\\bin\\as.exe\"",
 				"LD=\"C:\\Program Files\\LLVM\\bin\\ld.lld.exe\"",
@@ -23,13 +23,13 @@
 			"makePath": "C:\\LLVM\\bin\\mingw32-make.exe"
 		},
 		{
-			"name": "x86 Clang-16.0.0 FBC-1.10.0",
+			"name": "x86 Clang-17.0.1 FBC-1.10.0",
 			"makeArgs": [
 				"FBC_VER=_FBC1100",
-				"GCC_VER=_Clang1600",
+				"GCC_VER=_Clang1701",
 				"PROCESSOR_ARCHITECTURE=x86",
 				"MARCH=atom",
-				"FBC=\"C:\\Programming\\FreeBASIC Projects\\fbc\\src\\compiler\\fbc32_icase.exe\"",
+				"FBC=\"C:\\Programming\\FreeBASIC Projects\\fbc-modified\\src\\compiler\\fbc32_icase.exe\"",
 				"CC=\"C:\\Program Files\\LLVM\\bin\\clang.exe\"",
 				"AS=\"C:\\Program Files (x86)\\mingw32\\bin\\as.exe\"",
 				"LD=\"C:\\Program Files (x86)\\mingw32\\bin\\ld.exe\"",
@@ -51,7 +51,7 @@
 				"GCC_VER=_GCC1310",
 				"PROCESSOR_ARCHITECTURE=AMD64",
 				"MARCH=native",
-				"FBC=\"C:\\Programming\\FreeBASIC Projects\\fbc\\src\\compiler\\fbc64_icase.exe\"",
+				"FBC=\"C:\\Programming\\FreeBASIC Projects\\fbc-modified\\src\\compiler\\fbc64_icase.exe\"",
 				"CC=\"C:\\Program Files\\mingw64\\bin\\gcc.exe\"",
 				"AS=\"C:\\Program Files\\mingw64\\bin\\as.exe\"",
 				"LD=\"C:\\Program Files\\mingw64\\bin\\ld.exe\"",
@@ -72,7 +72,7 @@
 				"GCC_VER=_GCC1310",
 				"PROCESSOR_ARCHITECTURE=x86",
 				"MARCH=atom",
-				"FBC=\"C:\\Programming\\FreeBASIC Projects\\fbc\\src\\compiler\\fbc32_icase.exe\"",
+				"FBC=\"C:\\Programming\\FreeBASIC Projects\\fbc-modified\\src\\compiler\\fbc32_icase.exe\"",
 				"CC=\"C:\\Program Files (x86)\\mingw32\\bin\\gcc.exe\"",
 				"AS=\"C:\\Program Files (x86)\\mingw32\\bin\\as.exe\"",
 				"LD=\"C:\\Program Files (x86)\\mingw32\\bin\\ld.exe\"",

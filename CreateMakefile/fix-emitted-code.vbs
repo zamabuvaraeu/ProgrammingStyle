@@ -42,7 +42,7 @@ Sub WriteTextFile(FileName, strText)
 End Sub
 
 Function CommentLine(strLine)
-	CommentLine = "/*" & strLine & "*/"
+	CommentLine = "/* " & strLine & " */"
 	' CommentLine = ""
 End Function
 
