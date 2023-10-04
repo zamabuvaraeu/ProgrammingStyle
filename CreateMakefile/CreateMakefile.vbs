@@ -26,25 +26,6 @@ Const DEFINE_UNICODE = 1
 Const WINVER_DEFAULT = 0
 Const WINVER_XP = 0
 
-' #define WINVER 0x0A00
-' #define _WIN32_WINNT 0x0A00
-
-' _WIN32_WINNT version constants
-
-' #define _WIN32_WINNT_NT4                    0x0400 // Windows NT 4.0
-' #define _WIN32_WINNT_WIN2K                  0x0500 // Windows 2000
-' #define _WIN32_WINNT_WINXP                  0x0501 // Windows XP
-' #define _WIN32_WINNT_WS03                   0x0502 // Windows Server 2003
-' #define _WIN32_WINNT_WIN6                   0x0600 // Windows Vista
-' #define _WIN32_WINNT_VISTA                  0x0600 // Windows Vista
-' #define _WIN32_WINNT_WS08                   0x0600 // Windows Server 2008
-' #define _WIN32_WINNT_LONGHORN               0x0600 // Windows Vista
-' #define _WIN32_WINNT_WIN7                   0x0601 // Windows 7
-' #define _WIN32_WINNT_WIN8                   0x0602 // Windows 8
-' #define _WIN32_WINNT_WINBLUE                0x0603 // Windows 8.1
-' #define _WIN32_WINNT_WINTHRESHOLD           0x0A00 // Windows 10
-' #define _WIN32_WINNT_WIN10                  0x0A00 // Windows 10
-
 Const DEFINE_RUNTIME = 0
 Const DEFINE_WITHOUT_RUNTIME = 1
 
@@ -64,75 +45,49 @@ Const FileSuffix = "$(FILE_SUFFIX)"
 Const ObjectFilesRelease = "OBJECTFILES_RELEASE"
 Const ObjectFilesDebug = "OBJECTFILES_DEBUG"
 
-Dim colArgs
-Set colArgs = WScript.Arguments.Named
+Class Parameter
+	Public MakefileFileName
+	Public SourceFolder
+	Public CompilerPath
+	Public FbcCompilerName
+	Public OutputFileName
+	Public MainModuleName
+	Public ExeType
+	Public FileSubsystem
+	Public Emitter
+	Public FixEmittedCode
+	Public Unicode
+	Public UseRuntimeLibrary
+	Public AddressAware
+	Public ThreadingMode
+	Public MinimalWindowsVersion
+	Public UseFileSuffix
+End Class
 
-Dim MakefileFileName
-MakefileFileName = GetMakefileNameParameter()
-
-Dim SourceFolder
-SourceFolder = GetSourceFolderParameter()
-
-Dim CompilerPath
-CompilerPath = GetCompilerPathParameter()
-
-Dim FbcCompilerName
-FbcCompilerName = GetFbcCompilerNameParameter()
-
-Dim OutputFileName
-OutputFileName = GetOutputFileNameParameter()
-
-Dim MainModuleName
-MainModuleName = GetMainModuleNameParameter()
-
-Dim ExeType
-ExeType = GetExeTypeParameter()
-
-Dim FileSubsystem
-FileSubsystem = GetFileSubsystemParameter()
-
-Dim Emit
-Emit = GetEmitterParameter()
-
-Dim FixEmitted
-FixEmitted = GetFixEmittedCodeParameter()
-
-Dim Unicode
-Unicode = GetUnicodeParameter()
-
-Dim Runtime
-Runtime = GetRuntimeParameter()
-
-Dim AddressAware
-AddressAware = GetAddressAwareParameter()
-
-Dim ThreadingMode
-ThreadingMode = GetThreadingModeParameter()
-
-Dim UseSuffix
-UseSuffix = GetUseFileSuffixParameter()
+Dim Params
+Set Params = GetParameters()
 
 Dim FSO
 Set FSO = CreateObject("Scripting.FileSystemObject")
 
 Dim MakefileFileStream
-Set MakefileFileStream = FSO.OpenTextFile(MakefileFileName, 2, True, 0)
+Set MakefileFileStream = FSO.OpenTextFile(Params.MakefileFileName, 2, True, 0)
 
 WriteTargets MakefileFileStream
 WriteCompilerToolChain MakefileFileStream
 WriteProcessorArch MakefileFileStream
-WriteOutputFilename MakefileFileStream, OutputFileName, ExeType, UseSuffix
+WriteOutputFilename MakefileFileStream, Params
 WriteUtilsPath MakefileFileStream
 WriteArchSpecifiedPath MakefileFileStream
 
-WriteFbcFlags MakefileFileStream, MainModuleName, Emit, Unicode, FileSubsystem
-WriteGccFlags MakefileFileStream, Emit
+WriteFbcFlags MakefileFileStream, Params
+WriteGccFlags MakefileFileStream, Params
 WriteAsmFlags MakefileFileStream
 WriteGorcFlags MakefileFileStream
-WriteLinkerFlags MakefileFileStream, FileSubsystem, AddressAware, Emit
+WriteLinkerFlags MakefileFileStream, Params
 
-WriteLinkerLibraryes MakefileFileStream, ThreadingMode, Emit
-WriteIncludeFile MakefileFileStream, MainModuleName
+WriteLinkerLibraryes MakefileFileStream, Params
+WriteIncludeFile MakefileFileStream, Params
 WriteReleaseTarget MakefileFileStream
 WriteDebugTarget MakefileFileStream
 WriteCleanTarget MakefileFileStream
@@ -143,236 +98,234 @@ WriteDebugRule MakefileFileStream
 
 WriteAsmRule MakefileFileStream
 WriteCRule MakefileFileStream
-WriteBasRule MakefileFileStream, FixEmitted
+WriteBasRule MakefileFileStream, Params
 WriteResourceRule MakefileFileStream
 
 Set MakefileFileStream = Nothing
 Set FSO = Nothing
+Set Params = Nothing
 
-
-Function GetMinimalWindowsVersionParameter()
-	If colArgs.Exists("winver") Then
-		GetMinimalWindowsVersionParameter = colArgs.Item("winver")
-	Else
-		GetMinimalWindowsVersionParameter = "Makefile"
-	End If
-End Function
-
-Function GetMakefileNameParameter()
+Function GetParameters()
+	Dim p
+	Set p = New Parameter
+	
+	Dim colArgs
+	Set colArgs = WScript.Arguments.Named
+	
 	If colArgs.Exists("makefile") Then
-		GetMakefileNameParameter = colArgs.Item("makefile")
+		p.MakefileFileName = colArgs.Item("makefile")
 	Else
-		GetMakefileNameParameter = "Makefile"
+		p.MakefileFileName = "Makefile"
 	End If
-End Function
-
-Function GetFbcCompilerNameParameter()
-	If colArgs.Exists("fbc") Then
-		GetFbcCompilerNameParameter = colArgs.Item("fbc")
-	Else
-		GetFbcCompilerNameParameter = "fbc64.exe"
-	End If
-End Function
-
-Function GetCompilerPathParameter()
-	If colArgs.Exists("fbc-path") Then
-		GetCompilerPathParameter = colArgs.Item("fbc-path")
-	Else
-		GetCompilerPathParameter = "C:\Program Files (x86)\FreeBASIC-1.10.0-winlibs-gcc-9.3.0"
-	End If
-End Function
-
-Function GetSourceFolderParameter()
+	
 	If colArgs.Exists("src") Then
-		GetSourceFolderParameter = colArgs.Item("src")
+		p.SourceFolder = colArgs.Item("src")
 	Else
-		GetSourceFolderParameter = "src"
+		p.SourceFolder = "src"
 	End If
-End Function
-
-Function GetMainModuleNameParameter()
+	
+	If colArgs.Exists("fbc-path") Then
+		p.CompilerPath = colArgs.Item("fbc-path")
+	Else
+		p.CompilerPath = "C:\Program Files (x86)\FreeBASIC-1.10.0-winlibs-gcc-9.3.0"
+	End If
+	
+	If colArgs.Exists("fbc") Then
+		p.FbcCompilerName = colArgs.Item("fbc")
+	Else
+		p.FbcCompilerName = "fbc64.exe"
+	End If
+	
+	If colArgs.Exists("out") Then
+		p.OutputFileName = colArgs.Item("out")
+	Else
+		p.OutputFileName = "a"
+	End If
+	
 	If colArgs.Exists("module") Then
-		GetMainModuleNameParameter = colArgs.Item("module")
+		p.MainModuleName = colArgs.Item("module")
 	Else
-		GetMainModuleNameParameter = OutputFileName
+		p.MainModuleName = OutputFileName
 	End If
-End Function
-
-Function GetExeTypeParameter()
+	
 	If colArgs.Exists("exetype") Then
 		Dim t1
 		t1 = colArgs.Item("exetype")
 		Select Case t1
 			Case "exe"
-				GetExeTypeParameter = OUTPUT_FILETYPE_EXE
+				p.ExeType = OUTPUT_FILETYPE_EXE
 			Case "dll"
-				GetExeTypeParameter = OUTPUT_FILETYPE_DLL
+				p.ExeType = OUTPUT_FILETYPE_DLL
 			Case "lib"
-				GetExeTypeParameter = OUTPUT_FILETYPE_LIBRARY
+				p.ExeType = OUTPUT_FILETYPE_LIBRARY
 			Case "wasm32"
-				GetExeTypeParameter = OUTPUT_FILETYPE_WASM32
+				p.ExeType = OUTPUT_FILETYPE_WASM32
 			Case "wasm64"
-				GetExeTypeParameter = OUTPUT_FILETYPE_WASM64
+				p.ExeType = OUTPUT_FILETYPE_WASM64
 			Case Else
-				GetExeTypeParameter = OUTPUT_FILETYPE_EXE
+				p.ExeType = OUTPUT_FILETYPE_EXE
 		End Select
 	Else
-		GetExeTypeParameter = OUTPUT_FILETYPE_EXE
+		p.ExeType = OUTPUT_FILETYPE_EXE
 	End If
-End Function
-
-Function GetFileSubsystemParameter()
+	
 	If colArgs.Exists("subsystem") Then
 		Dim t2
 		t2 = colArgs.Item("subsystem")
 		Select Case t2
 			Case "console"
-				GetFileSubsystemParameter = SUBSYSTEM_CONSOLE
+				p.FileSubsystem = SUBSYSTEM_CONSOLE
 			Case "windows"
-				GetFileSubsystemParameter = SUBSYSTEM_WINDOW
+				p.FileSubsystem = SUBSYSTEM_WINDOW
 			Case "native"
-				GetFileSubsystemParameter = SUBSYSTEM_NATIVE
+				p.FileSubsystem = SUBSYSTEM_NATIVE
 			Case Else
-				GetFileSubsystemParameter = SUBSYSTEM_CONSOLE
+				p.FileSubsystem = SUBSYSTEM_CONSOLE
 		End Select
 	Else
-		GetFileSubsystemParameter = SUBSYSTEM_CONSOLE
+		p.FileSubsystem = SUBSYSTEM_CONSOLE
 	End If
-End Function
-
-Function GetEmitterParameter()
+	
 	If colArgs.Exists("emitter") Then
 		Dim t3
 		t3 = colArgs.Item("emitter")
 		Select Case t3
 			Case "gcc"
-				GetEmitterParameter = CODE_EMITTER_GCC
+				p.Emitter = CODE_EMITTER_GCC
 			Case "gas"
-				GetEmitterParameter = CODE_EMITTER_GAS
+				p.Emitter = CODE_EMITTER_GAS
 			Case "gas64"
-				GetEmitterParameter = CODE_EMITTER_GAS64
+				p.Emitter = CODE_EMITTER_GAS64
 			Case "llvm"
-				GetEmitterParameter = CODE_EMITTER_LLVM
+				p.Emitter = CODE_EMITTER_LLVM
 			Case "wasm32"
-				GetEmitterParameter = CODE_EMITTER_WASM32
+				p.Emitter = CODE_EMITTER_WASM32
 			Case "wasm64"
-				GetEmitterParameter = CODE_EMITTER_WASM64
+				p.Emitter = CODE_EMITTER_WASM64
 			Case Else
-				GetEmitterParameter = CODE_EMITTER_GCC
+				p.Emitter = CODE_EMITTER_GCC
 		End Select
 	Else
-		GetEmitterParameter = CODE_EMITTER_GCC
+		p.Emitter = CODE_EMITTER_GCC
 	End If
-End Function
-
-Function GetUnicodeParameter()
+	
+	If colArgs.Exists("fix") Then
+		Dim t9
+		t9 = colArgs.Item("fix")
+		Select Case t9
+			Case "true"
+				p.FixEmittedCode = FIX_EMITTED_CODE
+			Case "false"
+				p.FixEmittedCode = NOT_FIX_EMITTED_CODE
+			Case Else
+				p.FixEmittedCode = NOT_FIX_EMITTED_CODE
+		End Select
+	Else
+		p.FixEmittedCode = NOT_FIX_EMITTED_CODE
+	End If
+	
 	If colArgs.Exists("unicode") Then
 		Dim t4
 		t4 = colArgs.Item("unicode")
 		Select Case t4
 			Case "true"
-				GetUnicodeParameter = DEFINE_UNICODE
+				p.Unicode = DEFINE_UNICODE
 			Case "false"
-				GetUnicodeParameter = DEFINE_ANSI
+				p.Unicode = DEFINE_ANSI
 			Case Else
-				GetUnicodeParameter = DEFINE_ANSI
+				p.Unicode = DEFINE_ANSI
 		End Select
 	Else
-		GetUnicodeParameter = DEFINE_ANSI
+		p.Unicode = DEFINE_ANSI
 	End If
-End Function
-
-Function GetRuntimeParameter()
+	
 	If colArgs.Exists("wrt") Then
 		Dim t5
 		t5 = colArgs.Item("wrt")
 		Select Case t5
 			Case "true"
-				GetRuntimeParameter = DEFINE_WITHOUT_RUNTIME
+				p.UseRuntimeLibrary = DEFINE_WITHOUT_RUNTIME
 			Case "false"
-				GetRuntimeParameter = DEFINE_RUNTIME
+				p.UseRuntimeLibrary = DEFINE_RUNTIME
 			Case Else
-				GetRuntimeParameter = DEFINE_RUNTIME
+				p.UseRuntimeLibrary = DEFINE_RUNTIME
 		End Select
 	Else
-		GetRuntimeParameter = DEFINE_RUNTIME
+		p.UseRuntimeLibrary = DEFINE_RUNTIME
 	End If
-End Function
-
-Function GetAddressAwareParameter()
+	
 	If colArgs.Exists("addressaware") Then
 		Dim t6
 		t6 = colArgs.Item("addressaware")
 		Select Case t6
 			Case "true"
-				GetAddressAwareParameter = LARGE_ADDRESS_AWARE
+				p.AddressAware = LARGE_ADDRESS_AWARE
 			Case "false"
-				GetAddressAwareParameter = LARGE_ADDRESS_UNAWARE
+				p.AddressAware = LARGE_ADDRESS_UNAWARE
 			Case Else
-				GetAddressAwareParameter = LARGE_ADDRESS_UNAWARE
+				p.AddressAware = LARGE_ADDRESS_UNAWARE
 		End Select
 	Else
-		GetAddressAwareParameter = LARGE_ADDRESS_UNAWARE
+		p.AddressAware = LARGE_ADDRESS_UNAWARE
 	End If
-End Function
-
-Function GetThreadingModeParameter()
+	
 	If colArgs.Exists("multithreading") Then
 		Dim t7
 		t7 = colArgs.Item("multithreading")
 		Select Case t7
 			Case "true"
-				GetThreadingModeParameter = DEFINE_MULTITHREADING_RUNTIME
+				p.ThreadingMode = DEFINE_MULTITHREADING_RUNTIME
 			Case "false"
-				GetThreadingModeParameter = DEFINE_SINGLETHREADING_RUNTIME
+				p.ThreadingMode = DEFINE_SINGLETHREADING_RUNTIME
 			Case Else
-				GetThreadingModeParameter = DEFINE_SINGLETHREADING_RUNTIME
+				p.ThreadingMode = DEFINE_SINGLETHREADING_RUNTIME
 		End Select
 	Else
-		GetThreadingModeParameter = DEFINE_SINGLETHREADING_RUNTIME
+		p.ThreadingMode = DEFINE_SINGLETHREADING_RUNTIME
 	End If
-End Function
-
-Function GetUseFileSuffixParameter()
+	
 	If colArgs.Exists("usefilesuffix") Then
-		Dim t7
-		t7 = colArgs.Item("usefilesuffix")
-		Select Case t7
+		Dim t8
+		t8 = colArgs.Item("usefilesuffix")
+		Select Case t8
 			Case "true"
-				GetUseFileSuffixParameter = True
+				p.UseFileSuffix = True
 			Case "false"
-				GetUseFileSuffixParameter = False
+				p.UseFileSuffix = False
 			Case Else
-				GetUseFileSuffixParameter = True
+				p.UseFileSuffix = True
 		End Select
 	Else
-		GetUseFileSuffixParameter = True
+		p.UseFileSuffix = True
 	End If
-End Function
-
-Function GetOutputFileNameParameter()
-	If colArgs.Exists("out") Then
-		GetOutputFileNameParameter = colArgs.Item("out")
+	
+	If colArgs.Exists("winver") Then
+		p.MinimalWindowsVersion = colArgs.Item("winver")
 	Else
-		GetOutputFileNameParameter = "a"
-	End If
-End Function
+		' #define WINVER 0x0A00
+		' #define _WIN32_WINNT 0x0A00
 
-Function GetFixEmittedCodeParameter()
-	If colArgs.Exists("fix") Then
-		Dim t7
-		t7 = colArgs.Item("fix")
-		Select Case t7
-			Case "true"
-				GetFixEmittedCodeParameter = FIX_EMITTED_CODE
-			Case "false"
-				GetFixEmittedCodeParameter = NOT_FIX_EMITTED_CODE
-			Case Else
-				GetFixEmittedCodeParameter = NOT_FIX_EMITTED_CODE
-		End Select
-	Else
-		GetFixEmittedCodeParameter = NOT_FIX_EMITTED_CODE
+		' _WIN32_WINNT version constants
+
+		' #define _WIN32_WINNT_NT4            0x0400 // Windows NT 4.0
+		' #define _WIN32_WINNT_WIN2K          0x0500 // Windows 2000
+		' #define _WIN32_WINNT_WINXP          0x0501 // Windows XP
+		' #define _WIN32_WINNT_WS03           0x0502 // Windows Server 2003
+		' #define _WIN32_WINNT_WIN6           0x0600 // Windows Vista
+		' #define _WIN32_WINNT_VISTA          0x0600 // Windows Vista
+		' #define _WIN32_WINNT_WS08           0x0600 // Windows Server 2008
+		' #define _WIN32_WINNT_LONGHORN       0x0600 // Windows Vista
+		' #define _WIN32_WINNT_WIN7           0x0601 // Windows 7
+		' #define _WIN32_WINNT_WIN8           0x0602 // Windows 8
+		' #define _WIN32_WINNT_WINBLUE        0x0603 // Windows 8.1
+		' #define _WIN32_WINNT_WINTHRESHOLD   0x0A00 // Windows 10
+		' #define _WIN32_WINNT_WIN10          0x0A00 // Windows 10
+		
+		p.MinimalWindowsVersion = "0x0A00"
 	End If
+	
+	Set GetParameters = p
+	
 End Function
 
 Function CodeGenerationToString(Emitter)
@@ -462,20 +415,26 @@ Sub WriteProcessorArch(MakefileStream)
 	MakefileStream.WriteLine 
 End Sub
 
-Sub WriteOutputFilename(MakefileStream, OutputFilename, FileType, UseFileSuffix)
+Sub WriteOutputFilename(MakefileStream, p)
 	
 	Dim Extension
-	Select Case FileType
+	Select Case p.ExeType
+		
 		Case OUTPUT_FILETYPE_EXE
 			Extension = ".exe"
+			
 		Case OUTPUT_FILETYPE_DLL
 			Extension = ".dll"
+			
 		Case OUTPUT_FILETYPE_LIBRARY
 			Extension = ".a"
+			
 		Case OUTPUT_FILETYPE_WASM32
 			Extension = ".wasm"
+			
 		Case OUTPUT_FILETYPE_WASM64
 			Extension = ".wasm"
+			
 	End Select
 	
 	' TODO Add UNICODE and _UNICODE to file suffix
@@ -489,11 +448,11 @@ Sub WriteOutputFilename(MakefileStream, OutputFilename, FileType, UseFileSuffix)
 	MakefileStream.WriteLine "RUNTIME = _WRT"
 	MakefileStream.WriteLine "endif"
 	
-	If UseFileSuffix Then
+	If p.UseFileSuffix Then
 		MakefileStream.WriteLine "FILE_SUFFIX=$(GCC_VER)$(FBC_VER)$(RUNTIME)"
 	End If
 	
-	MakefileStream.WriteLine "OUTPUT_FILE_NAME=" & OutputFilename & "$(FILE_SUFFIX)" & Extension
+	MakefileStream.WriteLine "OUTPUT_FILE_NAME=" & p.OutputFilename & "$(FILE_SUFFIX)" & Extension
 	MakefileStream.WriteLine 
 End Sub
 
@@ -531,21 +490,24 @@ Sub WriteArchSpecifiedPath(MakefileStream)
 	MakefileStream.WriteLine 
 End Sub
 
-Sub WriteFbcFlags(MakefileStream, MainModule, Emitter, Unicode, SubSystem)
+Sub WriteFbcFlags(MakefileStream, p)
 	
 	Dim EmitterParam
-	EmitterParam = CodeGenerationToString(Emitter)
+	EmitterParam = CodeGenerationToString(p.Emitter)
 	
 	Dim UnicodeFlag
-	Select Case Unicode
+	Select Case p.Unicode
+		
 		Case DEFINE_ANSI
 			UnicodeFlag = ""
+			
 		Case DEFINE_UNICODE
 			UnicodeFlag = "FBCFLAGS+=-d UNICODE"
+			
 	End Select
 	
 	Dim SubSystemParam
-	If SubSystem = SUBSYSTEM_WINDOW Then
+	If p.FileSubsystem = SUBSYSTEM_WINDOW Then
 		SubSystemParam = "-s gui"
 	Else
 		SubSystemParam = "-s console"
@@ -554,12 +516,12 @@ Sub WriteFbcFlags(MakefileStream, MainModule, Emitter, Unicode, SubSystem)
 	MakefileStream.WriteLine "FBCFLAGS+=" & EmitterParam
 	MakefileStream.WriteLine UnicodeFlag
 	MakefileStream.WriteLine "ifeq ($(USE_RUNTIME),TRUE)"
-	MakefileStream.WriteLine "FBCFLAGS+=-m " & MainModule
+	MakefileStream.WriteLine "FBCFLAGS+=-m " & p.MainModuleName
 	MakefileStream.WriteLine "else"
 	MakefileStream.WriteLine "FBCFLAGS+=-d WITHOUT_RUNTIME"
 	MakefileStream.WriteLine "endif"
 	MakefileStream.WriteLine "FBCFLAGS+=-w error -maxerr 1"
-	MakefileStream.WriteLine "FBCFLAGS+=-i " & SourceFolder
+	MakefileStream.WriteLine "FBCFLAGS+=-i " & p.SourceFolder
 	MakefileStream.WriteLine "ifneq ($(INC_DIR),)"
 	MakefileStream.WriteLine "FBCFLAGS+=-i ""$(INC_DIR)"""
 	MakefileStream.WriteLine "endif"
@@ -571,11 +533,13 @@ Sub WriteFbcFlags(MakefileStream, MainModule, Emitter, Unicode, SubSystem)
 	MakefileStream.WriteLine 
 End Sub
 
-Sub WriteGccFlags(MakefileStream, Emitter)
+Sub WriteGccFlags(MakefileStream, p)
 	
-	Select Case Emitter
+	Select Case p.Emitter
+		
 		Case CODE_EMITTER_WASM32, CODE_EMITTER_WASM64
 			' MakefileStream.WriteLine "CFLAGS+=-emit-llvm"
+			
 		Case Else
 			MakefileStream.WriteLine "ifeq ($(PROCESSOR_ARCHITECTURE),AMD64)"
 			MakefileStream.WriteLine "CFLAGS+=-m64"
@@ -587,7 +551,7 @@ Sub WriteGccFlags(MakefileStream, Emitter)
 			
 	End Select
 	
-	Select Case Emitter
+	Select Case p.Emitter
 		
 		Case CODE_EMITTER_WASM32
 			MakefileStream.WriteLine "CFLAGS+=--target=wasm32"
@@ -647,9 +611,10 @@ Sub WriteGorcFlags(MakefileStream)
 	MakefileStream.WriteLine 
 End Sub
 
-Sub WriteLinkerFlags(MakefileStream, SubSystem, LargeAddress, Emitter)
+Sub WriteLinkerFlags(MakefileStream, p)
 	
-	Select Case Emitter
+	Select Case p.Emitter
+		
 		Case CODE_EMITTER_WASM32, CODE_EMITTER_WASM64
 			' Set maximum stack size to 8MiB
 			' -z stack-size=8388608
@@ -679,7 +644,7 @@ Sub WriteLinkerFlags(MakefileStream, SubSystem, LargeAddress, Emitter)
 			MakefileStream.WriteLine "endif"
 			MakefileStream.WriteLine "LDFLAGS+=-m i386pe"
 			
-			Select Case LargeAddress
+			Select Case p.AddressAware
 				Case LARGE_ADDRESS_UNAWARE
 				Case LARGE_ADDRESS_AWARE
 					MakefileStream.WriteLine "LDFLAGS+=--large-address-aware"
@@ -687,7 +652,7 @@ Sub WriteLinkerFlags(MakefileStream, SubSystem, LargeAddress, Emitter)
 			
 			MakefileStream.WriteLine "endif"
 			
-			Select Case SubSystem
+			Select Case p.FileSubsystem
 				Case SUBSYSTEM_CONSOLE
 					MakefileStream.WriteLine "LDFLAGS+=-subsystem console"
 				Case SUBSYSTEM_WINDOW
@@ -715,9 +680,9 @@ Sub WriteLinkerFlags(MakefileStream, SubSystem, LargeAddress, Emitter)
 	
 End Sub
 
-Sub WriteLinkerLibraryes(MakefileStream, Multithreading, Emitter)
+Sub WriteLinkerLibraryes(MakefileStream, p)
 	
-	Select Case Emitter
+	Select Case p.Emitter
 		Case CODE_EMITTER_WASM32, CODE_EMITTER_WASM64
 			
 		Case Else
@@ -739,7 +704,7 @@ Sub WriteLinkerLibraryes(MakefileStream, Multithreading, Emitter)
 			MakefileStream.WriteLine "ifeq ($(USE_RUNTIME),TRUE)"
 			
 			' For Multithreading
-			Select Case Multithreading
+			Select Case p.ThreadingMode
 				Case DEFINE_SINGLETHREADING_RUNTIME
 					MakefileStream.WriteLine "LDLIBS+=-lfb"
 				Case DEFINE_MULTITHREADING_RUNTIME
@@ -769,15 +734,15 @@ Sub WriteLinkerLibraryes(MakefileStream, Multithreading, Emitter)
 	
 End Sub
 
-Sub WriteIncludeFile(MakefileStream, MainModule)
+Sub WriteIncludeFile(MakefileStream, p)
 	Dim SrcFolder
-	Set SrcFolder = FSO.GetFolder(SourceFolder)
+	Set SrcFolder = FSO.GetFolder(p.SourceFolder)
 	
 	Dim File
 	For Each File In SrcFolder.Files
 		Dim ext
 		ext = FSO.GetExtensionName(File.Path)
-		CreateDependencies MakefileStream, File, ext, File.Path, MainModule
+		CreateDependencies MakefileStream, File, ext, p
 	Next
 	
 	Set SrcFolder = Nothing
@@ -870,9 +835,9 @@ Function GetSourceFolderWithPathSep(strLine)
 	End If
 End Function
 
-Sub WriteBasRule(MakefileStream, NeedFixEmittedCode)
+Sub WriteBasRule(MakefileStream, p)
 	Dim SourceFolderWithPathSep
-	SourceFolderWithPathSep = GetSourceFolderWithPathSep(SourceFolder)
+	SourceFolderWithPathSep = GetSourceFolderWithPathSep(p.SourceFolder)
 	
 	Dim AnyBasFile
 	AnyBasFile = ReplaceSolidusToPathSeparator(SourceFolderWithPathSep) & "%.bas"
@@ -882,17 +847,21 @@ Sub WriteBasRule(MakefileStream, NeedFixEmittedCode)
 	
 	MakefileStream.WriteLine "$(OBJ_RELEASE_DIR)$(PATH_SEP)%$(FILE_SUFFIX).c: " & AnyBasFile
 	MakefileStream.WriteLine "	$(FBC) $(FBCFLAGS) $<"
-	If NeedFixEmittedCode = FIX_EMITTED_CODE Then
+	
+	If p.FixEmittedCode = FIX_EMITTED_CODE Then
 		MakefileStream.WriteLine "	$(SCRIPT_COMMAND) /release " & AnyCFile
 	End If
+	
 	MakefileStream.WriteLine "	$(MOVE_COMMAND) " & AnyCFile & " $(OBJ_RELEASE_DIR_MOVE)$(MOVE_PATH_SEP)$*$(FILE_SUFFIX).c"
 	MakefileStream.WriteLine
 	
 	MakefileStream.WriteLine "$(OBJ_DEBUG_DIR)$(PATH_SEP)%$(FILE_SUFFIX).c: " & AnyBasFile
 	MakefileStream.WriteLine "	$(FBC) $(FBCFLAGS) $<"
-	If NeedFixEmittedCode = FIX_EMITTED_CODE Then
+	
+	If p.FixEmittedCode = FIX_EMITTED_CODE Then
 		MakefileStream.WriteLine "	$(SCRIPT_COMMAND) /debug " & AnyCFile
 	End If
+	
 	MakefileStream.WriteLine "	$(MOVE_COMMAND) " & AnyCFile & " $(OBJ_DEBUG_DIR_MOVE)$(MOVE_PATH_SEP)$*$(FILE_SUFFIX).c"
 	MakefileStream.WriteLine 
 End Sub
@@ -940,12 +909,12 @@ Sub RemoveOmmittedIncludes(LinesArray)
 	Next
 End Sub
 
-Sub RemoveDefaultIncludes(LinesArray)
+Sub RemoveDefaultIncludes(LinesArray, p)
 	' заголовочные файлы в системном каталоге обнуляем
 	Dim i
 	For i = LBound(LinesArray) To UBound(LinesArray)
 		Dim Finded
-		Finded = InStr(LinesArray(i), CompilerPath & Solidus & "inc")
+		Finded = InStr(LinesArray(i), p.CompilerPath & Solidus & "inc")
 		If Finded Then
 			LinesArray(i) = ""
 		End If
@@ -1030,18 +999,18 @@ Function ReadTextStream(Stream)
 	ReadTextStream = Lines
 End Function
 
-Function GetBasFileWithoutPath(BasFile)
+Function GetBasFileWithoutPath(BasFile, p)
 	Dim ReplaceFind
-	ReplaceFind = GetSourceFolderWithPathSep(SourceFolder)
+	ReplaceFind = GetSourceFolderWithPathSep(p.SourceFolder)
 	
 	GetBasFileWithoutPath = Replace(BasFile, ReplaceFind, "")
 	
 End Function
 
-Sub WriteTextFile(MakefileStream, BasFile, DependenciesLine)
+Sub WriteTextFile(MakefileStream, BasFile, DependenciesLine, p)
 	
 	Dim BasFileWithoutPath
-	BasFileWithoutPath = GetBasFileWithoutPath(BasFile)
+	BasFileWithoutPath = GetBasFileWithoutPath(BasFile, p)
 	
 	Dim FileNameCExtenstionWitthSuffix
 	Dim ObjectFileName
@@ -1086,21 +1055,21 @@ Sub WriteTextFile(MakefileStream, BasFile, DependenciesLine)
 	
 End Sub
 
-Function GetIncludesFromBasFile(Filepath, MainModule)
+Function GetIncludesFromBasFile(Filepath, p)
 	Dim FbcParam
 	FbcParam = CreateCompilerParams( _
 		CODE_EMITTER_GCC, _
 		DEFINE_UNICODE, _
 		DEFINE_WITHOUT_RUNTIME, _
 		SUBSYSTEM_CONSOLE, _
-		MainModule _
+		p.MainModuleName _
 	)
 	
 	Dim ProgramName
-	ProgramName = """" & CompilerPath & Solidus & FbcCompilerName & """" & " " & _
+	ProgramName = """" & p.CompilerPath & Solidus & p.FbcCompilerName & """" & " " & _
 		FbcParam & _
-		" -i " & SourceFolder & _
-		" -i " & """" & CompilerPath & Solidus & "inc" & """" & " """ & Filepath & """"
+		" -i " & p.SourceFolder & _
+		" -i " & """" & p.CompilerPath & Solidus & "inc" & """" & " """ & Filepath & """"
 	WScript.Echo ProgramName
 	
 	Dim WshShell
@@ -1125,22 +1094,22 @@ Function GetIncludesFromBasFile(Filepath, MainModule)
 	GetIncludesFromBasFile = Lines
 End Function
 
-Function GetIncludesFromResFile(Filepath)
+Function GetIncludesFromResFile()
 	' TODO Get real dependencies from resource file
 	GetIncludesFromResFile = "src\Resources.RC" & vbCrLf & "src\Resources.RH" & vbCrLf & "src\app.exe.manifest"
 End Function
 
-Function CreateDependencies(MakefileStream, oFile, FileExtension, Filepath, MainModule)
+Function CreateDependencies(MakefileStream, oFile, FileExtension, p)
 	
 	Dim LinesArray
 	Dim LinesArrayCreated
 	
 	Select Case UCase(FileExtension)
 		Case "RC"
-			LinesArray = Split(GetIncludesFromResFile(oFile.Path, MainModule), vbCrLf)
+			LinesArray = Split(GetIncludesFromResFile(), vbCrLf)
 			LinesArrayCreated = True
 		Case "BAS"
-			LinesArray = Split(GetIncludesFromBasFile(oFile.Path, MainModule), vbCrLf)
+			LinesArray = Split(GetIncludesFromBasFile(oFile.Path, p), vbCrLf)
 			LinesArrayCreated = True
 		Case Else
 			LinesArray = Split("", vbCrLf)
@@ -1156,7 +1125,7 @@ Function CreateDependencies(MakefileStream, oFile, FileExtension, Filepath, Main
 		
 		RemoveVerticalLine LinesArray
 		RemoveOmmittedIncludes LinesArray
-		RemoveDefaultIncludes LinesArray
+		RemoveDefaultIncludes LinesArray, p
 		ReplaceSolidusToPathSeparatorVector LinesArray
 		AddSpaces LinesArray
 		
@@ -1164,6 +1133,6 @@ Function CreateDependencies(MakefileStream, oFile, FileExtension, Filepath, Main
 		Dim OneLine
 		OneLine = Join(LinesArray, "")
 		
-		WriteTextFile MakefileStream, Original, RTrim(OneLine)
+		WriteTextFile MakefileStream, Original, RTrim(OneLine), p
 	End If
 End Function
