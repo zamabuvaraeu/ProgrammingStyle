@@ -7,11 +7,27 @@
 			"command": "cscript.exe",
 			"args": [
 				"//nologo",
-				"CreateMakefile.vbs"
+				"C:\\Programming\\FreeBASIC Projects\\ProgrammingStyle\\CreateMakefile\\CreateMakefile.vbs",
+				"/out:Station922",
+				"/unicode:true",
+				"/wrt:true",
+				"/addressaware:true",
+				"/makefile:Makefile",
+				"/fbc:fbc64",
+				"/fbc-path:C:\\Program Files (x86)\\FreeBASIC-1.10.0-winlibs-gcc-9.3.0",
+				"/src:src",
+				"/module:Station922",
+				"/exetype:exe",
+				"/subsystem:console",
+				"/emitter:gcc",
+				"/fix:true",
+				"/unicode:true",
+				"/multithreading:false"
+				
 			],
 			"problemMatcher": [],
 			"group": {
-				"kind": "none",
+				"kind":"build",
 				"isDefault": true
 			}
 		},
