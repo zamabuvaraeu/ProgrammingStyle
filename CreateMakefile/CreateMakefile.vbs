@@ -321,43 +321,50 @@ Function GetParameters()
 		' #define _WIN32_WINNT_WINTHRESHOLD   0x0A00 // Windows 10
 		' #define _WIN32_WINNT_WIN10          0x0A00 // Windows 10
 		
-		p.MinimalWindowsVersion = "0x0A00"
+		p.MinimalWindowsVersion = "0x0400"
 	End If
 	
 	Set GetParameters = p
 	
 End Function
 
-Function CodeGenerationToString(Emitter)
+Function CodeGenerationToString(p)
 	
-	Dim EmitterParam
+	Dim ep
 	
-	Select Case Emitter
+	Select Case p.Emitter
+		
 		Case CODE_EMITTER_GCC
-			EmitterParam = "-gen gcc"
+			ep = "-gen gcc"
+			
 		Case CODE_EMITTER_GAS
-			EmitterParam = "-gen gas"
+			ep = "-gen gas"
+			
 		Case CODE_EMITTER_GAS64
-			EmitterParam = "-gen gas64"
+			ep = "-gen gas64"
+			
 		Case CODE_EMITTER_LLVM
-			EmitterParam = "-gen llvm"
+			ep = "-gen llvm"
+			
 		Case CODE_EMITTER_WASM32
-			EmitterParam = "-gen gcc"
+			ep = "-gen gcc"
+			
 		Case CODE_EMITTER_WASM64
-			EmitterParam = "-gen gcc"
+			ep = "-gen gcc"
+			
 	End Select
 	
-	CodeGenerationToString = EmitterParam
+	CodeGenerationToString = ep
 	
 End Function
 
-Function CreateCompilerParams(Emitter, Unicode, Runtime, SubSystem, MainModule)
+Function CreateCompilerParams(p)
 	
 	Dim EmitterParam
-	EmitterParam = CodeGenerationToString(Emitter)
+	EmitterParam = CodeGenerationToString(p)
 	
 	Dim UnicodeFlag
-	Select Case Unicode
+	Select Case p.Unicode
 		Case DEFINE_ANSI
 			UnicodeFlag = ""
 		Case DEFINE_UNICODE
@@ -365,7 +372,7 @@ Function CreateCompilerParams(Emitter, Unicode, Runtime, SubSystem, MainModule)
 	End Select
 	
 	Dim RuntimeFlag
-	Select Case Runtime
+	Select Case p.UseRuntimeLibrary
 		Case DEFINE_RUNTIME
 			RuntimeFlag = ""
 		Case DEFINE_WITHOUT_RUNTIME
@@ -373,7 +380,7 @@ Function CreateCompilerParams(Emitter, Unicode, Runtime, SubSystem, MainModule)
 	End Select
 	
 	Dim SubSystemParam
-	If SubSystem = SUBSYSTEM_WINDOW Then
+	If p.FileSubsystem = SUBSYSTEM_WINDOW Then
 		SubSystemParam = "-s gui"
 	Else
 		SubSystemParam = "-s console"
@@ -382,7 +389,7 @@ Function CreateCompilerParams(Emitter, Unicode, Runtime, SubSystem, MainModule)
 	Dim CompilerParam
 	CompilerParam = EmitterParam & " " & UnicodeFlag & " " & _
 		RuntimeFlag & " " & SubSystemParam & " " & _
-	"-maxerr 1 -r -O 0 -showincludes -m " & MainModule
+	"-maxerr 1 -r -O 0 -showincludes -m " & p.MainModuleName
 	
 	CreateCompilerParams = CompilerParam
 	
@@ -406,6 +413,7 @@ Sub WriteCompilerToolChain(MakefileStream)
 	MakefileStream.WriteLine "LIB_DIR ?="
 	MakefileStream.WriteLine "INC_DIR ?="
 	MakefileStream.WriteLine "LD_SCRIPT ?="
+	MakefileStream.WriteLine "FLTO ?="
 	MakefileStream.WriteLine 
 End Sub
 
@@ -442,6 +450,7 @@ Sub WriteOutputFilename(MakefileStream, p)
 	MakefileStream.WriteLine "USE_RUNTIME ?= TRUE"
 	MakefileStream.WriteLine "FBC_VER ?= _FBC1100"
 	MakefileStream.WriteLine "GCC_VER ?= _GCC0930"
+	
 	MakefileStream.WriteLine "ifeq ($(USE_RUNTIME),TRUE)"
 	MakefileStream.WriteLine "RUNTIME = _RT"
 	MakefileStream.WriteLine "else"
@@ -493,7 +502,7 @@ End Sub
 Sub WriteFbcFlags(MakefileStream, p)
 	
 	Dim EmitterParam
-	EmitterParam = CodeGenerationToString(p.Emitter)
+	EmitterParam = CodeGenerationToString(p)
 	
 	Dim UnicodeFlag
 	Select Case p.Unicode
@@ -515,16 +524,20 @@ Sub WriteFbcFlags(MakefileStream, p)
 	
 	MakefileStream.WriteLine "FBCFLAGS+=" & EmitterParam
 	MakefileStream.WriteLine UnicodeFlag
+	
 	MakefileStream.WriteLine "ifeq ($(USE_RUNTIME),TRUE)"
 	MakefileStream.WriteLine "FBCFLAGS+=-m " & p.MainModuleName
 	MakefileStream.WriteLine "else"
 	MakefileStream.WriteLine "FBCFLAGS+=-d WITHOUT_RUNTIME"
 	MakefileStream.WriteLine "endif"
+	
 	MakefileStream.WriteLine "FBCFLAGS+=-w error -maxerr 1"
 	MakefileStream.WriteLine "FBCFLAGS+=-i " & p.SourceFolder
+	
 	MakefileStream.WriteLine "ifneq ($(INC_DIR),)"
 	MakefileStream.WriteLine "FBCFLAGS+=-i ""$(INC_DIR)"""
 	MakefileStream.WriteLine "endif"
+	
 	MakefileStream.WriteLine "FBCFLAGS+=-r"
 	MakefileStream.WriteLine "FBCFLAGS+=" & SubSystemParam
 	MakefileStream.WriteLine "FBCFLAGS+=-O 0"
@@ -573,8 +586,6 @@ Sub WriteGccFlags(MakefileStream, p)
 	
 	MakefileStream.WriteLine "CFLAGS_DEBUG+=-g -O0"
 	
-	MakefileStream.WriteLine "FLTO ?="
-	
 	MakefileStream.WriteLine "release: CFLAGS+=$(CFLAGS_RELEASE)"
 	MakefileStream.WriteLine "release: CFLAGS+=-fno-math-errno -fno-exceptions"
 	MakefileStream.WriteLine "release: CFLAGS+=-fno-unwind-tables -fno-asynchronous-unwind-tables"
@@ -595,6 +606,7 @@ Sub WriteAsmFlags(MakefileStream)
 	MakefileStream.WriteLine "else"
 	MakefileStream.WriteLine "ASFLAGS+=--32"
 	MakefileStream.WriteLine "endif"
+	
 	MakefileStream.WriteLine "ASFLAGS_DEBUG+="
 	MakefileStream.WriteLine "release: ASFLAGS+=--strip-local-absolute"
 	MakefileStream.WriteLine "debug: ASFLAGS+=$(ASFLAGS_DEBUG)"
@@ -605,6 +617,7 @@ Sub WriteGorcFlags(MakefileStream)
 	MakefileStream.WriteLine "ifeq ($(PROCESSOR_ARCHITECTURE),AMD64)"
 	MakefileStream.WriteLine "GORCFLAGS+=/machine X64"
 	MakefileStream.WriteLine "endif"
+	
 	MakefileStream.WriteLine "GORCFLAGS+=/ni /o /d FROM_MAKEFILE"
 	MakefileStream.WriteLine "GORCFLAGS_DEBUG=/d DEBUG"
 	MakefileStream.WriteLine "debug: GORCFLAGS+=$(GORCFLAGS_DEBUG)"
@@ -634,14 +647,19 @@ Sub WriteLinkerFlags(MakefileStream, p)
 			MakefileStream.WriteLine "release: LDFLAGS+=--lto-O3 --gc-sections"
 		Case Else
 			MakefileStream.WriteLine "ifeq ($(PROCESSOR_ARCHITECTURE),AMD64)"
+			
 			MakefileStream.WriteLine "ifeq ($(USE_RUNTIME),FALSE)"
 			MakefileStream.WriteLine "LDFLAGS+=-e EntryPoint"
 			MakefileStream.WriteLine "endif"
+			
 			MakefileStream.WriteLine "LDFLAGS+=-m i386pep"
+			
 			MakefileStream.WriteLine "else"
+			
 			MakefileStream.WriteLine "ifeq ($(USE_RUNTIME),FALSE)"
 			MakefileStream.WriteLine "LDFLAGS+=-e _EntryPoint@0"
 			MakefileStream.WriteLine "endif"
+			
 			MakefileStream.WriteLine "LDFLAGS+=-m i386pe"
 			
 			Select Case p.AddressAware
@@ -1057,13 +1075,7 @@ End Sub
 
 Function GetIncludesFromBasFile(Filepath, p)
 	Dim FbcParam
-	FbcParam = CreateCompilerParams( _
-		CODE_EMITTER_GCC, _
-		DEFINE_UNICODE, _
-		DEFINE_WITHOUT_RUNTIME, _
-		SUBSYSTEM_CONSOLE, _
-		p.MainModuleName _
-	)
+	FbcParam = CreateCompilerParams(p)
 	
 	Dim ProgramName
 	ProgramName = """" & p.CompilerPath & Solidus & p.FbcCompilerName & """" & " " & _
