@@ -22,7 +22,8 @@
 				"/emitter:gcc",
 				"/fix:true",
 				"/unicode:true",
-				"/multithreading:false"
+				"/multithreading:false",
+				"/pedantic:true"
 				
 			],
 			"problemMatcher": [],

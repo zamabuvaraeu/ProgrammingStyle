@@ -62,6 +62,7 @@ Class Parameter
 	Public ThreadingMode
 	Public MinimalWindowsVersion
 	Public UseFileSuffix
+	Public Pedantic
 End Class
 
 Dim Params
@@ -297,6 +298,21 @@ Function GetParameters()
 		End Select
 	Else
 		p.UseFileSuffix = True
+	End If
+	
+	If colArgs.Exists("pedantic") Then
+		Dim t10
+		t10 = colArgs.Item("pedantic")
+		Select Case t10
+			Case "true"
+				p.Pedantic = True
+			Case "false"
+				p.Pedantic = False
+			Case Else
+				p.Pedantic = False
+		End Select
+	Else
+		p.Pedantic = False
 	End If
 	
 	If colArgs.Exists("winver") Then
@@ -577,7 +593,13 @@ Sub WriteGccFlags(MakefileStream, p)
 	End Select
 	
 	MakefileStream.WriteLine "CFLAGS+=-pipe"
-	MakefileStream.WriteLine "CFLAGS+=-Wall -Werror -Wextra -pedantic"
+	
+	If p.Pedantic Then
+		MakefileStream.WriteLine "CFLAGS+=-Wall -Werror -Wextra -pedantic"
+	Else
+		MakefileStream.WriteLine "CFLAGS+=-Wall -Werror -Wextra"
+	End If
+	
 	MakefileStream.WriteLine "CFLAGS+=-Wno-unused-label -Wno-unused-function"
 	MakefileStream.WriteLine "CFLAGS+=-Wno-unused-parameter -Wno-unused-variable"
 	MakefileStream.WriteLine "CFLAGS+=-Wno-dollar-in-identifier-extension"
