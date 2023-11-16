@@ -21,7 +21,6 @@
 				"/subsystem:console",
 				"/emitter:gcc",
 				"/fix:true",
-				"/unicode:true",
 				"/multithreading:false",
 				"/pedantic:true"
 				
