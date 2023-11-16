@@ -1,0 +1,86 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<!-- В релизной версии комментарии желательно удалить -->
+
+<!-- Корневой элемент оставляем без изменений -->
+<assembly xmlns="urn:schemas-microsoft-com:asm.v1" xmlns:asmv3="urn:schemas-microsoft-com:asm.v3" manifestVersion="1.0">
+	
+	<!-- Этот раздел обязателен
+	Здесь нужно указывать версию программы и name в формате «НазваниеКорпорации.НазваниеПродукта.НазваниеПрограммы»
+	атрибут type всегда должен быть равен win32
+	-->
+	<assemblyIdentity version="1.0.0.0" name="BatchedFiles.CharsCounter.CharsCounter" processorArchitecture="*" type="win32" />
+	<!-- Описание программы -->
+	<description>CharsCounter</description>
+	
+	<!-- Использование COM без регистрации в реестре
+	<file name="sampleu.dll">
+		<comClass description="Font Property Page" clsid="{0BE35200-8F91-11CE-9DE3-00AA004BB851}" threadingModel="Apartment" />
+		<comClass description="Color Property Page" clsid="{0BE35201-8F91-11CE-9DE3-00AA004BB851}" />
+		<comClass description="Picture Property Page" clsid="{0BE35202-8F91-11CE-9DE3-00AA004BB851}" />
+		<typelib tlbid="{44EC0535-400F-11D0-9DCD-00A0C90391D3}" version="1.0" helpdir="" />
+	</file>
+	-->
+	
+	<!-- Добавляем если нужна поддержка стилей как в XP, иначе интерфейс будет выглядеть как в Windows 2000
+	Для консольных программ и неинтерактивных служб не требуется
+	-->
+	<dependency>
+		<dependentAssembly>
+			<assemblyIdentity type="win32" name="Microsoft.Windows.Common-Controls" version="6.0.0.0" processorArchitecture="*" publicKeyToken="6595b64144ccf1df" language="*" />
+		</dependentAssembly>
+	</dependency>
+	
+	<!-- Добавляем если программа поддерживает возможности версий ОС -->
+	<compatibility xmlns="urn:schemas-microsoft-com:compatibility.v1">
+		<application>
+			<!-- Windows 10 если не указать, то функция GetVersionEx будет возвращать версию системы 8.1, вместо 10 -->
+			<supportedOS Id="{8e0f7a12-bfb3-4fe8-b9a5-48fd50a15a9a}"></supportedOS>
+			
+			<!-- Windows 8.1 -->
+			<supportedOS Id="{1f676c76-80e1-4239-95bb-83d0f6d0da78}"></supportedOS>
+			
+			<!-- Windows 8 -->
+			<supportedOS Id="{4a2f28e3-53b9-4441-ba9c-d69d4a4a6e38}"></supportedOS>
+			
+			<!-- Windows 7 -->
+			<supportedOS Id="{35138b9a-5d96-4fbd-8e2d-a2440225f93a}"></supportedOS>
+			
+			<!-- Windows Vista -->
+			<supportedOS Id="{e2011457-1546-43c5-a5fe-008deee3d3f0}"></supportedOS>
+		</application>
+	</compatibility>
+	
+	<trustInfo xmlns="urn:schemas-microsoft-com:asm.v2">
+		<!-- Если эта секция отсутствует в манифесте, к приложению будет применена виртуализация файловой системы и реестра. Если такое приложение пытается записать что‐то в защищённые папки типа «Program files», запись будет перенаправлена в папку «%userprofile%\AppData\Local\VirtualStore\Program files». Аналогично, попытки записи в раздел реестра HKEY_LOCAL_MACHINE будут перенаправлены в «HKEY_CURRENT_USER\Software\Classes\VirtualStore\MACHINE». Естественно, сделанные таким образом изменения будут видны только приложениям, запущенным в режиме виртуализации.
+		-->
+		<security>
+			<requestedPrivileges>
+				<!-- Для запуска с правами простого пользователя -->
+				<requestedExecutionLevel level="asInvoker" uiAccess="false" />
+				
+				<!-- Для запуска с правами администратора, в этом случае выскочит UAC с требованием ввести пароль -->
+				<!-- <requestedExecutionLevel level="requireAdministrator" uiAccess="false" /> -->
+				<!-- Ставим uiAccess="true" только если программа отправляет пользовательский ввод в другие программы, например, наша программа — это виртуальная клавиатура -->
+			</requestedPrivileges>
+		</security>
+	</trustInfo>
+	
+	<asmv3:application>
+		<asmv3:windowsSettings>
+			<!-- кодировка UTF-8 -->
+			<!-- <activeCodePage xmlns="http://schemas.microsoft.com/SMI/2019/WindowsSettings">UTF-8</activeCodePage>  -->
+			
+			<!-- Добавляем если программа осведомлена о поддержке высокого DPI -->
+			<dpiAware xmlns="http://schemas.microsoft.com/SMI/2005/WindowsSettings">true</dpiAware>
+			
+			<!-- Добавляем если программа осведомлена о поддержке высокого DPI на разных мониторах с уведомлением дочерних окон о смене DPI
+			Если тег dpiAwareness присутствует, то тег dpiAware игнорируется
+			-->
+			<dpiAwareness xmlns="http://schemas.microsoft.com/SMI/2016/WindowsSettings">PerMonitorV2</dpiAwareness>
+			
+			<!-- Добавляем если нужно масштабирование GDI -->
+			<!-- <gdiScaling xmlns="http://schemas.microsoft.com/SMI/2017/WindowsSettings">true</gdiScaling> -->
+		</asmv3:windowsSettings>
+	</asmv3:application>
+	
+</assembly>
