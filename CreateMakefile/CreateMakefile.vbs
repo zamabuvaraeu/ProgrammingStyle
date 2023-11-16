@@ -146,7 +146,7 @@ Function GetParameters()
 	If colArgs.Exists("module") Then
 		p.MainModuleName = colArgs.Item("module")
 	Else
-		p.MainModuleName = OutputFileName
+		p.MainModuleName = p.OutputFileName
 	End If
 	
 	If colArgs.Exists("exetype") Then
@@ -737,8 +737,8 @@ Sub WriteLinkerLibraryes(MakefileStream, p)
 			
 			MakefileStream.WriteLine "LDLIBS+=--start-group"
 			MakefileStream.WriteLine "LDLIBS+=-ladvapi32 -lcrypt32 -lkernel32 -lmsvcrt"
-			MakefileStream.WriteLine "LDLIBS+=-lole32 -loleaut32"
-			MakefileStream.WriteLine "LDLIBS+=-lmswsock -lws2_32"
+			MakefileStream.WriteLine "LDLIBS+=-lole32 -loleaut32 -lcomdlg32"
+			MakefileStream.WriteLine "LDLIBS+=-lmswsock -lwsock32 -lws2_32"
 			MakefileStream.WriteLine "LDLIBS+=-lshell32 -lshlwapi -lgdi32 -lgdiplus -luser32 -lcomctl32"
 			
 			MakefileStream.WriteLine "ifeq ($(USE_RUNTIME),TRUE)"
