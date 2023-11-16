@@ -7,6 +7,7 @@
 				"GCC_VER=_Clang1701",
 				"PROCESSOR_ARCHITECTURE=AMD64",
 				"MARCH=native",
+				/* "FBC=\"C:\\Program Files (x86)\\FreeBASIC-1.10.0-winlibs-gcc-9.3.0\\fbc64.exe\"", */
 				"FBC=\"C:\\Programming\\FreeBASIC Projects\\fbc-modified\\src\\compiler\\fbc64_icase.exe\"",
 				"CC=\"C:\\Program Files\\LLVM\\bin\\clang.exe\"",
 				"AS=\"C:\\LLVM\\bin\\as.exe\"",
@@ -29,6 +30,7 @@
 				"GCC_VER=_Clang1701",
 				"PROCESSOR_ARCHITECTURE=x86",
 				"MARCH=atom",
+				/* "FBC=\"C:\\Program Files (x86)\\FreeBASIC-1.10.0-winlibs-gcc-9.3.0\\fbc32.exe\"", */
 				"FBC=\"C:\\Programming\\FreeBASIC Projects\\fbc-modified\\src\\compiler\\fbc32_icase.exe\"",
 				"CC=\"C:\\Program Files\\LLVM\\bin\\clang.exe\"",
 				"AS=\"C:\\Program Files (x86)\\mingw32\\bin\\as.exe\"",
@@ -51,6 +53,7 @@
 				"GCC_VER=_GCC1310",
 				"PROCESSOR_ARCHITECTURE=AMD64",
 				"MARCH=native",
+				/* "FBC=\"C:\\Program Files (x86)\\FreeBASIC-1.10.0-winlibs-gcc-9.3.0\\fbc64.exe\"", */
 				"FBC=\"C:\\Programming\\FreeBASIC Projects\\fbc-modified\\src\\compiler\\fbc64_icase.exe\"",
 				"CC=\"C:\\Program Files\\mingw64\\bin\\gcc.exe\"",
 				"AS=\"C:\\Program Files\\mingw64\\bin\\as.exe\"",
@@ -72,6 +75,7 @@
 				"GCC_VER=_GCC1310",
 				"PROCESSOR_ARCHITECTURE=x86",
 				"MARCH=atom",
+				/* "FBC=\"C:\\Program Files (x86)\\FreeBASIC-1.10.0-winlibs-gcc-9.3.0\\fbc32.exe\"", */
 				"FBC=\"C:\\Programming\\FreeBASIC Projects\\fbc-modified\\src\\compiler\\fbc32_icase.exe\"",
 				"CC=\"C:\\Program Files (x86)\\mingw32\\bin\\gcc.exe\"",
 				"AS=\"C:\\Program Files (x86)\\mingw32\\bin\\as.exe\"",
