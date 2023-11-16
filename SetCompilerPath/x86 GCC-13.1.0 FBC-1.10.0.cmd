@@ -3,7 +3,7 @@ set PATH=%MINGW_W64_DIR%\bin;%PATH%
 
 set PROCESSOR_ARCHITECTURE=x86
 set FBC_VER=_FBC1100
-set GCC_VER=_Clang1600
+set GCC_VER=_GCC1310
 set MARCH=atom
 set FBC_DIR=C:\Program Files (x86)\FreeBASIC-1.10.0-winlibs-gcc-9.3.0
 set FBC="C:\Programming\FreeBASIC Projects\fbc-modified\src\compiler\fbc32_icase.exe"
