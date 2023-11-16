@@ -1,7 +1,7 @@
 set MINGW_W64_DIR=%ProgramFiles%\mingw64
 set PATH=%MINGW_W64_DIR%\bin;%PATH%
 
-rem set PROCESSOR_ARCHITECTURE=x86
+set PROCESSOR_ARCHITECTURE=x86
 set FBC_VER=_FBC1100
 set GCC_VER=_Clang1600
 set MARCH=atom
@@ -20,3 +20,8 @@ set INC_DIR=%FBC_DIR%\inc
 set LD_SCRIPT=%FBC_DIR%\lib\win32\fbextra.x
 
 set USE_RUNTIME=FALSE
+
+rem Create "bin" "obj" folders
+rem mingw32-make createdirs
+rem Compile
+rem mingw32-make all

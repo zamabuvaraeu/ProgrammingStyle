@@ -20,3 +20,8 @@ set INC_DIR=%FBC_DIR%\inc
 set LD_SCRIPT=%FBC_DIR%\lib\win64\fbextra.x
 
 set USE_RUNTIME=FALSE
+
+rem Create "bin" "obj" folders
+rem mingw32-make createdirs
+rem Compile
+rem mingw32-make all

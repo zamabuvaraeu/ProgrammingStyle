@@ -1,7 +1,7 @@
 set MINGW_W64_DIR=%ProgramFiles%\mingw64
 set PATH=%MINGW_W64_DIR%\bin;%PATH%
 
-rem set PROCESSOR_ARCHITECTURE=x86
+set PROCESSOR_ARCHITECTURE=x86
 set FBC_VER=_FBC1100
 set GCC_VER=_Clang1701
 set MARCH=atom
@@ -25,3 +25,8 @@ set USE_RUNTIME=FALSE
 
 rem Only for Clang
 set TARGET_TRIPLET=i686-pc-windows-gnu
+
+rem Create "bin" "obj" folders
+rem mingw32-make createdirs
+rem Compile
+rem mingw32-make all

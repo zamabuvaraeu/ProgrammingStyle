@@ -27,3 +27,8 @@ rem for wasm
 rem set TARGET_TRIPLET=wasm32
 set TARGET_TRIPLET=x86_64-w64-pc-windows-msvc
 set FLTO=-flto
+
+rem Create "bin" "obj" folders
+rem mingw32-make createdirs
+rem Compile
+rem mingw32-make all
