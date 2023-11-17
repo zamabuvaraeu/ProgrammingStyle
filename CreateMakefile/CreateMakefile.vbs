@@ -734,12 +734,14 @@ Sub WriteLinkerLibraryes(MakefileStream, p)
 			MakefileStream.WriteLine "LDLIBSBEGIN+=""$(LIB_DIR)\fbrt0.o"""
 			MakefileStream.WriteLine "endif"
 			
-			
 			MakefileStream.WriteLine "LDLIBS+=--start-group"
-			MakefileStream.WriteLine "LDLIBS+=-ladvapi32 -lcrypt32 -lkernel32 -lmsvcrt"
-			MakefileStream.WriteLine "LDLIBS+=-lole32 -loleaut32 -lcomdlg32"
-			MakefileStream.WriteLine "LDLIBS+=-lmswsock -lwsock32 -lws2_32"
-			MakefileStream.WriteLine "LDLIBS+=-lshell32 -lshlwapi -lgdi32 -lgdiplus -luser32 -lcomctl32"
+			' Windows API
+			MakefileStream.WriteLine "LDLIBS+=-ladvapi32 -lcomctl32 -lcomdlg32 -lcrypt32"
+			MakefileStream.WriteLine "LDLIBS+=-lgdi32 -lgdiplus -lkernel32 -lmswsock"
+			MakefileStream.WriteLine "LDLIBS+=-lole32 -loleaut32 -lshell32 -lshlwapi"
+			MakefileStream.WriteLine "LDLIBS+=-lwsock32 -lws2_32 -luser32"
+			' C Runtime
+			MakefileStream.WriteLine "LDLIBS+=-lcrtdll -lmsvcrt"
 			
 			MakefileStream.WriteLine "ifeq ($(USE_RUNTIME),TRUE)"
 			
