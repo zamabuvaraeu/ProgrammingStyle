@@ -1,12 +1,16 @@
 set MINGW_W64_DIR=C:\Program Files\mingw64
 set PATH=%MINGW_W64_DIR%\bin;%PATH%
+set FBC_DIR=C:\Program Files (x86)\FreeBASIC-1.10.0-winlibs-gcc-9.3.0
+set PATH=%FBC_DIR%\bin\win64;%PATH%
 
 rem set PROCESSOR_ARCHITECTURE=AMD64
 set FBC_VER=_FBC1100
 set GCC_VER=_Clang1701
 set MARCH=native
-set FBC_DIR=C:\Program Files (x86)\FreeBASIC-1.10.0-winlibs-gcc-9.3.0
+rem Patched FBC
 set FBC="C:\Programming\FreeBASIC Projects\fbc-modified\src\compiler\fbc64_icase.exe"
+rem Original FBC
+rem set FBC="%FBC_DIR%\fbc64.exe"
 set CC="C:\Program Files\LLVM\bin\clang.exe"
 set AS="C:\LLVM\bin\as.exe"
 rem for wasm
