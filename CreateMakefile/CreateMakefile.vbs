@@ -1130,9 +1130,29 @@ Function GetIncludesFromBasFile(Filepath, p)
 	GetIncludesFromBasFile = Lines
 End Function
 
-Function GetIncludesFromResFile()
+Function GetIncludesFromResFile(Filepath, p)
 	' TODO Get real dependencies from resource file
-	GetIncludesFromResFile = "src\Resources.RC" & vbCrLf & "src\Resources.RH" & vbCrLf & "src\manifest.xml"
+	GetIncludesFromResFile = "src\Resources.RC" & vbCrLf & "src\manifest.xml"
+	
+	Dim SrcFolder
+	Set SrcFolder = FSO.GetFolder(p.SourceFolder)
+	
+	Dim File
+	For Each File In SrcFolder.Files
+		Dim ext
+		ext = FSO.GetExtensionName(File.Path)
+		
+		Select Case UCase(ext)
+			Case "RH"
+				Dim ResourceHeader
+				ResourceHeader = SrcFolder.Name & "\" & File.Name
+				
+				GetIncludesFromResFile = GetIncludesFromResFile & vbCrLf & ResourceHeader
+		End Select
+	Next
+	
+	Set SrcFolder = Nothing
+	
 End Function
 
 Function CreateDependencies(MakefileStream, oFile, FileExtension, p)
@@ -1142,7 +1162,7 @@ Function CreateDependencies(MakefileStream, oFile, FileExtension, p)
 	
 	Select Case UCase(FileExtension)
 		Case "RC"
-			LinesArray = Split(GetIncludesFromResFile(), vbCrLf)
+			LinesArray = Split(GetIncludesFromResFile(oFile.Path, p), vbCrLf)
 			LinesArrayCreated = True
 		Case "BAS"
 			LinesArray = Split(GetIncludesFromBasFile(oFile.Path, p), vbCrLf)
