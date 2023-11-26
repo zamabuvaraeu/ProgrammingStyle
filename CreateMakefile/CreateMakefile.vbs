@@ -1132,7 +1132,7 @@ End Function
 
 Function GetIncludesFromResFile(Filepath, p)
 	' TODO Get real dependencies from resource file
-	GetIncludesFromResFile = "src\Resources.RC" & vbCrLf & "src\manifest.xml"
+	GetIncludesFromResFile = "src\Resources.RC"
 	
 	Dim SrcFolder
 	Set SrcFolder = FSO.GetFolder(p.SourceFolder)
@@ -1141,13 +1141,27 @@ Function GetIncludesFromResFile(Filepath, p)
 	For Each File In SrcFolder.Files
 		Dim ext
 		ext = FSO.GetExtensionName(File.Path)
+		Dim FileNameWithParentDir
+		FileNameWithParentDir = SrcFolder.Name & "\" & File.Name
 		
 		Select Case UCase(ext)
+			
 			Case "RH"
-				Dim ResourceHeader
-				ResourceHeader = SrcFolder.Name & "\" & File.Name
+				GetIncludesFromResFile = GetIncludesFromResFile & vbCrLf & FileNameWithParentDir
 				
-				GetIncludesFromResFile = GetIncludesFromResFile & vbCrLf & ResourceHeader
+		End Select
+		
+		Select Case UCase(File.Name)
+			
+			Case "MANIFEST.XML"
+				GetIncludesFromResFile = GetIncludesFromResFile & vbCrLf & FileNameWithParentDir
+				
+			Case "RESOURCES.RC"
+				GetIncludesFromResFile = GetIncludesFromResFile & vbCrLf & FileNameWithParentDir
+				
+			Case "APP.ICO"
+				GetIncludesFromResFile = GetIncludesFromResFile & vbCrLf & FileNameWithParentDir
+				
 		End Select
 	Next
 	
