@@ -833,13 +833,13 @@ Sub WriteCreateDirsTarget(MakefileStream)
 	MakefileStream.WriteLine 
 End Sub
 
-Sub WriteReleaseTarget(MakefileStream)
+Sub WriteReleaseRule(MakefileStream)
 	MakefileStream.WriteLine "$(BIN_RELEASE_DIR)$(PATH_SEP)$(OUTPUT_FILE_NAME): $(OBJECTFILES_RELEASE)"
 	MakefileStream.WriteLine "	$(LD) $(LDFLAGS) $(LDLIBSBEGIN) $^ $(LDLIBS) $(LDLIBSEND) -o $@"
 	MakefileStream.WriteLine 
 End Sub
 
-Sub WriteDebugTarget(MakefileStream)
+Sub WriteDebugRule(MakefileStream)
 	MakefileStream.WriteLine "$(BIN_DEBUG_DIR)$(PATH_SEP)$(OUTPUT_FILE_NAME): $(OBJECTFILES_DEBUG)"
 	MakefileStream.WriteLine "	$(LD) $(LDFLAGS) $(LDLIBSBEGIN) $^ $(LDLIBS) $(LDLIBSEND) -o $@"
 	MakefileStream.WriteLine 
