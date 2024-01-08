@@ -1,5 +1,13 @@
 Option Explicit
 
+Const FILEOPEN_READONLY = 1
+Const FILEOPEN_WRITEONLY = 2
+Const FILEOPEN_APPENDONLY = 8
+Const FILEOPEN_CREATENEW = True
+Const FILEFORMAT_ASCII = 0
+Const FILEFORMAT_UNICODE = 1
+Const FILEFORMAT_SYSTEM = 2
+
 Const SUBSYSTEM_CONSOLE = 0
 Const SUBSYSTEM_WINDOW = 1
 Const SUBSYSTEM_NATIVE = 2
@@ -44,6 +52,11 @@ Const DebugDirPrefix = "$(OBJ_DEBUG_DIR)$(PATH_SEP)"
 Const FileSuffix = "$(FILE_SUFFIX)"
 Const ObjectFilesRelease = "OBJECTFILES_RELEASE"
 Const ObjectFilesDebug = "OBJECTFILES_DEBUG"
+Const MakefileParametersFile = "makefile-params.cmd"
+Const DefaultCompilerFolder = "C:\Program Files (x86)\FreeBASIC-1.10.1-winlibs-gcc-9.3.0"
+Const DefaultCompilerName = "fbc64.exe"
+Const FBC_VER = "_FBC1101"
+Const GCC_VER = "_GCC0930"
 
 Class Parameter
 	Public MakefileFileName
@@ -72,7 +85,7 @@ Dim FSO
 Set FSO = CreateObject("Scripting.FileSystemObject")
 
 Dim MakefileFileStream
-Set MakefileFileStream = FSO.OpenTextFile(Params.MakefileFileName, 2, True, 0)
+Set MakefileFileStream = FSO.OpenTextFile(Params.MakefileFileName, FILEOPEN_WRITEONLY, FILEOPEN_CREATENEW, FILEFORMAT_ASCII)
 
 WriteTargets MakefileFileStream
 WriteCompilerToolChain MakefileFileStream
@@ -102,9 +115,106 @@ WriteCRule MakefileFileStream
 WriteBasRule MakefileFileStream, Params
 WriteResourceRule MakefileFileStream
 
+MakefileFileStream.Close
 Set MakefileFileStream = Nothing
+
+WriteMakefileParameters Params
+
 Set FSO = Nothing
 Set Params = Nothing
+
+Sub WriteMakefileParameters(p)
+	Dim oStream
+	Set oStream = FSO.OpenTextFile(MakefileParametersFile, FILEOPEN_WRITEONLY, FILEOPEN_CREATENEW, FILEFORMAT_ASCII)
+	
+	' PROCESSOR_ARCHITECTURE = AMD64 или x86
+	oStream.WriteLine "if %PROCESSOR_ARCHITECTURE% == AMD64 ("
+	oStream.WriteLine "set BinFolder=bin\win64"
+	oStream.WriteLine "set LibFolder=lib\win64"
+	oStream.WriteLine ") else ("
+	oStream.WriteLine "set BinFolder=bin\win32"
+	oStream.WriteLine "set LibFolder=lib\win32"
+	oStream.WriteLine ")"
+	oStream.WriteLine
+	
+	oStream.WriteLine "rem Add mingw64 directory to PATH"
+	oStream.WriteLine "set MINGW_W64_DIR=C:\Program Files\mingw64"
+	oStream.WriteLine "set PATH=%MINGW_W64_DIR%\bin;%PATH%"
+	oStream.WriteLine
+	oStream.WriteLine "rem Add compiler directory to PATH"
+	oStream.WriteLine "set FBC_DIR=" & p.CompilerPath
+	oStream.WriteLine "set PATH=%FBC_DIR%\%BinFolder%;%PATH%"
+	oStream.WriteLine
+	
+	oStream.WriteLine "rem File Suffixes"
+	oStream.WriteLine "set FBC_VER=" & FBC_VER
+	oStream.WriteLine "set GCC_VER=" & GCC_VER
+	oStream.WriteLine
+	
+	oStream.WriteLine "rem WinAPI version"
+	' oStream.WriteLine "rem Need to escape ^&"
+	oStream.WriteLine "set WINVER=" & p.MinimalWindowsVersion
+	oStream.WriteLine "set _WIN32_WINNT=" & p.MinimalWindowsVersion
+	oStream.WriteLine
+	
+	If p.Unicode = DEFINE_UNICODE Then
+		oStream.WriteLine "set USE_UNICODE=TRUE"
+	Else
+		oStream.WriteLine "set USE_UNICODE=FALSE"
+	End If
+	oStream.WriteLine
+	
+	oStream.WriteLine "rem Toolchain"
+	oStream.WriteLine "set FBC=""%FBC_DIR%\" & p.FbcCompilerName & """"
+	oStream.WriteLine "set CC=""%FBC_DIR%\%BinFolder%\gcc.exe"""
+	oStream.WriteLine "set AS=""%FBC_DIR%\%BinFolder%\as.exe"""
+	oStream.WriteLine "set AR=""%FBC_DIR%\%BinFolder%\ar.exe"""
+	oStream.WriteLine "set GORC=""%FBC_DIR%\%BinFolder%\GoRC.exe"""
+	oStream.WriteLine "set LD=""%FBC_DIR%\%BinFolder%\ld.exe"""
+	oStream.WriteLine "set DLL_TOOL=""%FBC_DIR%\%BinFolder%\dlltool.exe"""
+	oStream.WriteLine
+	
+	oStream.WriteLine "rem Without quotes:"
+	oStream.WriteLine "set LIB_DIR==%FBC_DIR%\%LibFolder%"
+	oStream.WriteLine "set INC_DIR=%FBC_DIR%\inc"
+	oStream.WriteLine
+	
+	If p.UseRuntimeLibrary = DEFINE_WITHOUT_RUNTIME Then
+		oStream.WriteLine "set USE_RUNTIME=FALSE"
+	Else
+		oStream.WriteLine "set USE_RUNTIME=TRUE"
+	End If
+	oStream.WriteLine
+	
+	If p.Emitter = CODE_EMITTER_GCC Then
+		oStream.WriteLine "rem Linker script only for GCC x86, GCC x64 and Clang x86"
+		oStream.WriteLine "rem Without quotes:"
+		oStream.WriteLine "set LD_SCRIPT=%FBC_DIR%\%LibFolder%\fbextra.x"
+	End If
+	oStream.WriteLine
+	
+	oStream.WriteLine "set MARCH=native"
+	oStream.WriteLine
+	
+	' rem Only for Clang x86
+	' set TARGET_TRIPLET=i686-pc-windows-gnu
+	
+	' rem Only for Clang AMD64
+	' set TARGET_TRIPLET=x86_64-w64-pc-windows-msvc
+	' set FLTO=-flto
+	
+	' rem for wasm
+	' rem set TARGET_TRIPLET=wasm32
+	
+	oStream.WriteLine "rem Create bin obj folders"
+	oStream.WriteLine "rem mingw32-make createdirs"
+	oStream.WriteLine
+	oStream.WriteLine "rem Compile"
+	oStream.Write "rem mingw32-make all"
+	
+	oStream.Close
+	Set oStream = Nothing
+End Sub
 
 Function GetParameters()
 	Dim p
@@ -128,13 +238,13 @@ Function GetParameters()
 	If colArgs.Exists("fbc-path") Then
 		p.CompilerPath = colArgs.Item("fbc-path")
 	Else
-		p.CompilerPath = "C:\Program Files (x86)\FreeBASIC-1.10.1-winlibs-gcc-9.3.0"
+		p.CompilerPath = DefaultCompilerFolder
 	End If
 	
 	If colArgs.Exists("fbc") Then
 		p.FbcCompilerName = colArgs.Item("fbc")
 	Else
-		p.FbcCompilerName = "fbc64.exe"
+		p.FbcCompilerName = DefaultCompilerName
 	End If
 	
 	If colArgs.Exists("out") Then
@@ -323,21 +433,21 @@ Function GetParameters()
 
 		' _WIN32_WINNT version constants
 
-		' #define _WIN32_WINNT_NT4            0x0400 // Windows NT 4.0
-		' #define _WIN32_WINNT_WIN2K          0x0500 // Windows 2000
-		' #define _WIN32_WINNT_WINXP          0x0501 // Windows XP
-		' #define _WIN32_WINNT_WS03           0x0502 // Windows Server 2003
-		' #define _WIN32_WINNT_WIN6           0x0600 // Windows Vista
-		' #define _WIN32_WINNT_VISTA          0x0600 // Windows Vista
-		' #define _WIN32_WINNT_WS08           0x0600 // Windows Server 2008
-		' #define _WIN32_WINNT_LONGHORN       0x0600 // Windows Vista
-		' #define _WIN32_WINNT_WIN7           0x0601 // Windows 7
-		' #define _WIN32_WINNT_WIN8           0x0602 // Windows 8
-		' #define _WIN32_WINNT_WINBLUE        0x0603 // Windows 8.1
-		' #define _WIN32_WINNT_WINTHRESHOLD   0x0A00 // Windows 10
-		' #define _WIN32_WINNT_WIN10          0x0A00 // Windows 10
+		' #define _WIN32_WINNT_NT4            0x0400    1024 // Windows NT 4.0
+		' #define _WIN32_WINNT_WIN2K          0x0500    1280 // Windows 2000
+		' #define _WIN32_WINNT_WINXP          0x0501    1281 // Windows XP
+		' #define _WIN32_WINNT_WS03           0x0502    1282 // Windows Server 2003
+		' #define _WIN32_WINNT_WIN6           0x0600    1536 // Windows Vista
+		' #define _WIN32_WINNT_VISTA          0x0600    1536 // Windows Vista
+		' #define _WIN32_WINNT_WS08           0x0600    1536 // Windows Server 2008
+		' #define _WIN32_WINNT_LONGHORN       0x0600    1536 // Windows Vista
+		' #define _WIN32_WINNT_WIN7           0x0601    1537 // Windows 7
+		' #define _WIN32_WINNT_WIN8           0x0602    1538 // Windows 8
+		' #define _WIN32_WINNT_WINBLUE        0x0603    1539 // Windows 8.1
+		' #define _WIN32_WINNT_WINTHRESHOLD   0x0A00    2560 // Windows 10
+		' #define _WIN32_WINNT_WIN10          0x0A00    2560 // Windows 10
 		
-		p.MinimalWindowsVersion = "0x0400"
+		p.MinimalWindowsVersion = "1024"
 	End If
 	
 	Set GetParameters = p
@@ -490,8 +600,8 @@ Sub WriteOutputFilename(MakefileStream, p)
 	' TODO Add UNICODE and _UNICODE to file suffix
 	' TODO Add WINVER and _WIN32_WINNT to file suffix
 	MakefileStream.WriteLine "USE_RUNTIME ?= TRUE"
-	MakefileStream.WriteLine "FBC_VER ?= _FBC1100"
-	MakefileStream.WriteLine "GCC_VER ?= _GCC0930"
+	MakefileStream.WriteLine "FBC_VER ?= " & FBC_VER
+	MakefileStream.WriteLine "GCC_VER ?= " & GCC_VER
 	
 	MakefileStream.WriteLine "ifeq ($(USE_RUNTIME),TRUE)"
 	MakefileStream.WriteLine "RUNTIME = _RT"
@@ -546,17 +656,6 @@ Sub WriteFbcFlags(MakefileStream, p)
 	Dim EmitterParam
 	EmitterParam = CodeGenerationToString(p)
 	
-	Dim UnicodeFlag
-	Select Case p.Unicode
-		
-		Case DEFINE_ANSI
-			UnicodeFlag = ""
-			
-		Case DEFINE_UNICODE
-			UnicodeFlag = "FBCFLAGS+=-d UNICODE"
-			
-	End Select
-	
 	Dim SubSystemParam
 	If p.FileSubsystem = SUBSYSTEM_WINDOW Then
 		SubSystemParam = "-s gui"
@@ -565,7 +664,14 @@ Sub WriteFbcFlags(MakefileStream, p)
 	End If
 	
 	MakefileStream.WriteLine "FBCFLAGS+=" & EmitterParam
-	MakefileStream.WriteLine UnicodeFlag
+	
+	MakefileStream.WriteLine "ifeq ($(USE_UNICODE),TRUE)"
+	MakefileStream.WriteLine "FBCFLAGS+=-d UNICODE"
+	MakefileStream.WriteLine "FBCFLAGS+=-d _UNICODE"
+	MakefileStream.WriteLine "endif"
+	
+	MakefileStream.WriteLine "FBCFLAGS+=-d WINVER=$(WINVER)"
+	MakefileStream.WriteLine "FBCFLAGS+=-d _WIN32_WINNT=$(_WIN32_WINNT)"
 	
 	MakefileStream.WriteLine "ifeq ($(USE_RUNTIME),TRUE)"
 	MakefileStream.WriteLine "FBCFLAGS+=-m " & p.MainModuleName
@@ -981,8 +1087,12 @@ Sub RemoveDefaultIncludes(LinesArray, p)
 	' заголовочные файлы в системном каталоге обнуляем
 	Dim i
 	For i = LBound(LinesArray) To UBound(LinesArray)
+		Dim IncludeFullName
+		IncludeFullName = FSO.BuildPath(p.CompilerPath, "inc")
+		
 		Dim Finded
-		Finded = InStr(LinesArray(i), p.CompilerPath & Solidus & "inc")
+		Finded = InStr(LinesArray(i), IncludeFullName)
+		
 		If Finded Then
 			LinesArray(i) = ""
 		End If
@@ -1127,11 +1237,17 @@ Function GetIncludesFromBasFile(Filepath, p)
 	Dim FbcParam
 	FbcParam = CreateCompilerParams(p)
 	
+	Dim CompilerFullName
+	CompilerFullName = FSO.BuildPath(p.CompilerPath, p.FbcCompilerName)
+	
+	Dim IncludeFullName
+	IncludeFullName = FSO.BuildPath(p.CompilerPath, "inc")
+	
 	Dim ProgramName
-	ProgramName = """" & p.CompilerPath & Solidus & p.FbcCompilerName & """" & " " & _
+	ProgramName = """" & CompilerFullName & """" & " " & _
 		FbcParam & _
 		" -i " & p.SourceFolder & _
-		" -i " & """" & p.CompilerPath & Solidus & "inc" & """" & " """ & Filepath & """"
+		" -i " & """" & IncludeFullName & """" & " """ & Filepath & """"
 	WScript.Echo ProgramName
 	
 	Dim WshShell
@@ -1169,7 +1285,7 @@ Function GetIncludesFromResFile(Filepath, p)
 		Dim ext
 		ext = FSO.GetExtensionName(File.Path)
 		Dim FileNameWithParentDir
-		FileNameWithParentDir = SrcFolder.Name & "\" & File.Name
+		FileNameWithParentDir = FSO.BuildPath(SrcFolder.Name, File.Name)
 		
 		Select Case UCase(ext)
 			
