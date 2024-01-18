@@ -61,7 +61,7 @@ MyProject:
 
 Путь к файлу компилятора.
 
-По умолчанию равно `C:\Program Files (x86)\FreeBASIC-1.10.0-winlibs-gcc-9.3.0`.
+По умолчанию равно `C:\Program Files (x86)\FreeBASIC-1.10.1-winlibs-gcc-9.3.0`.
 
 ### fbc
 
@@ -247,11 +247,25 @@ _WIN32_WINNT ?=
 Оконная программа с поддержкой юникода, библиотеками времени выполнения и адресного пространства больше 2 гигабайт:
 
 ```
-cscript.exe //nologo CreateMakefile.vbs /out:TestGui /subsystem:windows /unicode:true /addressaware:true
+cscript.exe //nologo CreateMakefile.vbs /out:HelloWorld /subsystem:windows /unicode:true /addressaware:true
+```
+
+### Консольная программа
+
+Консольная программа с поддержкой юникода и адресного пространства больше 2 гигабайт:
+
+```
+cscript.exe //nologo CreateMakefile.vbs /out:HelloWorld /subsystem:console /unicode:true /addressaware:true /wrt:true
+```
+
+### Все параметры
+
+```
+cscript.exe //nologo CreateMakefile.vbs /makefile:Makefile /src:src "/fbc-path:C:\Program Files (x86)\FreeBASIC-1.10.0-winlibs-gcc-9.3.0" /fbc:fbc64.exe /out:HelloWorld /module:WinMain /exetype:exe /subsystem:console /emitter:gcc /fix:true /unicode:true /wrt:true /addressaware:true /multithreading:false /usefilesuffix:true /pedantic:true /winver:1281
 ```
 
 ### WebAssembly
 
 ```
-cscript //nologo CreateMakefile.vbs /out:add /fix:true /emitter:wasm32 /exetype:wasm32
+cscript.exe //nologo CreateMakefile.vbs /out:add /fix:true /emitter:wasm32 /exetype:wasm32
 ```
