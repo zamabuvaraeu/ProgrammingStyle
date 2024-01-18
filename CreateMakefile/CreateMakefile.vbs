@@ -147,21 +147,34 @@ Sub WriteMakefileParameters(p)
 	oStream.WriteLine
 	
 	oStream.WriteLine "rem File Suffixes"
-	oStream.WriteLine "set FBC_VER=" & FBC_VER
 	oStream.WriteLine "set GCC_VER=" & GCC_VER
+	oStream.WriteLine "set FBC_VER=" & FBC_VER
 	oStream.WriteLine
 	
+	If p.UseRuntimeLibrary = DEFINE_WITHOUT_RUNTIME Then
+		oStream.WriteLine "set USE_RUNTIME=FALSE"
+	Else
+		oStream.WriteLine "set USE_RUNTIME=TRUE"
+	End If
+	
 	oStream.WriteLine "rem WinAPI version"
-	' oStream.WriteLine "rem Need to escape ^&"
 	oStream.WriteLine "set WINVER=" & p.MinimalWindowsVersion
 	oStream.WriteLine "set _WIN32_WINNT=" & p.MinimalWindowsVersion
 	oStream.WriteLine
 	
+	oStream.WriteLine "rem Use unicode in WinAPI"
 	If p.Unicode = DEFINE_UNICODE Then
 		oStream.WriteLine "set USE_UNICODE=TRUE"
 	Else
 		oStream.WriteLine "set USE_UNICODE=FALSE"
 	End If
+	
+	If p.UseFileSuffix Then
+		oStream.WriteLine "set FILE_SUFFIX=%GCC_VER%%FBC_VER%%RUNTIME%"
+	Else
+		oStream.WriteLine "set FILE_SUFFIX="
+	End If
+	
 	oStream.WriteLine
 	
 	oStream.WriteLine "rem Toolchain"
@@ -177,34 +190,31 @@ Sub WriteMakefileParameters(p)
 	oStream.WriteLine "rem Without quotes:"
 	oStream.WriteLine "set LIB_DIR==%FBC_DIR%\%LibFolder%"
 	oStream.WriteLine "set INC_DIR=%FBC_DIR%\inc"
+	oStream.WriteLine "set SRC_DIR=" & p.SourceFolder
 	oStream.WriteLine
 	
-	If p.UseRuntimeLibrary = DEFINE_WITHOUT_RUNTIME Then
-		oStream.WriteLine "set USE_RUNTIME=FALSE"
-	Else
-		oStream.WriteLine "set USE_RUNTIME=TRUE"
-	End If
+	Select Case p.Emitter
+		
+		Case CODE_EMITTER_GCC, CODE_EMITTER_GAS, CODE_EMITTER_GAS64, CODE_EMITTER_LLVM
+			oStream.WriteLine "rem Linker script only for GCC x86, GCC x64 and Clang x86"
+			oStream.WriteLine "rem Without quotes:"
+			oStream.WriteLine "set LD_SCRIPT=%FBC_DIR%\%LibFolder%\fbextra.x"
+			oStream.WriteLine
+			oStream.WriteLine "set MARCH=native"
+			oStream.WriteLine
+			oStream.WriteLine "rem Only for Clang x86"
+			oStream.WriteLine "rem set TARGET_TRIPLET=i686-pc-windows-gnu"
+			oStream.WriteLine
+			oStream.WriteLine "rem Only for Clang AMD64"
+			oStream.WriteLine "rem set TARGET_TRIPLET=x86_64-w64-pc-windows-msvc"
+			oStream.WriteLine "rem set FLTO=-flto"
+			
+		Case CODE_EMITTER_WASM32, CODE_EMITTER_WASM64
+			oStream.WriteLine "rem Only for wasm"
+			oStream.WriteLine "set TARGET_TRIPLET=wasm32"
+			
+	End Select
 	oStream.WriteLine
-	
-	If p.Emitter = CODE_EMITTER_GCC Then
-		oStream.WriteLine "rem Linker script only for GCC x86, GCC x64 and Clang x86"
-		oStream.WriteLine "rem Without quotes:"
-		oStream.WriteLine "set LD_SCRIPT=%FBC_DIR%\%LibFolder%\fbextra.x"
-	End If
-	oStream.WriteLine
-	
-	oStream.WriteLine "set MARCH=native"
-	oStream.WriteLine
-	
-	' rem Only for Clang x86
-	' set TARGET_TRIPLET=i686-pc-windows-gnu
-	
-	' rem Only for Clang AMD64
-	' set TARGET_TRIPLET=x86_64-w64-pc-windows-msvc
-	' set FLTO=-flto
-	
-	' rem for wasm
-	' rem set TARGET_TRIPLET=wasm32
 	
 	oStream.WriteLine "rem Create bin obj folders"
 	oStream.WriteLine "rem mingw32-make createdirs"
@@ -428,25 +438,6 @@ Function GetParameters()
 	If colArgs.Exists("winver") Then
 		p.MinimalWindowsVersion = colArgs.Item("winver")
 	Else
-		' #define WINVER 0x0A00
-		' #define _WIN32_WINNT 0x0A00
-
-		' _WIN32_WINNT version constants
-
-		' #define _WIN32_WINNT_NT4            0x0400    1024 // Windows NT 4.0
-		' #define _WIN32_WINNT_WIN2K          0x0500    1280 // Windows 2000
-		' #define _WIN32_WINNT_WINXP          0x0501    1281 // Windows XP
-		' #define _WIN32_WINNT_WS03           0x0502    1282 // Windows Server 2003
-		' #define _WIN32_WINNT_WIN6           0x0600    1536 // Windows Vista
-		' #define _WIN32_WINNT_VISTA          0x0600    1536 // Windows Vista
-		' #define _WIN32_WINNT_WS08           0x0600    1536 // Windows Server 2008
-		' #define _WIN32_WINNT_LONGHORN       0x0600    1536 // Windows Vista
-		' #define _WIN32_WINNT_WIN7           0x0601    1537 // Windows 7
-		' #define _WIN32_WINNT_WIN8           0x0602    1538 // Windows 8
-		' #define _WIN32_WINNT_WINBLUE        0x0603    1539 // Windows 8.1
-		' #define _WIN32_WINNT_WINTHRESHOLD   0x0A00    2560 // Windows 10
-		' #define _WIN32_WINNT_WIN10          0x0A00    2560 // Windows 10
-		
 		p.MinimalWindowsVersion = "1024"
 	End If
 	
@@ -608,10 +599,6 @@ Sub WriteOutputFilename(MakefileStream, p)
 	MakefileStream.WriteLine "else"
 	MakefileStream.WriteLine "RUNTIME = _WRT"
 	MakefileStream.WriteLine "endif"
-	
-	If p.UseFileSuffix Then
-		MakefileStream.WriteLine "FILE_SUFFIX=$(GCC_VER)$(FBC_VER)$(RUNTIME)"
-	End If
 	
 	MakefileStream.WriteLine "OUTPUT_FILE_NAME=" & p.OutputFilename & "$(FILE_SUFFIX)" & Extension
 	MakefileStream.WriteLine 
