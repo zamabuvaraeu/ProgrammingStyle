@@ -1247,6 +1247,9 @@ Function GetIncludesFromBasFile(Filepath, p)
 	Dim Lines
 	Lines = ReadTextStream(Stream)
 	
+	Dim code
+	code = WshExec.ExitCode
+	
 	Set Stream = Nothing
 	Set WshExec = Nothing
 	Set WshShell = Nothing
@@ -1256,6 +1259,10 @@ Function GetIncludesFromBasFile(Filepath, p)
 	FileC = Replace(Filepath, ".bas", ".c")
 	WScript.Echo FileC
 	FSO.DeleteFile FileC
+	
+	If code > 0 Then
+		Call Err.Raise(vbObjectError + 10, "FreeBASIC compiler error", Lines)
+	End If
 	
 	GetIncludesFromBasFile = Lines
 End Function
