@@ -53,6 +53,9 @@ Function FixWinApiDeclaration(strLine)
 	
 	Select Case strLine
 		
+		Case "int32 printf( char*, ... );"
+			FixWinApiDeclaration = "int32 printf( const char*, ... );"
+		
 		Case "int32 memcmp( void*, void*, uint64 );"
 			FixWinApiDeclaration = "int32 memcmp( const void*, const void*, uint64 );"
 		
