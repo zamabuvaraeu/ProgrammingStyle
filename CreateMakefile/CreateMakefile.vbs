@@ -507,7 +507,7 @@ Function CreateCompilerParams(p)
 	End If
 	
 	Dim MaxErrorFlag
-	MaxErrorFlag = "-maxerr 1"
+	MaxErrorFlag = "-w error -maxerr 1"
 	
 	Dim OptimizationFlag
 	OptimizationFlag = "-O 0"
@@ -643,13 +643,6 @@ Sub WriteFbcFlags(MakefileStream, p)
 	Dim EmitterParam
 	EmitterParam = CodeGenerationToString(p)
 	
-	Dim SubSystemParam
-	If p.FileSubsystem = SUBSYSTEM_WINDOW Then
-		SubSystemParam = "-s gui"
-	Else
-		SubSystemParam = "-s console"
-	End If
-	
 	MakefileStream.WriteLine "FBCFLAGS+=" & EmitterParam
 	
 	MakefileStream.WriteLine "ifeq ($(USE_UNICODE),TRUE)"
@@ -674,7 +667,15 @@ Sub WriteFbcFlags(MakefileStream, p)
 	MakefileStream.WriteLine "endif"
 	
 	MakefileStream.WriteLine "FBCFLAGS+=-r"
+	
+	Dim SubSystemParam
+	If p.FileSubsystem = SUBSYSTEM_WINDOW Then
+		SubSystemParam = "-s gui"
+	Else
+		SubSystemParam = "-s console"
+	End If
 	MakefileStream.WriteLine "FBCFLAGS+=" & SubSystemParam
+	
 	MakefileStream.WriteLine "FBCFLAGS+=-O 0"
 	MakefileStream.WriteLine "FBCFLAGS_DEBUG+=-g"
 	MakefileStream.WriteLine "debug: FBCFLAGS+=$(FBCFLAGS_DEBUG)"
