@@ -74,6 +74,15 @@ Private Sub DialogMain_OnUnload( _
 
 End Sub
 
+Private Sub DialogMain_OnClosing( _
+		ByVal this As InputDialogParam Ptr, _
+		ByVal hWin As HWND _
+	)
+
+	DestroyWindow(hWin)
+
+End Sub
+
 Private Function InputDataDialogProc( _
 		ByVal hWin As HWND, _
 		ByVal uMsg As UINT, _
@@ -106,6 +115,9 @@ Private Function InputDataDialogProc( _
 			End Select
 
 		Case WM_CLOSE
+			DialogMain_OnClosing(pContext, hWin)
+
+		Case WM_DESTROY
 			DialogMain_OnUnload(pContext, hWin)
 			PostQuitMessage(0)
 
