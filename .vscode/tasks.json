@@ -14,7 +14,7 @@
 				"/addressaware:true",
 				"/makefile:Makefile",
 				"/fbc:fbc64",
-				"/fbc-path:C:\\Program Files (x86)\\FreeBASIC-1.10.0-winlibs-gcc-9.3.0",
+				"/fbc-path:C:\\Program Files (x86)\\FreeBASIC-1.10.1-winlibs-gcc-9.3.0",
 				"/src:src",
 				"/module:Station922",
 				"/exetype:exe",
