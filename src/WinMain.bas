@@ -21,6 +21,28 @@ Private Sub AppendLengthTextW( _
 
 End Sub
 
+Private Sub DisableDialogItem( _
+		ByVal hWin As HWND, _
+		ByVal Id As UINT _
+	)
+
+	SendMessage(hWin, WM_NEXTDLGCTL, 0, 0)
+
+	Dim hwndOk As HWND = GetDlgItem(hWin, Id)
+	EnableWindow(hwndOk, False)
+
+End Sub
+
+Private Sub EnableDialogItem( _
+		ByVal hWin As HWND, _
+		ByVal Id As UINT _
+	)
+
+	Dim hwndOk As HWND = GetDlgItem(hWin, Id)
+	EnableWindow(hwndOk, True)
+
+End Sub
+
 Private Sub IDOK_OnClick( _
 		ByVal this As InputDialogParam Ptr, _
 		ByVal hWin As HWND _
