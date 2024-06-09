@@ -295,32 +295,16 @@ Private Function tWinMain( _
 
 End Function
 
-#ifndef WITHOUT_RUNTIME
-Private Function EntryPoint()As Integer
-#else
-Public Function EntryPoint Alias "EntryPoint"()As Integer
-#endif
+Dim hInst As HMODULE = GetModuleHandle(NULL)
+Dim hPrevInstance As HINSTANCE = NULL
 
-	Dim hInst As HMODULE = GetModuleHandle(NULL)
+' The program does not process command line parameters
+Dim Arguments As LPTSTR = NULL
+Dim RetCode As Integer = tWinMain( _
+	hInst, _
+	hPrevInstance, _
+	Arguments, _
+	SW_SHOW _
+)
 
-	' The program does not process command line parameters
-	Dim Arguments As LPTSTR = NULL
-	Dim RetCode As Integer = tWinMain( _
-		hInst, _
-		NULL, _
-		Arguments, _
-		SW_SHOW _
-	)
-
-	#ifdef WITHOUT_RUNTIME
-		ExitProcess(RetCode)
-	#endif
-
-	Return RetCode
-
-End Function
-
-#ifndef WITHOUT_RUNTIME
-Dim RetCode As Long = CLng(EntryPoint())
 End(RetCode)
-#endif
