@@ -661,8 +661,9 @@ Sub WriteFbcFlags(MakefileStream, p)
 	MakefileStream.WriteLine "FBCFLAGS+=-d WINVER=$(WINVER)"
 	MakefileStream.WriteLine "FBCFLAGS+=-d _WIN32_WINNT=$(_WIN32_WINNT)"
 
-	MakefileStream.WriteLine "ifeq ($(USE_RUNTIME),TRUE)"
 	MakefileStream.WriteLine "FBCFLAGS+=-m " & p.MainModuleName
+
+	MakefileStream.WriteLine "ifeq ($(USE_RUNTIME),TRUE)"
 	MakefileStream.WriteLine "else"
 	MakefileStream.WriteLine "FBCFLAGS+=-d WITHOUT_RUNTIME"
 	MakefileStream.WriteLine "endif"
