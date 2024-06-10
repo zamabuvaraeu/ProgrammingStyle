@@ -1,11 +1,23 @@
-#include once "mini-runtime.bi"
-#include once "windows.bi"
-
 #ifdef WITHOUT_RUNTIME
 
+#include once "mini-runtime.bi"
+
+#ifdef __FB_WIN32__
+#include once "windows.bi"
+#endif
+
 #undef fb_End
+#undef fb_Init
 
 Declare Function main Alias "main"(ByVal argc As Long, ByVal argv As ZString Ptr) As Long
+
+Public Sub __main cdecl Alias "__main"()
+
+End Sub
+
+Public Sub fb_Init Alias "fb_Init"(ByVal argc As Long, ByVal argv As ZString Ptr Ptr, ByVal lang As Long)
+
+End Sub
 
 Public Sub fb_End Alias "fb_End"(ByVal RetCode As Long)
 	#ifdef __FB_WIN32__
@@ -29,7 +41,7 @@ Public Sub fb_End Alias "fb_End"(ByVal RetCode As Long)
 	#endif
 End Sub
 
-Public Function EntryPoint Alias "EntryPoint"()As Integer
+Public Function mainCRTStartup Alias "mainCRTStartup"()As Integer
 
 	Dim RetCode As Long = main(0, 0)
 
