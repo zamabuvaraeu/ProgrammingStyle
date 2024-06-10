@@ -940,55 +940,55 @@ End Sub
 
 Sub WriteCleanTarget(MakefileStream)
 	MakefileStream.WriteLine "clean:"
-	MakefileStream.WriteLine "	$(DELETE_COMMAND) $(OBJ_RELEASE_DIR_MOVE)$(MOVE_PATH_SEP)*$(FILE_SUFFIX).c"
-	MakefileStream.WriteLine "	$(DELETE_COMMAND) $(OBJ_DEBUG_DIR_MOVE)$(MOVE_PATH_SEP)*$(FILE_SUFFIX).c"
-	MakefileStream.WriteLine "	$(DELETE_COMMAND) $(OBJ_RELEASE_DIR_MOVE)$(MOVE_PATH_SEP)*$(FILE_SUFFIX).asm"
-	MakefileStream.WriteLine "	$(DELETE_COMMAND) $(OBJ_DEBUG_DIR_MOVE)$(MOVE_PATH_SEP)*$(FILE_SUFFIX).asm"
-	MakefileStream.WriteLine "	$(DELETE_COMMAND) $(OBJ_RELEASE_DIR_MOVE)$(MOVE_PATH_SEP)*$(FILE_SUFFIX).o"
-	MakefileStream.WriteLine "	$(DELETE_COMMAND) $(OBJ_DEBUG_DIR_MOVE)$(MOVE_PATH_SEP)*$(FILE_SUFFIX).o"
-	MakefileStream.WriteLine "	$(DELETE_COMMAND) $(OBJ_RELEASE_DIR_MOVE)$(MOVE_PATH_SEP)*$(FILE_SUFFIX).obj"
-	MakefileStream.WriteLine "	$(DELETE_COMMAND) $(OBJ_DEBUG_DIR_MOVE)$(MOVE_PATH_SEP)*$(FILE_SUFFIX).obj"
-	MakefileStream.WriteLine "	$(DELETE_COMMAND) $(BIN_RELEASE_DIR_MOVE)$(MOVE_PATH_SEP)$(OUTPUT_FILE_NAME)"
-	MakefileStream.WriteLine "	$(DELETE_COMMAND) $(BIN_DEBUG_DIR_MOVE)$(MOVE_PATH_SEP)$(OUTPUT_FILE_NAME)"
+	MakefileStream.WriteLine vbTab & "$(DELETE_COMMAND) $(OBJ_RELEASE_DIR_MOVE)$(MOVE_PATH_SEP)*$(FILE_SUFFIX).c"
+	MakefileStream.WriteLine vbTab & "$(DELETE_COMMAND) $(OBJ_DEBUG_DIR_MOVE)$(MOVE_PATH_SEP)*$(FILE_SUFFIX).c"
+	MakefileStream.WriteLine vbTab & "$(DELETE_COMMAND) $(OBJ_RELEASE_DIR_MOVE)$(MOVE_PATH_SEP)*$(FILE_SUFFIX).asm"
+	MakefileStream.WriteLine vbTab & "$(DELETE_COMMAND) $(OBJ_DEBUG_DIR_MOVE)$(MOVE_PATH_SEP)*$(FILE_SUFFIX).asm"
+	MakefileStream.WriteLine vbTab & "$(DELETE_COMMAND) $(OBJ_RELEASE_DIR_MOVE)$(MOVE_PATH_SEP)*$(FILE_SUFFIX).o"
+	MakefileStream.WriteLine vbTab & "$(DELETE_COMMAND) $(OBJ_DEBUG_DIR_MOVE)$(MOVE_PATH_SEP)*$(FILE_SUFFIX).o"
+	MakefileStream.WriteLine vbTab & "$(DELETE_COMMAND) $(OBJ_RELEASE_DIR_MOVE)$(MOVE_PATH_SEP)*$(FILE_SUFFIX).obj"
+	MakefileStream.WriteLine vbTab & "$(DELETE_COMMAND) $(OBJ_DEBUG_DIR_MOVE)$(MOVE_PATH_SEP)*$(FILE_SUFFIX).obj"
+	MakefileStream.WriteLine vbTab & "$(DELETE_COMMAND) $(BIN_RELEASE_DIR_MOVE)$(MOVE_PATH_SEP)$(OUTPUT_FILE_NAME)"
+	MakefileStream.WriteLine vbTab & "$(DELETE_COMMAND) $(BIN_DEBUG_DIR_MOVE)$(MOVE_PATH_SEP)$(OUTPUT_FILE_NAME)"
 	MakefileStream.WriteLine
 End Sub
 
 Sub WriteCreateDirsTarget(MakefileStream)
 	MakefileStream.WriteLine "createdirs:"
-	MakefileStream.WriteLine "	$(MKDIR_COMMAND) $(BIN_DEBUG_DIR_MOVE)"
-	MakefileStream.WriteLine "	$(MKDIR_COMMAND) $(BIN_RELEASE_DIR_MOVE)"
-	MakefileStream.WriteLine "	$(MKDIR_COMMAND) $(OBJ_DEBUG_DIR_MOVE)"
-	MakefileStream.WriteLine "	$(MKDIR_COMMAND) $(OBJ_RELEASE_DIR_MOVE)"
+	MakefileStream.WriteLine vbTab & "$(MKDIR_COMMAND) $(BIN_DEBUG_DIR_MOVE)"
+	MakefileStream.WriteLine vbTab & "$(MKDIR_COMMAND) $(BIN_RELEASE_DIR_MOVE)"
+	MakefileStream.WriteLine vbTab & "$(MKDIR_COMMAND) $(OBJ_DEBUG_DIR_MOVE)"
+	MakefileStream.WriteLine vbTab & "$(MKDIR_COMMAND) $(OBJ_RELEASE_DIR_MOVE)"
 	MakefileStream.WriteLine
 End Sub
 
 Sub WriteReleaseRule(MakefileStream)
 	MakefileStream.WriteLine "$(BIN_RELEASE_DIR)$(PATH_SEP)$(OUTPUT_FILE_NAME): $(OBJECTFILES_RELEASE)"
-	MakefileStream.WriteLine "	$(LD) $(LDFLAGS) $(LDLIBSBEGIN) $^ $(LDLIBS) $(LDLIBSEND) -o $@"
+	MakefileStream.WriteLine vbTab & "$(LD) $(LDFLAGS) $(LDLIBSBEGIN) $^ $(LDLIBS) $(LDLIBSEND) -o $@"
 	MakefileStream.WriteLine
 End Sub
 
 Sub WriteDebugRule(MakefileStream)
 	MakefileStream.WriteLine "$(BIN_DEBUG_DIR)$(PATH_SEP)$(OUTPUT_FILE_NAME): $(OBJECTFILES_DEBUG)"
-	MakefileStream.WriteLine "	$(LD) $(LDFLAGS) $(LDLIBSBEGIN) $^ $(LDLIBS) $(LDLIBSEND) -o $@"
+	MakefileStream.WriteLine vbTab & "$(LD) $(LDFLAGS) $(LDLIBSBEGIN) $^ $(LDLIBS) $(LDLIBSEND) -o $@"
 	MakefileStream.WriteLine
 End Sub
 
 Sub WriteAsmRule(MakefileStream)
 	MakefileStream.WriteLine "$(OBJ_RELEASE_DIR)$(PATH_SEP)%$(FILE_SUFFIX).o: $(OBJ_RELEASE_DIR)$(PATH_SEP)%$(FILE_SUFFIX).asm"
-	MakefileStream.WriteLine "	$(AS) $(ASFLAGS) -o $@ $<"
+	MakefileStream.WriteLine vbTab & "$(AS) $(ASFLAGS) -o $@ $<"
 	MakefileStream.WriteLine
 	MakefileStream.WriteLine "$(OBJ_DEBUG_DIR)$(PATH_SEP)%$(FILE_SUFFIX).o: $(OBJ_DEBUG_DIR)$(PATH_SEP)%$(FILE_SUFFIX).asm"
-	MakefileStream.WriteLine "	$(AS) $(ASFLAGS) -o $@ $<"
+	MakefileStream.WriteLine vbTab & "$(AS) $(ASFLAGS) -o $@ $<"
 	MakefileStream.WriteLine
 End Sub
 
 Sub WriteCRule(MakefileStream)
 	MakefileStream.WriteLine "$(OBJ_RELEASE_DIR)$(PATH_SEP)%$(FILE_SUFFIX).asm: $(OBJ_RELEASE_DIR)$(PATH_SEP)%$(FILE_SUFFIX).c"
-	MakefileStream.WriteLine "	$(CC) $(EXTRA_CFLAGS) $(CFLAGS) -o $@ $<"
+	MakefileStream.WriteLine vbTab & "$(CC) $(EXTRA_CFLAGS) $(CFLAGS) -o $@ $<"
 	MakefileStream.WriteLine
 	MakefileStream.WriteLine "$(OBJ_DEBUG_DIR)$(PATH_SEP)%$(FILE_SUFFIX).asm: $(OBJ_DEBUG_DIR)$(PATH_SEP)%$(FILE_SUFFIX).c"
-	MakefileStream.WriteLine "	$(CC) $(EXTRA_CFLAGS) $(CFLAGS) -o $@ $<"
+	MakefileStream.WriteLine vbTab & "$(CC) $(EXTRA_CFLAGS) $(CFLAGS) -o $@ $<"
 	MakefileStream.WriteLine
 End Sub
 
@@ -1017,32 +1017,32 @@ Sub WriteBasRule(MakefileStream, p)
 	AnyCFile = ReplaceSolidusToMovePathSeparator(SourceFolderWithPathSep) & "$*.c"
 
 	MakefileStream.WriteLine "$(OBJ_RELEASE_DIR)$(PATH_SEP)%$(FILE_SUFFIX).c: " & AnyBasFile
-	MakefileStream.WriteLine "	$(FBC) $(FBCFLAGS) $<"
+	MakefileStream.WriteLine vbTab & "$(FBC) $(FBCFLAGS) $<"
 
 	If p.FixEmittedCode = FIX_EMITTED_CODE Then
-		MakefileStream.WriteLine "	$(SCRIPT_COMMAND) /release " & AnyCFile
+		MakefileStream.WriteLine vbTab & "$(SCRIPT_COMMAND) /release " & AnyCFile
 	End If
 
-	MakefileStream.WriteLine "	$(MOVE_COMMAND) " & AnyCFile & " $(OBJ_RELEASE_DIR_MOVE)$(MOVE_PATH_SEP)$*$(FILE_SUFFIX).c"
+	MakefileStream.WriteLine vbTab & "$(MOVE_COMMAND) " & AnyCFile & " $(OBJ_RELEASE_DIR_MOVE)$(MOVE_PATH_SEP)$*$(FILE_SUFFIX).c"
 	MakefileStream.WriteLine
 
 	MakefileStream.WriteLine "$(OBJ_DEBUG_DIR)$(PATH_SEP)%$(FILE_SUFFIX).c: " & AnyBasFile
-	MakefileStream.WriteLine "	$(FBC) $(FBCFLAGS) $<"
+	MakefileStream.WriteLine vbTab & "$(FBC) $(FBCFLAGS) $<"
 
 	If p.FixEmittedCode = FIX_EMITTED_CODE Then
-		MakefileStream.WriteLine "	$(SCRIPT_COMMAND) /debug " & AnyCFile
+		MakefileStream.WriteLine vbTab & "$(SCRIPT_COMMAND) /debug " & AnyCFile
 	End If
 
-	MakefileStream.WriteLine "	$(MOVE_COMMAND) " & AnyCFile & " $(OBJ_DEBUG_DIR_MOVE)$(MOVE_PATH_SEP)$*$(FILE_SUFFIX).c"
+	MakefileStream.WriteLine vbTab & "$(MOVE_COMMAND) " & AnyCFile & " $(OBJ_DEBUG_DIR_MOVE)$(MOVE_PATH_SEP)$*$(FILE_SUFFIX).c"
 	MakefileStream.WriteLine
 End Sub
 
 Sub WriteResourceRule(MakefileStream)
 	MakefileStream.WriteLine "$(OBJ_RELEASE_DIR)$(PATH_SEP)%$(FILE_SUFFIX).obj: src$(PATH_SEP)%.RC"
-	MakefileStream.WriteLine "	$(GORC) $(GORCFLAGS) /fo $@ $<"
+	MakefileStream.WriteLine vbTab & "$(GORC) $(GORCFLAGS) /fo $@ $<"
 	MakefileStream.WriteLine
 	MakefileStream.WriteLine "$(OBJ_DEBUG_DIR)$(PATH_SEP)%$(FILE_SUFFIX).obj: src$(PATH_SEP)%.RC"
-	MakefileStream.WriteLine "	$(GORC) $(GORCFLAGS) /fo $@ $<"
+	MakefileStream.WriteLine vbTab & "$(GORC) $(GORCFLAGS) /fo $@ $<"
 	MakefileStream.WriteLine
 End Sub
 
