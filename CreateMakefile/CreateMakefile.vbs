@@ -740,10 +740,7 @@ Sub WriteGccFlags(MakefileStream, p)
 	MakefileStream.WriteLine "release: CFLAGS+=-fno-math-errno -fno-exceptions"
 	MakefileStream.WriteLine "release: CFLAGS+=-fno-unwind-tables -fno-asynchronous-unwind-tables"
 	MakefileStream.WriteLine "release: CFLAGS+=-O3 -fno-ident -fdata-sections -ffunction-sections"
-
-	MakefileStream.WriteLine "ifeq ($(PROCESSOR_ARCHITECTURE),AMD64)"
 	MakefileStream.WriteLine "release: CFLAGS+=-flto"
-	MakefileStream.WriteLine "endif"
 
 	MakefileStream.WriteLine "debug: CFLAGS+=$(CFLAGS_DEBUG)"
 
@@ -842,11 +839,7 @@ Sub WriteLinkerFlags(MakefileStream, p)
 			MakefileStream.WriteLine "LDFLAGS+=-T ""$(LD_SCRIPT)"""
 			MakefileStream.WriteLine "endif"
 
-			MakefileStream.WriteLine "ifeq ($(PROCESSOR_ARCHITECTURE),AMD64)"
 			MakefileStream.WriteLine "release: LDFLAGS+=-flto -s -Wl,--gc-sections"
-			MakefileStream.WriteLine "else"
-			MakefileStream.WriteLine "release: LDFLAGS+=-s -Wl,--gc-sections"
-			MakefileStream.WriteLine "endif"
 
 			MakefileStream.WriteLine "debug: LDFLAGS+=$(LDFLAGS_DEBUG)"
 			MakefileStream.WriteLine "debug: LDLIBS+=$(LDLIBS_DEBUG)"
