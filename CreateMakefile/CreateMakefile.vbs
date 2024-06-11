@@ -564,7 +564,6 @@ Sub WriteCompilerToolChain(MakefileStream)
 	MakefileStream.WriteLine "LIB_DIR ?="
 	MakefileStream.WriteLine "INC_DIR ?="
 	MakefileStream.WriteLine "LD_SCRIPT ?="
-	MakefileStream.WriteLine "FLTO ?="
 	MakefileStream.WriteLine
 End Sub
 
@@ -742,8 +741,8 @@ Sub WriteGccFlags(MakefileStream, p)
 	MakefileStream.WriteLine "release: CFLAGS+=-fno-unwind-tables -fno-asynchronous-unwind-tables"
 	MakefileStream.WriteLine "release: CFLAGS+=-O3 -fno-ident -fdata-sections -ffunction-sections"
 
-	MakefileStream.WriteLine "ifneq ($(FLTO),)"
-	MakefileStream.WriteLine "release: CFLAGS+=$(FLTO)"
+	MakefileStream.WriteLine "ifeq ($(PROCESSOR_ARCHITECTURE),AMD64)"
+	MakefileStream.WriteLine "release: CFLAGS+=-flto"
 	MakefileStream.WriteLine "endif"
 
 	MakefileStream.WriteLine "debug: CFLAGS+=$(CFLAGS_DEBUG)"
@@ -799,38 +798,42 @@ Sub WriteLinkerFlags(MakefileStream, p)
 		Case Else
 			MakefileStream.WriteLine "ifeq ($(PROCESSOR_ARCHITECTURE),AMD64)"
 
+			' WinMainCRTStartup or mainCRTStartup
 			MakefileStream.WriteLine "ifeq ($(USE_RUNTIME),FALSE)"
-			MakefileStream.WriteLine "LDFLAGS+=-e EntryPoint"
+			MakefileStream.WriteLine "LDFLAGS+=-Wl,-e EntryPoint"
 			MakefileStream.WriteLine "endif"
 
-			MakefileStream.WriteLine "LDFLAGS+=-m i386pep"
+			' MakefileStream.WriteLine "LDFLAGS+=-m i386pep"
 
 			MakefileStream.WriteLine "else"
 
 			MakefileStream.WriteLine "ifeq ($(USE_RUNTIME),FALSE)"
-			MakefileStream.WriteLine "LDFLAGS+=-e _EntryPoint@0"
+			MakefileStream.WriteLine "LDFLAGS+=-Wl,-e _EntryPoint@0"
 			MakefileStream.WriteLine "endif"
 
-			MakefileStream.WriteLine "LDFLAGS+=-m i386pe"
+			' MakefileStream.WriteLine "LDFLAGS+=-m i386pe"
 
 			Select Case p.AddressAware
 				Case LARGE_ADDRESS_UNAWARE
 				Case LARGE_ADDRESS_AWARE
-					MakefileStream.WriteLine "LDFLAGS+=--large-address-aware"
+					MakefileStream.WriteLine "LDFLAGS+=-Wl,--large-address-aware"
 			End Select
 
 			MakefileStream.WriteLine "endif"
 
 			Select Case p.FileSubsystem
 				Case SUBSYSTEM_CONSOLE
-					MakefileStream.WriteLine "LDFLAGS+=-subsystem console"
+					MakefileStream.WriteLine "LDFLAGS+=-Wl,--subsystem console"
 				Case SUBSYSTEM_WINDOW
-					MakefileStream.WriteLine "LDFLAGS+=-subsystem windows"
+					MakefileStream.WriteLine "LDFLAGS+=-Wl,--subsystem windows"
 				Case SUBSYSTEM_NATIVE
-					MakefileStream.WriteLine "LDFLAGS+=-subsystem native"
+					MakefileStream.WriteLine "LDFLAGS+=-Wl,--subsystem native"
 			End Select
 
-			MakefileStream.WriteLine "LDFLAGS+=--no-seh --nxcompat"
+			MakefileStream.WriteLine "LDFLAGS+=-Wl,--no-seh -Wl,--nxcompat"
+			MakefileStream.WriteLine "LDFLAGS+=-Wl,--disable-dynamicbase"
+
+			MakefileStream.WriteLine "LDFLAGS+=-pipe -nostdlib"
 
 			MakefileStream.WriteLine "LDFLAGS+=-L ."
 			MakefileStream.WriteLine "LDFLAGS+=-L ""$(LIB_DIR)"""
@@ -839,7 +842,11 @@ Sub WriteLinkerFlags(MakefileStream, p)
 			MakefileStream.WriteLine "LDFLAGS+=-T ""$(LD_SCRIPT)"""
 			MakefileStream.WriteLine "endif"
 
-			MakefileStream.WriteLine "release: LDFLAGS+=-s --gc-sections"
+			MakefileStream.WriteLine "ifeq ($(PROCESSOR_ARCHITECTURE),AMD64)"
+			MakefileStream.WriteLine "release: LDFLAGS+=-flto -s -Wl,--gc-sections"
+			MakefileStream.WriteLine "else"
+			MakefileStream.WriteLine "release: LDFLAGS+=-s -Wl,--gc-sections"
+			MakefileStream.WriteLine "endif"
 
 			MakefileStream.WriteLine "debug: LDFLAGS+=$(LDFLAGS_DEBUG)"
 			MakefileStream.WriteLine "debug: LDLIBS+=$(LDLIBS_DEBUG)"
@@ -863,7 +870,7 @@ Sub WriteLinkerLibraryes(MakefileStream, p)
 			MakefileStream.WriteLine "LDLIBSBEGIN+=""$(LIB_DIR)\fbrt0.o"""
 			MakefileStream.WriteLine "endif"
 
-			MakefileStream.WriteLine "LDLIBS+=--start-group"
+			MakefileStream.WriteLine "LDLIBS+=-Wl,--start-group"
 			' Windows API
 			MakefileStream.WriteLine "LDLIBS+=-ladvapi32 -lcomctl32 -lcomdlg32 -lcrypt32"
 			MakefileStream.WriteLine "LDLIBS+=-lgdi32 -lgdiplus -lkernel32 -lmswsock"
@@ -894,7 +901,7 @@ Sub WriteLinkerLibraryes(MakefileStream, p)
 			MakefileStream.WriteLine "LDLIBS+=-lgcc -lmingw32 -lmingwex -lmoldname -lgcc_eh"
 			MakefileStream.WriteLine "endif"
 
-			MakefileStream.WriteLine "LDLIBS+=--end-group"
+			MakefileStream.WriteLine "LDLIBS+=-Wl,--end-group"
 
 			MakefileStream.WriteLine "ifeq ($(USE_RUNTIME),TRUE)"
 			MakefileStream.WriteLine "LDLIBSEND+=""$(LIB_DIR)\crtend.o"""
@@ -964,13 +971,15 @@ End Sub
 
 Sub WriteReleaseRule(MakefileStream)
 	MakefileStream.WriteLine "$(BIN_RELEASE_DIR)$(PATH_SEP)$(OUTPUT_FILE_NAME): $(OBJECTFILES_RELEASE)"
-	MakefileStream.WriteLine vbTab & "$(LD) $(LDFLAGS) $(LDLIBSBEGIN) $^ $(LDLIBS) $(LDLIBSEND) -o $@"
+	' MakefileStream.WriteLine vbTab & "$(LD) $(LDFLAGS) $(LDLIBSBEGIN) $^ $(LDLIBS) $(LDLIBSEND) -o $@"
+	MakefileStream.WriteLine vbTab & "$(CC) $(LDFLAGS) $(LDLIBSBEGIN) $^ $(LDLIBS) $(LDLIBSEND) -o $@"
 	MakefileStream.WriteLine
 End Sub
 
 Sub WriteDebugRule(MakefileStream)
 	MakefileStream.WriteLine "$(BIN_DEBUG_DIR)$(PATH_SEP)$(OUTPUT_FILE_NAME): $(OBJECTFILES_DEBUG)"
-	MakefileStream.WriteLine vbTab & "$(LD) $(LDFLAGS) $(LDLIBSBEGIN) $^ $(LDLIBS) $(LDLIBSEND) -o $@"
+	' MakefileStream.WriteLine vbTab & "$(LD) $(LDFLAGS) $(LDLIBSBEGIN) $^ $(LDLIBS) $(LDLIBSEND) -o $@"
+	MakefileStream.WriteLine vbTab & "$(CC) $(LDFLAGS) $(LDLIBSBEGIN) $^ $(LDLIBS) $(LDLIBSEND) -o $@"
 	MakefileStream.WriteLine
 End Sub
 
