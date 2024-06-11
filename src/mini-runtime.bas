@@ -9,7 +9,7 @@
 #undef fb_End
 #undef fb_Init
 
-Declare Function main Alias "main"(ByVal argc As Long, ByVal argv As ZString Ptr Ptr) As Long
+Declare Function main cdecl Alias "main"(ByVal argc As Long, ByVal argv As ZString Ptr Ptr) As Long
 
 Public Sub __main cdecl Alias "__main"()
 
