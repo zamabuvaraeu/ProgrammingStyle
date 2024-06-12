@@ -23,7 +23,7 @@
 				"/fix:true",
 				"/multithreading:false",
 				"/pedantic:true"
-				
+
 			],
 			"problemMatcher": [],
 			"group": {
@@ -32,20 +32,23 @@
 			}
 		},
 		{
-			"label": "Build project",
+			"label": "Build CreateMakefile",
 			"type": "process",
-			"command": "R:\\Programming\\FreeBASIC-1.09.0-win64-gcc-9.3.0\\fbc64.exe",
+			"command": "C:\\Program Files (x86)\\FreeBASIC-1.10.1-winlibs-gcc-9.3.0\\fbc64.exe",
 			"args": [
-				"-m src\\Station922",
-				"-x Station922.exe",
-				"-gen gcc -O 3 -Wc -ffunction-sections,-fdata-sections -Wl --gc-sections",
-				"src\\*.bas",
-				"src\\*.RC"
+				"-m", "CreateMakefile",
+				"-x", "CreateMakefile.exe",
+				"-gen", "gcc",
+				"-O", "3",
+				"-Wc", "-ffunction-sections,-fdata-sections",
+				"-Wl", "--gc-sections",
+				"-s", "console",
+				"CreateMakefile\\CreateMakefile.bas",
 			],
 			"problemMatcher": [],
 			"group": {
-				"kind": "none",
-				"isDefault": true
+				"kind": "build",
+				"isDefault": false
 			}
 		}
 	]
