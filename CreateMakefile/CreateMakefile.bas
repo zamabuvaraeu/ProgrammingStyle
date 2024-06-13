@@ -435,6 +435,254 @@ Private Sub WriteArchSpecifiedPath(ByVal MakefileStream As Long)
 
 End Sub
 
+Private Function CodeGenerationToString(ByVal p As Parameter Ptr) As String
+
+	Dim ep As String
+
+	Select Case p->Emitter
+
+		Case CODE_EMITTER_GCC
+			ep = "-gen gcc"
+
+		Case CODE_EMITTER_GAS
+			ep = "-gen gas"
+
+		Case CODE_EMITTER_GAS64
+			ep = "-gen gas64"
+
+		Case CODE_EMITTER_LLVM
+			ep = "-gen llvm"
+
+		Case CODE_EMITTER_WASM32
+			ep = "-gen gcc"
+
+		Case Else ' CODE_EMITTER_WASM64
+			ep = "-gen gcc"
+
+	End Select
+
+	Return ep
+
+End Function
+
+Private Sub WriteFbcFlags(ByVal MakefileStream As Long, ByVal p As Parameter Ptr)
+
+	Dim EmitterParam As String = CodeGenerationToString(p)
+
+	Print #MakefileStream, "FBCFLAGS+=" & EmitterParam
+
+	Print #MakefileStream, "ifeq ($(USE_UNICODE),TRUE)"
+	Print #MakefileStream, "FBCFLAGS+=-d UNICODE"
+	Print #MakefileStream, "FBCFLAGS+=-d _UNICODE"
+	Print #MakefileStream, "endif"
+
+	Print #MakefileStream, "FBCFLAGS+=-d WINVER=$(WINVER)"
+	Print #MakefileStream, "FBCFLAGS+=-d _WIN32_WINNT=$(_WIN32_WINNT)"
+
+	Print #MakefileStream, "FBCFLAGS+=-m " & p->MainModuleName
+
+	Print #MakefileStream, "ifeq ($(USE_RUNTIME),TRUE)"
+	Print #MakefileStream, "else"
+	Print #MakefileStream, "FBCFLAGS+=-d WITHOUT_RUNTIME"
+	Print #MakefileStream, "endif"
+
+	Print #MakefileStream, "FBCFLAGS+=-w error -maxerr 1"
+	Print #MakefileStream, "FBCFLAGS+=-i " & p->SourceFolder
+
+	Print #MakefileStream, "ifneq ($(INC_DIR),)"
+	Print #MakefileStream, "FBCFLAGS+=-i ""$(INC_DIR)"""
+	Print #MakefileStream, "endif"
+
+	Print #MakefileStream, "FBCFLAGS+=-r"
+
+	Dim SubSystemParam As String
+	If p->FileSubsystem = SUBSYSTEM_WINDOW Then
+		SubSystemParam = "-s gui"
+	Else
+		SubSystemParam = "-s console"
+	End If
+
+	Print #MakefileStream, "FBCFLAGS+=" & SubSystemParam
+
+	Print #MakefileStream, "FBCFLAGS+=-O 0"
+	Print #MakefileStream, "FBCFLAGS_DEBUG+=-g"
+	Print #MakefileStream, "debug: FBCFLAGS+=$(FBCFLAGS_DEBUG)"
+	Print #MakefileStream,
+
+End Sub
+
+Private Sub WriteGccFlags(ByVal MakefileStream As Long, ByVal p As Parameter Ptr)
+
+	Select Case p->Emitter
+
+		Case CODE_EMITTER_WASM32, CODE_EMITTER_WASM64
+			' MakefileStream.WriteLine "CFLAGS+=-emit-llvm"
+
+		Case Else
+			Print #MakefileStream, "ifeq ($(PROCESSOR_ARCHITECTURE),AMD64)"
+			Print #MakefileStream, "CFLAGS+=-m64"
+			Print #MakefileStream, "else"
+			Print #MakefileStream, "CFLAGS+=-m32"
+			Print #MakefileStream, "endif"
+
+			Print #MakefileStream, "CFLAGS+=-march=$(MARCH)"
+
+	End Select
+
+	Select Case p->Emitter
+
+		Case CODE_EMITTER_WASM32
+			Print #MakefileStream, "CFLAGS+=--target=wasm32"
+
+		Case CODE_EMITTER_WASM64
+			Print #MakefileStream, "CFLAGS+=--target=wasm64"
+
+		Case Else
+
+	End Select
+
+	Print #MakefileStream, "CFLAGS+=-pipe"
+
+	If p->Pedantic Then
+		Print #MakefileStream, "CFLAGS+=-Wall -Werror -Wextra -pedantic"
+	Else
+		Print #MakefileStream, "CFLAGS+=-Wall -Werror -Wextra"
+	End If
+
+	Print #MakefileStream, "CFLAGS+=-Wno-unused-label -Wno-unused-function"
+	Print #MakefileStream, "CFLAGS+=-Wno-unused-parameter -Wno-unused-variable"
+	Print #MakefileStream, "CFLAGS+=-Wno-dollar-in-identifier-extension"
+	Print #MakefileStream, "CFLAGS+=-Wno-language-extension-token"
+	Print #MakefileStream, "CFLAGS+=-Wno-parentheses-equality"
+
+	Print #MakefileStream, "CFLAGS_DEBUG+=-g -O0"
+
+	Print #MakefileStream, "release: CFLAGS+=$(CFLAGS_RELEASE)"
+	Print #MakefileStream, "release: CFLAGS+=-fno-math-errno -fno-exceptions"
+	Print #MakefileStream, "release: CFLAGS+=-fno-unwind-tables -fno-asynchronous-unwind-tables"
+	Print #MakefileStream, "release: CFLAGS+=-O3 -fno-ident -fdata-sections -ffunction-sections"
+	Print #MakefileStream, "release: CFLAGS+=-flto"
+
+	Print #MakefileStream, "debug: CFLAGS+=$(CFLAGS_DEBUG)"
+
+	Print #MakefileStream,
+
+End Sub
+
+Private Sub WriteAsmFlags(ByVal MakefileStream As Long)
+
+	Print #MakefileStream, "ifeq ($(PROCESSOR_ARCHITECTURE),AMD64)"
+	Print #MakefileStream, "ASFLAGS+=--64"
+	Print #MakefileStream, "else"
+	Print #MakefileStream, "ASFLAGS+=--32"
+	Print #MakefileStream, "endif"
+
+	Print #MakefileStream, "ASFLAGS_DEBUG+="
+	Print #MakefileStream, "release: ASFLAGS+=--strip-local-absolute"
+	Print #MakefileStream, "debug: ASFLAGS+=$(ASFLAGS_DEBUG)"
+	Print #MakefileStream,
+
+End Sub
+
+Private Sub WriteGorcFlags(ByVal MakefileStream As Long)
+
+	Print #MakefileStream, "ifeq ($(PROCESSOR_ARCHITECTURE),AMD64)"
+	Print #MakefileStream, "GORCFLAGS+=/machine X64"
+	Print #MakefileStream, "endif"
+
+	Print #MakefileStream, "GORCFLAGS+=/ni /o /d FROM_MAKEFILE"
+	Print #MakefileStream, "GORCFLAGS_DEBUG=/d DEBUG"
+	Print #MakefileStream, "debug: GORCFLAGS+=$(GORCFLAGS_DEBUG)"
+	Print #MakefileStream,
+
+End Sub
+
+Private Sub WriteLinkerFlags(ByVal MakefileStream As Long, ByVal p As Parameter Ptr)
+
+	Select Case p->Emitter
+
+		Case CODE_EMITTER_WASM32, CODE_EMITTER_WASM64
+			' Set maximum stack size to 8MiB
+			' -z stack-size=8388608
+
+			' --initial-memory=<value> Initial size of the linear memory
+			' --max-memory=<value>     Maximum size of the linear memory
+			' --max-memory=8388608
+
+			Print #MakefileStream, "LDFLAGS+=-m wasm32"
+			Print #MakefileStream, "LDFLAGS+=--allow-undefined"
+			Print #MakefileStream, "LDFLAGS+=--no-entry"
+			Print #MakefileStream, "LDFLAGS+=--export-all"
+
+			Print #MakefileStream, "LDFLAGS+=-L ."
+			Print #MakefileStream, "LDFLAGS+=-L ""$(LIB_DIR)"""
+
+			Print #MakefileStream, "release: LDFLAGS+=--lto-O3 --gc-sections"
+
+		Case Else
+			Print #MakefileStream, "ifeq ($(PROCESSOR_ARCHITECTURE),AMD64)"
+
+			' WinMainCRTStartup or mainCRTStartup
+			Print #MakefileStream, "ifeq ($(USE_RUNTIME),FALSE)"
+			Print #MakefileStream, "LDFLAGS+=-Wl,-e EntryPoint"
+			Print #MakefileStream, "endif"
+
+			' MakefileStream.WriteLine "LDFLAGS+=-m i386pep"
+
+			Print #MakefileStream, "else"
+
+			Print #MakefileStream, "ifeq ($(USE_RUNTIME),FALSE)"
+			Print #MakefileStream, "LDFLAGS+=-Wl,-e _EntryPoint@0"
+			Print #MakefileStream, "endif"
+
+			' MakefileStream.WriteLine "LDFLAGS+=-m i386pe"
+
+			Select Case p->AddressAware
+
+				Case LARGE_ADDRESS_UNAWARE
+
+				Case LARGE_ADDRESS_AWARE
+					Print #MakefileStream, "LDFLAGS+=-Wl,--large-address-aware"
+
+			End Select
+
+			Print #MakefileStream, "endif"
+
+			Select Case p->FileSubsystem
+
+				Case SUBSYSTEM_CONSOLE
+					Print #MakefileStream, "LDFLAGS+=-Wl,--subsystem console"
+
+				Case SUBSYSTEM_WINDOW
+					Print #MakefileStream, "LDFLAGS+=-Wl,--subsystem windows"
+
+				Case SUBSYSTEM_NATIVE
+					Print #MakefileStream, "LDFLAGS+=-Wl,--subsystem native"
+
+			End Select
+
+			Print #MakefileStream, "LDFLAGS+=-Wl,--no-seh -Wl,--nxcompat"
+			Print #MakefileStream, "LDFLAGS+=-Wl,--disable-dynamicbase"
+
+			Print #MakefileStream, "LDFLAGS+=-pipe -nostdlib"
+
+			Print #MakefileStream, "LDFLAGS+=-L ."
+			Print #MakefileStream, "LDFLAGS+=-L ""$(LIB_DIR)"""
+
+			Print #MakefileStream, "ifneq ($(LD_SCRIPT),)"
+			Print #MakefileStream, "LDFLAGS+=-T ""$(LD_SCRIPT)"""
+			Print #MakefileStream, "endif"
+
+			Print #MakefileStream, "release: LDFLAGS+=-flto -s -Wl,--gc-sections"
+
+			Print #MakefileStream, "debug: LDFLAGS+=$(LDFLAGS_DEBUG)"
+			Print #MakefileStream, "debug: LDLIBS+=$(LDLIBS_DEBUG)"
+	End Select
+
+	Print #MakefileStream,
+
+End Sub
+
 Dim Params As Parameter = Any
 ParseCommandLine(@Params)
 
@@ -452,11 +700,11 @@ WriteOutputFilename(MakefileNumber, @Params)
 WriteUtilsPath(MakefileNumber)
 WriteArchSpecifiedPath(MakefileNumber)
 
-' WriteFbcFlags MakefileFileStream, Params
-' WriteGccFlags MakefileFileStream, Params
-' WriteAsmFlags MakefileFileStream
-' WriteGorcFlags MakefileFileStream
-' WriteLinkerFlags MakefileFileStream, Params
+WriteFbcFlags(MakefileNumber, @Params)
+WriteGccFlags(MakefileNumber, @Params)
+WriteAsmFlags(MakefileNumber)
+WriteGorcFlags(MakefileNumber)
+WriteLinkerFlags(MakefileNumber, @Params)
 
 ' WriteLinkerLibraryes MakefileFileStream, Params
 ' WriteIncludeFile MakefileFileStream, Params
@@ -614,36 +862,6 @@ Sub WriteMakefileParameters(p)
 	Set oStream = Nothing
 End Sub
 
-Function CodeGenerationToString(p)
-
-	Dim ep
-
-	Select Case p.Emitter
-
-		Case CODE_EMITTER_GCC
-			ep = "-gen gcc"
-
-		Case CODE_EMITTER_GAS
-			ep = "-gen gas"
-
-		Case CODE_EMITTER_GAS64
-			ep = "-gen gas64"
-
-		Case CODE_EMITTER_LLVM
-			ep = "-gen llvm"
-
-		Case CODE_EMITTER_WASM32
-			ep = "-gen gcc"
-
-		Case CODE_EMITTER_WASM64
-			ep = "-gen gcc"
-
-	End Select
-
-	CodeGenerationToString = ep
-
-End Function
-
 Function CreateCompilerParams(p)
 
 	Dim EmitterFlag
@@ -706,210 +924,6 @@ Function CreateCompilerParams(p)
 	CreateCompilerParams = CompilerParam
 
 End Function
-
-Sub WriteFbcFlags(MakefileStream, p)
-
-	Dim EmitterParam
-	EmitterParam = CodeGenerationToString(p)
-
-	MakefileStream.WriteLine "FBCFLAGS+=" & EmitterParam
-
-	MakefileStream.WriteLine "ifeq ($(USE_UNICODE),TRUE)"
-	MakefileStream.WriteLine "FBCFLAGS+=-d UNICODE"
-	MakefileStream.WriteLine "FBCFLAGS+=-d _UNICODE"
-	MakefileStream.WriteLine "endif"
-
-	MakefileStream.WriteLine "FBCFLAGS+=-d WINVER=$(WINVER)"
-	MakefileStream.WriteLine "FBCFLAGS+=-d _WIN32_WINNT=$(_WIN32_WINNT)"
-
-	MakefileStream.WriteLine "FBCFLAGS+=-m " & p.MainModuleName
-
-	MakefileStream.WriteLine "ifeq ($(USE_RUNTIME),TRUE)"
-	MakefileStream.WriteLine "else"
-	MakefileStream.WriteLine "FBCFLAGS+=-d WITHOUT_RUNTIME"
-	MakefileStream.WriteLine "endif"
-
-	MakefileStream.WriteLine "FBCFLAGS+=-w error -maxerr 1"
-	MakefileStream.WriteLine "FBCFLAGS+=-i " & p.SourceFolder
-
-	MakefileStream.WriteLine "ifneq ($(INC_DIR),)"
-	MakefileStream.WriteLine "FBCFLAGS+=-i ""$(INC_DIR)"""
-	MakefileStream.WriteLine "endif"
-
-	MakefileStream.WriteLine "FBCFLAGS+=-r"
-
-	Dim SubSystemParam
-	If p.FileSubsystem = SUBSYSTEM_WINDOW Then
-		SubSystemParam = "-s gui"
-	Else
-		SubSystemParam = "-s console"
-	End If
-	MakefileStream.WriteLine "FBCFLAGS+=" & SubSystemParam
-
-	MakefileStream.WriteLine "FBCFLAGS+=-O 0"
-	MakefileStream.WriteLine "FBCFLAGS_DEBUG+=-g"
-	MakefileStream.WriteLine "debug: FBCFLAGS+=$(FBCFLAGS_DEBUG)"
-	MakefileStream.WriteLine
-End Sub
-
-Sub WriteGccFlags(MakefileStream, p)
-
-	Select Case p.Emitter
-
-		Case CODE_EMITTER_WASM32, CODE_EMITTER_WASM64
-			' MakefileStream.WriteLine "CFLAGS+=-emit-llvm"
-
-		Case Else
-			MakefileStream.WriteLine "ifeq ($(PROCESSOR_ARCHITECTURE),AMD64)"
-			MakefileStream.WriteLine "CFLAGS+=-m64"
-			MakefileStream.WriteLine "else"
-			MakefileStream.WriteLine "CFLAGS+=-m32"
-			MakefileStream.WriteLine "endif"
-
-			MakefileStream.WriteLine "CFLAGS+=-march=$(MARCH)"
-
-	End Select
-
-	Select Case p.Emitter
-
-		Case CODE_EMITTER_WASM32
-			MakefileStream.WriteLine "CFLAGS+=--target=wasm32"
-
-		Case CODE_EMITTER_WASM64
-			MakefileStream.WriteLine "CFLAGS+=--target=wasm64"
-
-		Case Else
-
-	End Select
-
-	MakefileStream.WriteLine "CFLAGS+=-pipe"
-
-	If p.Pedantic Then
-		MakefileStream.WriteLine "CFLAGS+=-Wall -Werror -Wextra -pedantic"
-	Else
-		MakefileStream.WriteLine "CFLAGS+=-Wall -Werror -Wextra"
-	End If
-
-	MakefileStream.WriteLine "CFLAGS+=-Wno-unused-label -Wno-unused-function"
-	MakefileStream.WriteLine "CFLAGS+=-Wno-unused-parameter -Wno-unused-variable"
-	MakefileStream.WriteLine "CFLAGS+=-Wno-dollar-in-identifier-extension"
-	MakefileStream.WriteLine "CFLAGS+=-Wno-language-extension-token"
-	MakefileStream.WriteLine "CFLAGS+=-Wno-parentheses-equality"
-
-	MakefileStream.WriteLine "CFLAGS_DEBUG+=-g -O0"
-
-	MakefileStream.WriteLine "release: CFLAGS+=$(CFLAGS_RELEASE)"
-	MakefileStream.WriteLine "release: CFLAGS+=-fno-math-errno -fno-exceptions"
-	MakefileStream.WriteLine "release: CFLAGS+=-fno-unwind-tables -fno-asynchronous-unwind-tables"
-	MakefileStream.WriteLine "release: CFLAGS+=-O3 -fno-ident -fdata-sections -ffunction-sections"
-	MakefileStream.WriteLine "release: CFLAGS+=-flto"
-
-	MakefileStream.WriteLine "debug: CFLAGS+=$(CFLAGS_DEBUG)"
-
-	MakefileStream.WriteLine
-End Sub
-
-Sub WriteAsmFlags(MakefileStream)
-	MakefileStream.WriteLine "ifeq ($(PROCESSOR_ARCHITECTURE),AMD64)"
-	MakefileStream.WriteLine "ASFLAGS+=--64"
-	MakefileStream.WriteLine "else"
-	MakefileStream.WriteLine "ASFLAGS+=--32"
-	MakefileStream.WriteLine "endif"
-
-	MakefileStream.WriteLine "ASFLAGS_DEBUG+="
-	MakefileStream.WriteLine "release: ASFLAGS+=--strip-local-absolute"
-	MakefileStream.WriteLine "debug: ASFLAGS+=$(ASFLAGS_DEBUG)"
-	MakefileStream.WriteLine
-End Sub
-
-Sub WriteGorcFlags(MakefileStream)
-	MakefileStream.WriteLine "ifeq ($(PROCESSOR_ARCHITECTURE),AMD64)"
-	MakefileStream.WriteLine "GORCFLAGS+=/machine X64"
-	MakefileStream.WriteLine "endif"
-
-	MakefileStream.WriteLine "GORCFLAGS+=/ni /o /d FROM_MAKEFILE"
-	MakefileStream.WriteLine "GORCFLAGS_DEBUG=/d DEBUG"
-	MakefileStream.WriteLine "debug: GORCFLAGS+=$(GORCFLAGS_DEBUG)"
-	MakefileStream.WriteLine
-End Sub
-
-Sub WriteLinkerFlags(MakefileStream, p)
-
-	Select Case p.Emitter
-
-		Case CODE_EMITTER_WASM32, CODE_EMITTER_WASM64
-			' Set maximum stack size to 8MiB
-			' -z stack-size=8388608
-
-			' --initial-memory=<value> Initial size of the linear memory
-			' --max-memory=<value>     Maximum size of the linear memory
-			' --max-memory=8388608
-
-			MakefileStream.WriteLine "LDFLAGS+=-m wasm32"
-			MakefileStream.WriteLine "LDFLAGS+=--allow-undefined"
-			MakefileStream.WriteLine "LDFLAGS+=--no-entry"
-			MakefileStream.WriteLine "LDFLAGS+=--export-all"
-
-			MakefileStream.WriteLine "LDFLAGS+=-L ."
-			MakefileStream.WriteLine "LDFLAGS+=-L ""$(LIB_DIR)"""
-
-			MakefileStream.WriteLine "release: LDFLAGS+=--lto-O3 --gc-sections"
-		Case Else
-			MakefileStream.WriteLine "ifeq ($(PROCESSOR_ARCHITECTURE),AMD64)"
-
-			' WinMainCRTStartup or mainCRTStartup
-			MakefileStream.WriteLine "ifeq ($(USE_RUNTIME),FALSE)"
-			MakefileStream.WriteLine "LDFLAGS+=-Wl,-e EntryPoint"
-			MakefileStream.WriteLine "endif"
-
-			' MakefileStream.WriteLine "LDFLAGS+=-m i386pep"
-
-			MakefileStream.WriteLine "else"
-
-			MakefileStream.WriteLine "ifeq ($(USE_RUNTIME),FALSE)"
-			MakefileStream.WriteLine "LDFLAGS+=-Wl,-e _EntryPoint@0"
-			MakefileStream.WriteLine "endif"
-
-			' MakefileStream.WriteLine "LDFLAGS+=-m i386pe"
-
-			Select Case p.AddressAware
-				Case LARGE_ADDRESS_UNAWARE
-				Case LARGE_ADDRESS_AWARE
-					MakefileStream.WriteLine "LDFLAGS+=-Wl,--large-address-aware"
-			End Select
-
-			MakefileStream.WriteLine "endif"
-
-			Select Case p.FileSubsystem
-				Case SUBSYSTEM_CONSOLE
-					MakefileStream.WriteLine "LDFLAGS+=-Wl,--subsystem console"
-				Case SUBSYSTEM_WINDOW
-					MakefileStream.WriteLine "LDFLAGS+=-Wl,--subsystem windows"
-				Case SUBSYSTEM_NATIVE
-					MakefileStream.WriteLine "LDFLAGS+=-Wl,--subsystem native"
-			End Select
-
-			MakefileStream.WriteLine "LDFLAGS+=-Wl,--no-seh -Wl,--nxcompat"
-			MakefileStream.WriteLine "LDFLAGS+=-Wl,--disable-dynamicbase"
-
-			MakefileStream.WriteLine "LDFLAGS+=-pipe -nostdlib"
-
-			MakefileStream.WriteLine "LDFLAGS+=-L ."
-			MakefileStream.WriteLine "LDFLAGS+=-L ""$(LIB_DIR)"""
-
-			MakefileStream.WriteLine "ifneq ($(LD_SCRIPT),)"
-			MakefileStream.WriteLine "LDFLAGS+=-T ""$(LD_SCRIPT)"""
-			MakefileStream.WriteLine "endif"
-
-			MakefileStream.WriteLine "release: LDFLAGS+=-flto -s -Wl,--gc-sections"
-
-			MakefileStream.WriteLine "debug: LDFLAGS+=$(LDFLAGS_DEBUG)"
-			MakefileStream.WriteLine "debug: LDLIBS+=$(LDLIBS_DEBUG)"
-	End Select
-
-	MakefileStream.WriteLine
-
-End Sub
 
 Sub WriteLinkerLibraryes(MakefileStream, p)
 
