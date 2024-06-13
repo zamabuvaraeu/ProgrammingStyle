@@ -683,6 +683,70 @@ Private Sub WriteLinkerFlags(ByVal MakefileStream As Long, ByVal p As Parameter 
 
 End Sub
 
+Private Sub WriteLinkerLibraryes(ByVal MakefileStream As Long, ByVal p As Parameter Ptr)
+
+	Select Case p->Emitter
+
+		Case CODE_EMITTER_WASM32, CODE_EMITTER_WASM64
+
+		Case Else
+			Print #MakefileStream, "ifeq ($(USE_RUNTIME),TRUE)"
+
+			' For profile
+			' Print #MakefileStream, "LDLIBSBEGIN+=gcrt2.o"
+
+			Print #MakefileStream, "LDLIBSBEGIN+=""$(LIB_DIR)\crt2.o"""
+			Print #MakefileStream, "LDLIBSBEGIN+=""$(LIB_DIR)\crtbegin.o"""
+			Print #MakefileStream, "LDLIBSBEGIN+=""$(LIB_DIR)\fbrt0.o"""
+			Print #MakefileStream, "endif"
+
+			Print #MakefileStream, "LDLIBS+=-Wl,--start-group"
+
+			' Windows API
+			Print #MakefileStream, "LDLIBS+=-ladvapi32 -lcomctl32 -lcomdlg32 -lcrypt32"
+			Print #MakefileStream, "LDLIBS+=-lgdi32 -lgdiplus -lkernel32 -lmswsock"
+			Print #MakefileStream, "LDLIBS+=-lole32 -loleaut32 -lshell32 -lshlwapi"
+			Print #MakefileStream, "LDLIBS+=-lwsock32 -lws2_32 -luser32"
+			Print #MakefileStream, "LDLIBS+=-lmsvcrt"
+
+			Print #MakefileStream, "ifeq ($(USE_RUNTIME),TRUE)"
+
+			' For Multithreading
+			Select Case p->ThreadingMode
+
+				Case DEFINE_SINGLETHREADING_RUNTIME
+					Print #MakefileStream, "LDLIBS+=-lfb"
+
+				Case DEFINE_MULTITHREADING_RUNTIME
+					Print #MakefileStream, "LDLIBS+=-lfbmt"
+
+			End Select
+
+			Print #MakefileStream, "LDLIBS+=-luuid"
+
+			Print #MakefileStream, "endif"
+
+			' For profile
+			' Print #MakefileStream, "LDLIBS_DEBUG+=-lgmon"
+
+			Print #MakefileStream, "LDLIBS_DEBUG+=-lgcc -lmingw32 -lmingwex -lmoldname -lgcc_eh"
+
+			Print #MakefileStream, "ifeq ($(USE_RUNTIME),TRUE)"
+			Print #MakefileStream, "LDLIBS+=-lgcc -lmingw32 -lmingwex -lmoldname -lgcc_eh"
+			Print #MakefileStream, "endif"
+
+			Print #MakefileStream, "LDLIBS+=-Wl,--end-group"
+
+			Print #MakefileStream, "ifeq ($(USE_RUNTIME),TRUE)"
+			Print #MakefileStream, "LDLIBSEND+=""$(LIB_DIR)\crtend.o"""
+			Print #MakefileStream, "endif"
+
+	End Select
+
+	Print #MakefileStream,
+
+End Sub
+
 Dim Params As Parameter = Any
 ParseCommandLine(@Params)
 
@@ -706,7 +770,8 @@ WriteAsmFlags(MakefileNumber)
 WriteGorcFlags(MakefileNumber)
 WriteLinkerFlags(MakefileNumber, @Params)
 
-' WriteLinkerLibraryes MakefileFileStream, Params
+WriteLinkerLibraryes(MakefileNumber, @Params)
+
 ' WriteIncludeFile MakefileFileStream, Params
 ' WriteReleaseTarget MakefileFileStream
 ' WriteDebugTarget MakefileFileStream
@@ -924,62 +989,6 @@ Function CreateCompilerParams(p)
 	CreateCompilerParams = CompilerParam
 
 End Function
-
-Sub WriteLinkerLibraryes(MakefileStream, p)
-
-	Select Case p.Emitter
-		Case CODE_EMITTER_WASM32, CODE_EMITTER_WASM64
-
-		Case Else
-			MakefileStream.WriteLine "ifeq ($(USE_RUNTIME),TRUE)"
-			' For profile
-			' MakefileStream.WriteLine "LDLIBSBEGIN+=gcrt2.o"
-			MakefileStream.WriteLine "LDLIBSBEGIN+=""$(LIB_DIR)\crt2.o"""
-			MakefileStream.WriteLine "LDLIBSBEGIN+=""$(LIB_DIR)\crtbegin.o"""
-			MakefileStream.WriteLine "LDLIBSBEGIN+=""$(LIB_DIR)\fbrt0.o"""
-			MakefileStream.WriteLine "endif"
-
-			MakefileStream.WriteLine "LDLIBS+=-Wl,--start-group"
-			' Windows API
-			MakefileStream.WriteLine "LDLIBS+=-ladvapi32 -lcomctl32 -lcomdlg32 -lcrypt32"
-			MakefileStream.WriteLine "LDLIBS+=-lgdi32 -lgdiplus -lkernel32 -lmswsock"
-			MakefileStream.WriteLine "LDLIBS+=-lole32 -loleaut32 -lshell32 -lshlwapi"
-			MakefileStream.WriteLine "LDLIBS+=-lwsock32 -lws2_32 -luser32"
-			' C Runtime
-			MakefileStream.WriteLine "LDLIBS+=-lmsvcrt"
-
-			MakefileStream.WriteLine "ifeq ($(USE_RUNTIME),TRUE)"
-
-			' For Multithreading
-			Select Case p.ThreadingMode
-				Case DEFINE_SINGLETHREADING_RUNTIME
-					MakefileStream.WriteLine "LDLIBS+=-lfb"
-				Case DEFINE_MULTITHREADING_RUNTIME
-					MakefileStream.WriteLine "LDLIBS+=-lfbmt"
-			End Select
-
-			MakefileStream.WriteLine "LDLIBS+=-luuid"
-
-			MakefileStream.WriteLine "endif"
-
-			' For profile
-			' MakefileStream.WriteLine "LDLIBS_DEBUG+=-lgmon"
-			MakefileStream.WriteLine "LDLIBS_DEBUG+=-lgcc -lmingw32 -lmingwex -lmoldname -lgcc_eh"
-
-			MakefileStream.WriteLine "ifeq ($(USE_RUNTIME),TRUE)"
-			MakefileStream.WriteLine "LDLIBS+=-lgcc -lmingw32 -lmingwex -lmoldname -lgcc_eh"
-			MakefileStream.WriteLine "endif"
-
-			MakefileStream.WriteLine "LDLIBS+=-Wl,--end-group"
-
-			MakefileStream.WriteLine "ifeq ($(USE_RUNTIME),TRUE)"
-			MakefileStream.WriteLine "LDLIBSEND+=""$(LIB_DIR)\crtend.o"""
-			MakefileStream.WriteLine "endif"
-	End Select
-
-	MakefileStream.WriteLine
-
-End Sub
 
 Sub WriteIncludeFile(MakefileStream, p)
 	Dim SrcFolder
