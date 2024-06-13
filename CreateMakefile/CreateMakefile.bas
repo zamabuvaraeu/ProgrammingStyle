@@ -330,10 +330,156 @@ Private Function ParseCommandLine(ByVal p As Parameter Ptr) As Integer
 
 End Function
 
+Private Sub WriteTargets(ByVal MakefileStream As Long)
+	Print #MakefileStream, ".PHONY: all debug release clean createdirs"
+	Print #MakefileStream,
+	Print #MakefileStream, "all: release debug"
+	Print #MakefileStream,
+End Sub
+
+Private Sub WriteCompilerToolChain(ByVal MakefileStream As Long)
+	Print #MakefileStream, "FBC ?= fbc.exe"
+	Print #MakefileStream, "CC ?= gcc.exe"
+	Print #MakefileStream, "AS ?= as.exe"
+	Print #MakefileStream, "AR ?= ar.exe"
+	Print #MakefileStream, "GORC ?= GoRC.exe"
+	Print #MakefileStream, "LD ?= ld.exe"
+	Print #MakefileStream, "DLL_TOOL ?= dlltool.exe"
+	Print #MakefileStream, "LIB_DIR ?="
+	Print #MakefileStream, "INC_DIR ?="
+	Print #MakefileStream, "LD_SCRIPT ?="
+	Print #MakefileStream,
+End Sub
+
+Private Sub WriteProcessorArch(ByVal MakefileStream As Long)
+	Print #MakefileStream, "TARGET_TRIPLET ?="
+	Print #MakefileStream, "MARCH ?= native"
+	Print #MakefileStream,
+End Sub
+
+Private Sub WriteOutputFilename(ByVal MakefileStream As Long, ByVal p As Parameter Ptr)
+
+	Dim Extension As String
+	Select Case p->ExeType
+
+		Case OUTPUT_FILETYPE_EXE
+			Extension = ".exe"
+
+		Case OUTPUT_FILETYPE_DLL
+			Extension = ".dll"
+
+		Case OUTPUT_FILETYPE_LIBRARY
+			Extension = ".a"
+
+		Case OUTPUT_FILETYPE_WASM32
+			Extension = ".wasm"
+
+		Case Else ' OUTPUT_FILETYPE_WASM64
+			Extension = ".wasm"
+
+	End Select
+
+	' TODO Add UNICODE and _UNICODE to file suffix
+	' TODO Add WINVER and _WIN32_WINNT to file suffix
+
+	Print #MakefileStream, "USE_RUNTIME ?= TRUE"
+	Print #MakefileStream, "FBC_VER ?= " & FBC_VER
+	Print #MakefileStream, "GCC_VER ?= " & GCC_VER
+
+	Print #MakefileStream, "ifeq ($(USE_RUNTIME),TRUE)"
+	Print #MakefileStream, "RUNTIME = _RT"
+	Print #MakefileStream, "else"
+	Print #MakefileStream, "RUNTIME = _WRT"
+	Print #MakefileStream, "endif"
+
+	Print #MakefileStream, "OUTPUT_FILE_NAME=" & p->OutputFilename & "$(FILE_SUFFIX)" & Extension
+	Print #MakefileStream,
+
+End Sub
+
+Private Sub WriteUtilsPath(ByVal MakefileStream As Long)
+
+	Print #MakefileStream, "PATH_SEP ?= /"
+	Print #MakefileStream, "MOVE_PATH_SEP ?= \\"
+	Print #MakefileStream,
+	Print #MakefileStream, "MOVE_COMMAND ?= cmd.exe /c move /y"
+	Print #MakefileStream, "DELETE_COMMAND ?= cmd.exe /c del /f /q"
+	Print #MakefileStream, "MKDIR_COMMAND ?= cmd.exe /c mkdir"
+	Print #MakefileStream, "SCRIPT_COMMAND ?= cscript.exe //nologo fix-emitted-code.vbs"
+	Print #MakefileStream,
+
+End Sub
+
+Private Sub WriteArchSpecifiedPath(ByVal MakefileStream As Long)
+
+	Print #MakefileStream, "ifeq ($(PROCESSOR_ARCHITECTURE),AMD64)"
+	Print #MakefileStream, "BIN_DEBUG_DIR ?= bin$(PATH_SEP)Debug$(PATH_SEP)x64"
+	Print #MakefileStream, "BIN_RELEASE_DIR ?= bin$(PATH_SEP)Release$(PATH_SEP)x64"
+	Print #MakefileStream, "OBJ_DEBUG_DIR ?= obj$(PATH_SEP)Debug$(PATH_SEP)x64"
+	Print #MakefileStream, "OBJ_RELEASE_DIR ?= obj$(PATH_SEP)Release$(PATH_SEP)x64"
+	Print #MakefileStream, "BIN_DEBUG_DIR_MOVE ?= bin$(MOVE_PATH_SEP)Debug$(MOVE_PATH_SEP)x64"
+	Print #MakefileStream, "BIN_RELEASE_DIR_MOVE ?= bin$(MOVE_PATH_SEP)Release$(MOVE_PATH_SEP)x64"
+	Print #MakefileStream, "OBJ_DEBUG_DIR_MOVE ?= obj$(MOVE_PATH_SEP)Debug$(MOVE_PATH_SEP)x64"
+	Print #MakefileStream, "OBJ_RELEASE_DIR_MOVE ?= obj$(MOVE_PATH_SEP)Release$(MOVE_PATH_SEP)x64"
+	Print #MakefileStream, "else"
+	Print #MakefileStream, "BIN_DEBUG_DIR ?= bin$(PATH_SEP)Debug$(PATH_SEP)x86"
+	Print #MakefileStream, "BIN_RELEASE_DIR ?= bin$(PATH_SEP)Release$(PATH_SEP)x86"
+	Print #MakefileStream, "OBJ_DEBUG_DIR ?= obj$(PATH_SEP)Debug$(PATH_SEP)x86"
+	Print #MakefileStream, "OBJ_RELEASE_DIR ?= obj$(PATH_SEP)Release$(PATH_SEP)x86"
+	Print #MakefileStream, "BIN_DEBUG_DIR_MOVE ?= bin$(MOVE_PATH_SEP)Debug$(MOVE_PATH_SEP)x86"
+	Print #MakefileStream, "BIN_RELEASE_DIR_MOVE ?= bin$(MOVE_PATH_SEP)Release$(MOVE_PATH_SEP)x86"
+	Print #MakefileStream, "OBJ_DEBUG_DIR_MOVE ?= obj$(MOVE_PATH_SEP)Debug$(MOVE_PATH_SEP)x86"
+	Print #MakefileStream, "OBJ_RELEASE_DIR_MOVE ?= obj$(MOVE_PATH_SEP)Release$(MOVE_PATH_SEP)x86"
+	Print #MakefileStream, "endif"
+	Print #MakefileStream,
+
+End Sub
+
 Dim Params As Parameter = Any
 ParseCommandLine(@Params)
 
-'/
+var MakefileNumber = Freefile()
+var resOpen = Open(Params.MakefileFileName, For Output, As MakefileNumber)
+If resOpen Then
+	Print "Can not open Makefile file"
+	End(1)
+End If
+
+WriteTargets(MakefileNumber)
+WriteCompilerToolChain(MakefileNumber)
+WriteProcessorArch(MakefileNumber)
+WriteOutputFilename(MakefileNumber, @Params)
+WriteUtilsPath(MakefileNumber)
+WriteArchSpecifiedPath(MakefileNumber)
+
+' WriteFbcFlags MakefileFileStream, Params
+' WriteGccFlags MakefileFileStream, Params
+' WriteAsmFlags MakefileFileStream
+' WriteGorcFlags MakefileFileStream
+' WriteLinkerFlags MakefileFileStream, Params
+
+' WriteLinkerLibraryes MakefileFileStream, Params
+' WriteIncludeFile MakefileFileStream, Params
+' WriteReleaseTarget MakefileFileStream
+' WriteDebugTarget MakefileFileStream
+' WriteCleanTarget MakefileFileStream
+' WriteCreateDirsTarget MakefileFileStream
+
+' WriteReleaseRule MakefileFileStream
+' WriteDebugRule MakefileFileStream
+
+' WriteAsmRule MakefileFileStream
+' WriteCRule MakefileFileStream
+' WriteBasRule MakefileFileStream, Params
+' WriteResourceRule MakefileFileStream
+
+' MakefileFileStream.Close
+' Set MakefileFileStream = Nothing
+
+' WriteMakefileParameters Params
+
+
+/'
 #ifdef __FB_UNIX__
 Const TEST_COMMAND = "ls *"
 #else
@@ -354,50 +500,9 @@ Do Until EOF(FileNumber)
 Loop
 
 Close(FileNumber)
+'/
 
 /'
-Dim FSO
-Set FSO = CreateObject("Scripting.FileSystemObject")
-
-Dim MakefileFileStream
-Set MakefileFileStream = FSO.OpenTextFile(Params.MakefileFileName, FILEOPEN_WRITEONLY, FILEOPEN_CREATENEW, FILEFORMAT_ASCII)
-
-WriteTargets MakefileFileStream
-WriteCompilerToolChain MakefileFileStream
-WriteProcessorArch MakefileFileStream
-WriteOutputFilename MakefileFileStream, Params
-WriteUtilsPath MakefileFileStream
-WriteArchSpecifiedPath MakefileFileStream
-
-WriteFbcFlags MakefileFileStream, Params
-WriteGccFlags MakefileFileStream, Params
-WriteAsmFlags MakefileFileStream
-WriteGorcFlags MakefileFileStream
-WriteLinkerFlags MakefileFileStream, Params
-
-WriteLinkerLibraryes MakefileFileStream, Params
-WriteIncludeFile MakefileFileStream, Params
-WriteReleaseTarget MakefileFileStream
-WriteDebugTarget MakefileFileStream
-WriteCleanTarget MakefileFileStream
-WriteCreateDirsTarget MakefileFileStream
-
-WriteReleaseRule MakefileFileStream
-WriteDebugRule MakefileFileStream
-
-WriteAsmRule MakefileFileStream
-WriteCRule MakefileFileStream
-WriteBasRule MakefileFileStream, Params
-WriteResourceRule MakefileFileStream
-
-MakefileFileStream.Close
-Set MakefileFileStream = Nothing
-
-WriteMakefileParameters Params
-
-Set FSO = Nothing
-Set Params = Nothing
-
 Sub WriteMakefileParameters(p)
 	Dim oStream
 	Set oStream = FSO.OpenTextFile(MakefileParametersFile, FILEOPEN_WRITEONLY, FILEOPEN_CREATENEW, FILEFORMAT_ASCII)
@@ -601,105 +706,6 @@ Function CreateCompilerParams(p)
 	CreateCompilerParams = CompilerParam
 
 End Function
-
-Sub WriteTargets(MakefileStream)
-	MakefileStream.WriteLine ".PHONY: all debug release clean createdirs"
-	MakefileStream.WriteLine
-	MakefileStream.WriteLine "all: release debug"
-	MakefileStream.WriteLine
-End Sub
-
-Sub WriteCompilerToolChain(MakefileStream)
-	MakefileStream.WriteLine "FBC ?= fbc.exe"
-	MakefileStream.WriteLine "CC ?= gcc.exe"
-	MakefileStream.WriteLine "AS ?= as.exe"
-	MakefileStream.WriteLine "AR ?= ar.exe"
-	MakefileStream.WriteLine "GORC ?= GoRC.exe"
-	MakefileStream.WriteLine "LD ?= ld.exe"
-	MakefileStream.WriteLine "DLL_TOOL ?= dlltool.exe"
-	MakefileStream.WriteLine "LIB_DIR ?="
-	MakefileStream.WriteLine "INC_DIR ?="
-	MakefileStream.WriteLine "LD_SCRIPT ?="
-	MakefileStream.WriteLine
-End Sub
-
-Sub WriteProcessorArch(MakefileStream)
-	MakefileStream.WriteLine "TARGET_TRIPLET ?="
-	MakefileStream.WriteLine "MARCH ?= native"
-	MakefileStream.WriteLine
-End Sub
-
-Sub WriteOutputFilename(MakefileStream, p)
-
-	Dim Extension
-	Select Case p.ExeType
-
-		Case OUTPUT_FILETYPE_EXE
-			Extension = ".exe"
-
-		Case OUTPUT_FILETYPE_DLL
-			Extension = ".dll"
-
-		Case OUTPUT_FILETYPE_LIBRARY
-			Extension = ".a"
-
-		Case OUTPUT_FILETYPE_WASM32
-			Extension = ".wasm"
-
-		Case OUTPUT_FILETYPE_WASM64
-			Extension = ".wasm"
-
-	End Select
-
-	' TODO Add UNICODE and _UNICODE to file suffix
-	' TODO Add WINVER and _WIN32_WINNT to file suffix
-	MakefileStream.WriteLine "USE_RUNTIME ?= TRUE"
-	MakefileStream.WriteLine "FBC_VER ?= " & FBC_VER
-	MakefileStream.WriteLine "GCC_VER ?= " & GCC_VER
-
-	MakefileStream.WriteLine "ifeq ($(USE_RUNTIME),TRUE)"
-	MakefileStream.WriteLine "RUNTIME = _RT"
-	MakefileStream.WriteLine "else"
-	MakefileStream.WriteLine "RUNTIME = _WRT"
-	MakefileStream.WriteLine "endif"
-
-	MakefileStream.WriteLine "OUTPUT_FILE_NAME=" & p.OutputFilename & "$(FILE_SUFFIX)" & Extension
-	MakefileStream.WriteLine
-End Sub
-
-Sub WriteUtilsPath(MakefileStream)
-	MakefileStream.WriteLine "PATH_SEP ?= /"
-	MakefileStream.WriteLine "MOVE_PATH_SEP ?= \\"
-	MakefileStream.WriteLine
-	MakefileStream.WriteLine "MOVE_COMMAND ?= cmd.exe /c move /y"
-	MakefileStream.WriteLine "DELETE_COMMAND ?= cmd.exe /c del /f /q"
-	MakefileStream.WriteLine "MKDIR_COMMAND ?= cmd.exe /c mkdir"
-	MakefileStream.WriteLine "SCRIPT_COMMAND ?= cscript.exe //nologo fix-emitted-code.vbs"
-	MakefileStream.WriteLine
-End Sub
-
-Sub WriteArchSpecifiedPath(MakefileStream)
-	MakefileStream.WriteLine "ifeq ($(PROCESSOR_ARCHITECTURE),AMD64)"
-	MakefileStream.WriteLine "BIN_DEBUG_DIR ?= bin$(PATH_SEP)Debug$(PATH_SEP)x64"
-	MakefileStream.WriteLine "BIN_RELEASE_DIR ?= bin$(PATH_SEP)Release$(PATH_SEP)x64"
-	MakefileStream.WriteLine "OBJ_DEBUG_DIR ?= obj$(PATH_SEP)Debug$(PATH_SEP)x64"
-	MakefileStream.WriteLine "OBJ_RELEASE_DIR ?= obj$(PATH_SEP)Release$(PATH_SEP)x64"
-	MakefileStream.WriteLine "BIN_DEBUG_DIR_MOVE ?= bin$(MOVE_PATH_SEP)Debug$(MOVE_PATH_SEP)x64"
-	MakefileStream.WriteLine "BIN_RELEASE_DIR_MOVE ?= bin$(MOVE_PATH_SEP)Release$(MOVE_PATH_SEP)x64"
-	MakefileStream.WriteLine "OBJ_DEBUG_DIR_MOVE ?= obj$(MOVE_PATH_SEP)Debug$(MOVE_PATH_SEP)x64"
-	MakefileStream.WriteLine "OBJ_RELEASE_DIR_MOVE ?= obj$(MOVE_PATH_SEP)Release$(MOVE_PATH_SEP)x64"
-	MakefileStream.WriteLine "else"
-	MakefileStream.WriteLine "BIN_DEBUG_DIR ?= bin$(PATH_SEP)Debug$(PATH_SEP)x86"
-	MakefileStream.WriteLine "BIN_RELEASE_DIR ?= bin$(PATH_SEP)Release$(PATH_SEP)x86"
-	MakefileStream.WriteLine "OBJ_DEBUG_DIR ?= obj$(PATH_SEP)Debug$(PATH_SEP)x86"
-	MakefileStream.WriteLine "OBJ_RELEASE_DIR ?= obj$(PATH_SEP)Release$(PATH_SEP)x86"
-	MakefileStream.WriteLine "BIN_DEBUG_DIR_MOVE ?= bin$(MOVE_PATH_SEP)Debug$(MOVE_PATH_SEP)x86"
-	MakefileStream.WriteLine "BIN_RELEASE_DIR_MOVE ?= bin$(MOVE_PATH_SEP)Release$(MOVE_PATH_SEP)x86"
-	MakefileStream.WriteLine "OBJ_DEBUG_DIR_MOVE ?= obj$(MOVE_PATH_SEP)Debug$(MOVE_PATH_SEP)x86"
-	MakefileStream.WriteLine "OBJ_RELEASE_DIR_MOVE ?= obj$(MOVE_PATH_SEP)Release$(MOVE_PATH_SEP)x86"
-	MakefileStream.WriteLine "endif"
-	MakefileStream.WriteLine
-End Sub
 
 Sub WriteFbcFlags(MakefileStream, p)
 
