@@ -1122,6 +1122,61 @@ Private Function CreateCompilerParams(ByVal p As Parameter Ptr) As String
 
 End Function
 
+Private Sub RemoveVerticalLine(LinesVector() As String)
+
+	' Remove all "|"
+
+	Const VSPattern = "|"
+
+	For i As Integer = LBound(LinesVector) To UBound(LinesVector)
+		LinesVector(i) = Replace(LinesVector(i), VSPattern, "")
+		LinesVector(i) = Trim(LinesVector(i))
+	Next
+
+End Sub
+
+Private Sub RemoveOmmittedIncludes(LinesVector() As String)
+
+	' Remove all strings "(filename.bi)"
+
+	For i As Integer = LBound(LinesVector) To UBound(LinesVector)
+
+		Dim First As String = Mid(LinesVector(i), 1, 1)
+
+		If First = "(" Then
+			Dim Length As Integer = Len(LinesVector(i))
+			Dim Last As String = Mid(LinesVector(i), Length, 1)
+
+			If Last = ")" Then
+				LinesVector(i) = ""
+			End If
+		End If
+	Next
+End Sub
+
+Private Sub ReplaceSolidusToPathSeparatorVector(LinesVector() As String)
+
+	' Replace "\" to "$(PATH_SEP)"
+
+	For i As Integer = LBound(LinesVector) To UBound(LinesVector)
+		LinesVector(i) = ReplaceSolidusToPathSeparator(LinesVector(i))
+	Next
+
+End Sub
+
+Private Sub AddSpaces(LinesVector() As String)
+
+	' Append space to all strings
+	For i As Integer = LBound(LinesVector) To UBound(LinesVector)
+		Dim Length As Integer = Len(LinesVector(i))
+		If Length Then
+			LinesVector(i) = LinesVector(i) & " "
+		End If
+	Next
+
+End Sub
+
+
 Dim Params As Parameter = Any
 var resParse = ParseCommandLine(@Params)
 If resParse Then
@@ -1177,7 +1232,7 @@ Close(MakefileNumber)
 /'
 
 #ifdef __FB_UNIX__
-Const TEST_COMMAND = "ls *"
+Const TEST_COMMAND = "fbc"
 #else
 Const TEST_COMMAND = """C:\Program Files (x86)\FreeBASIC-1.10.1-winlibs-gcc-9.3.0\fbc64.exe"""
 #endif
@@ -1199,39 +1254,6 @@ Close(FileNumber)
 '/
 
 /'
-Sub RemoveVerticalLine(LinesArray)
-	Const VSPattern = "|"
-	' Удалим все вхождения "|"
-	Dim i
-	For i = LBound(LinesArray) To UBound(LinesArray)
-		Dim Finded
-		Finded = InStr(LinesArray(i), VSPattern)
-		Do While Finded
-			LinesArray(i) = Replace(LinesArray(i), VSPattern, "")
-			Finded = InStr(LinesArray(i), VSPattern)
-		Loop
-		LinesArray(i) = Trim(LinesArray(i))
-	Next
-End Sub
-
-Sub RemoveOmmittedIncludes(LinesArray)
-	' Если строка в списке в виде "(filename.bi)"
-	' мы её обнуляем
-	Dim i
-	For i = LBound(LinesArray) To UBound(LinesArray)
-		Dim First
-		First = Mid(LinesArray(i), 1, 1)
-		If First = "(" Then
-			Dim Length
-			Length = Len(LinesArray(i))
-			Dim Last
-			Last = Mid(LinesArray(i), Length, 1)
-			If Last = ")" Then
-				LinesArray(i) = ""
-			End If
-		End If
-	Next
-End Sub
 
 Sub RemoveDefaultIncludes(LinesArray, p)
 	' заголовочные файлы в системном каталоге обнуляем
@@ -1245,28 +1267,6 @@ Sub RemoveDefaultIncludes(LinesArray, p)
 
 		If Finded Then
 			LinesArray(i) = ""
-		End If
-	Next
-End Sub
-
-Sub ReplaceSolidusToPathSeparatorVector(LinesArray)
-	' заменяем "\" на "$(PATH_SEP)"
-	Dim i
-	For i = LBound(LinesArray) To UBound(LinesArray)
-		Dim strLine
-		strLine = LinesArray(i)
-		LinesArray(i) = ReplaceSolidusToPathSeparator(strLine)
-	Next
-End Sub
-
-Sub AddSpaces(LinesArray)
-	' Добавляем пробел в конце каждой строки
-	Dim i
-	For i = LBound(LinesArray) To UBound(LinesArray)
-		Dim Length
-		Length = Len(LinesArray(i))
-		If Length > 0 Then
-			LinesArray(i) = LinesArray(i) & " "
 		End If
 	Next
 End Sub
