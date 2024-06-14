@@ -95,6 +95,60 @@ Type Parameter
 	Pedantic As Boolean
 End Type
 
+Private Function AppendPathSeparator(ByVal strLine As String) As String
+
+	var Length = Len(strLine)
+
+	var LastChar = Mid(strLine, Length, 1)
+
+	If LastChar = "\" Then
+		Return strLine
+	Else
+		Return strLine & "\"
+	End If
+
+End Function
+
+Private Function Replace(ByVal strFind As String, ByVal strFrom As String, ByVal strTo As String) As String
+
+	Dim strLine1 As String = strFind
+	Dim FromLength As Integer = Len(strFrom)
+
+	Dim Finded As Integer = InStr(strLine1, strFrom)
+
+	Do While Finded
+		Dim strLeft As String = Mid(strLine1, 1, Finded - 1)
+		Dim strRight As String = Mid(strLine1, Finded + FromLength)
+
+		strLine1 = strLeft & strTo & strRight
+
+		Finded = InStr(strLine1, strFrom)
+	Loop
+
+	Return strLine1
+
+End Function
+
+Private Function ReplaceSolidusToPathSeparator(ByVal strLine As String) As String
+
+	' Replace "\" to "$(PATH_SEP)"
+
+	Dim strLine1 As String = Replace(strLine, Solidus, MakefilePathSeparator)
+
+	Return strLine1
+
+End Function
+
+Private Function ReplaceSolidusToMovePathSeparator(ByVal strLine As String) As String
+
+	' Replace "\" to "$(MOVE_PATH_SEP)"
+
+	Dim strLine1 As String = Replace(strLine, Solidus, MakefileMovePathSeparator)
+
+	Return strLine1
+
+End Function
+
 Private Function ParseCommandLine(ByVal p As Parameter Ptr) As Integer
 
 	p->MakefileFileName = "Makefile"
@@ -971,6 +1025,36 @@ Private Sub WriteResourceRule(ByVal MakefileStream As Long)
 
 End Sub
 
+Private Sub WriteBasRule(ByVal MakefileStream As Long, ByVal p As Parameter Ptr)
+
+	Dim SourceFolderWithPathSep As String = AppendPathSeparator(p->SourceFolder)
+
+	Dim AnyBasFile As String = ReplaceSolidusToPathSeparator(SourceFolderWithPathSep) & "%.bas"
+
+	Dim AnyCFile As String = ReplaceSolidusToMovePathSeparator(SourceFolderWithPathSep) & "$*.c"
+
+	Print #MakefileStream, "$(OBJ_RELEASE_DIR)$(PATH_SEP)%$(FILE_SUFFIX).c: " & AnyBasFile
+	Print #MakefileStream, vbTab & "$(FBC) $(FBCFLAGS) $<"
+
+	If p->FixEmittedCode = FIX_EMITTED_CODE Then
+		Print #MakefileStream, vbTab & "$(SCRIPT_COMMAND) /release " & AnyCFile
+	End If
+
+	Print #MakefileStream, vbTab & "$(MOVE_COMMAND) " & AnyCFile & " $(OBJ_RELEASE_DIR_MOVE)$(MOVE_PATH_SEP)$*$(FILE_SUFFIX).c"
+	Print #MakefileStream,
+
+	Print #MakefileStream, "$(OBJ_DEBUG_DIR)$(PATH_SEP)%$(FILE_SUFFIX).c: " & AnyBasFile
+	Print #MakefileStream, vbTab & "$(FBC) $(FBCFLAGS) $<"
+
+	If p->FixEmittedCode = FIX_EMITTED_CODE Then
+		Print #MakefileStream, vbTab & "$(SCRIPT_COMMAND) /debug " & AnyCFile
+	End If
+
+	Print #MakefileStream, vbTab & "$(MOVE_COMMAND) " & AnyCFile & " $(OBJ_DEBUG_DIR_MOVE)$(MOVE_PATH_SEP)$*$(FILE_SUFFIX).c"
+	Print #MakefileStream,
+
+End Sub
+
 Dim Params As Parameter = Any
 var resParse = ParseCommandLine(@Params)
 If resParse Then
@@ -1006,8 +1090,6 @@ WriteLinkerFlags(MakefileNumber, @Params)
 
 WriteLinkerLibraryes(MakefileNumber, @Params)
 
-' WriteIncludeFile MakefileFileStream, Params
-
 WriteReleaseTarget(MakefileNumber)
 WriteDebugTarget(MakefileNumber)
 WriteCleanTarget(MakefileNumber)
@@ -1018,43 +1100,14 @@ WriteDebugRule(MakefileNumber)
 
 WriteAsmRule(MakefileNumber)
 WriteCRule(MakefileNumber)
-' WriteBasRule MakefileFileStream, Params
+WriteBasRule(MakefileNumber, @Params)
 WriteResourceRule(MakefileNumber)
+
+' WriteIncludeFile MakefileFileStream, Params
 
 Close(MakefileNumber)
 
 /'
-Private Sub WriteBasRule(ByVal MakefileStream As Long, ByVal p As Parameter Ptr)
-
-	Dim SourceFolderWithPathSep
-	SourceFolderWithPathSep = GetSourceFolderWithPathSep(p.SourceFolder)
-
-	Dim AnyBasFile
-	AnyBasFile = ReplaceSolidusToPathSeparator(SourceFolderWithPathSep) & "%.bas"
-
-	Dim AnyCFile
-	AnyCFile = ReplaceSolidusToMovePathSeparator(SourceFolderWithPathSep) & "$*.c"
-
-	MakefileStream.WriteLine "$(OBJ_RELEASE_DIR)$(PATH_SEP)%$(FILE_SUFFIX).c: " & AnyBasFile
-	MakefileStream.WriteLine vbTab & "$(FBC) $(FBCFLAGS) $<"
-
-	If p.FixEmittedCode = FIX_EMITTED_CODE Then
-		MakefileStream.WriteLine vbTab & "$(SCRIPT_COMMAND) /release " & AnyCFile
-	End If
-
-	MakefileStream.WriteLine vbTab & "$(MOVE_COMMAND) " & AnyCFile & " $(OBJ_RELEASE_DIR_MOVE)$(MOVE_PATH_SEP)$*$(FILE_SUFFIX).c"
-	MakefileStream.WriteLine
-
-	MakefileStream.WriteLine "$(OBJ_DEBUG_DIR)$(PATH_SEP)%$(FILE_SUFFIX).c: " & AnyBasFile
-	MakefileStream.WriteLine vbTab & "$(FBC) $(FBCFLAGS) $<"
-
-	If p.FixEmittedCode = FIX_EMITTED_CODE Then
-		MakefileStream.WriteLine vbTab & "$(SCRIPT_COMMAND) /debug " & AnyCFile
-	End If
-
-	MakefileStream.WriteLine vbTab & "$(MOVE_COMMAND) " & AnyCFile & " $(OBJ_DEBUG_DIR_MOVE)$(MOVE_PATH_SEP)$*$(FILE_SUFFIX).c"
-	MakefileStream.WriteLine
-End Sub
 
 #ifdef __FB_UNIX__
 Const TEST_COMMAND = "ls *"
@@ -1158,20 +1211,6 @@ Sub WriteIncludeFile(MakefileStream, p)
 	MakefileStream.WriteLine
 End Sub
 
-Function GetSourceFolderWithPathSep(strLine)
-	Dim Length
-	Length = Len(strLine)
-
-	Dim LastChar
-	LastChar = Mid(strLine, Length, 1)
-
-	If LastChar = "\" Then
-		GetSourceFolderWithPathSep = strLine
-	Else
-		GetSourceFolderWithPathSep = strLine & "\"
-	End If
-End Function
-
 Sub RemoveVerticalLine(LinesArray)
 	Const VSPattern = "|"
 	' Удалим все вхождения "|"
@@ -1222,38 +1261,6 @@ Sub RemoveDefaultIncludes(LinesArray, p)
 	Next
 End Sub
 
-Function ReplaceSolidusToPathSeparator(strLine)
-	' заменяем "\" на "$(PATH_SEP)"
-	Dim strLine1
-	strLine1 = strLine
-
-	Dim Finded
-	Finded = InStr(strLine1, Solidus)
-	Do While Finded
-		strLine1 = Replace(strLine1, Solidus, MakefilePathSeparator)
-		Finded = InStr(strLine1, Solidus)
-	Loop
-
-	ReplaceSolidusToPathSeparator = strLine1
-
-End Function
-
-Function ReplaceSolidusToMovePathSeparator(strLine)
-	' заменяем "\" на "$(MOVE_PATH_SEP)"
-	Dim strLine1
-	strLine1 = strLine
-
-	Dim Finded
-	Finded = InStr(strLine1, Solidus)
-	Do While Finded
-		strLine1 = Replace(strLine1, Solidus, MakefileMovePathSeparator)
-		Finded = InStr(strLine1, Solidus)
-	Loop
-
-	ReplaceSolidusToMovePathSeparator = strLine1
-
-End Function
-
 Sub ReplaceSolidusToPathSeparatorVector(LinesArray)
 	' заменяем "\" на "$(PATH_SEP)"
 	Dim i
@@ -1302,7 +1309,7 @@ End Function
 
 Function GetBasFileWithoutPath(BasFile, p)
 	Dim ReplaceFind
-	ReplaceFind = GetSourceFolderWithPathSep(p.SourceFolder)
+	ReplaceFind = AppendPathSeparator(p.SourceFolder)
 
 	GetBasFileWithoutPath = Replace(BasFile, ReplaceFind, "")
 
