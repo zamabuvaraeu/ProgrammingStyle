@@ -128,6 +128,18 @@ Private Function BuildPath(ByVal Directory As String, ByVal File As String) As S
 
 End Function
 
+Private Function GetExtensionName(ByVal filename As String) As String
+
+	Dim DotPosition As Integer = InStrRev(filename, ".")
+
+	If DotPosition Then
+		Return Mid(filename, DotPosition)
+	End If
+
+	Return ""
+
+End Function
+
 Private Function Replace(ByVal strFind As String, ByVal strOld As String, ByVal strNew As String) As String
 
 	Dim strLine1 As String = strFind
