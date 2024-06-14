@@ -112,7 +112,11 @@ End Function
 
 Private Function BuildPath(ByVal Directory As String, ByVal File As String) As String
 
-	Dim DirWithPathSeparator As String = AppendPathSeparator(Directory)
+	Dim DirLength As Integer = Len(Directory)
+	Dim DirWithPathSeparator As String
+	If DirLength Then
+		DirWithPathSeparator = AppendPathSeparator(Directory)
+	End If
 
 	Dim FirstChar As String = Mid(File, 1, 1)
 
