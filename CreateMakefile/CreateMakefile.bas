@@ -110,20 +110,20 @@ Private Function AppendPathSeparator(ByVal strLine As String) As String
 
 End Function
 
-Private Function Replace(ByVal strFind As String, ByVal strFrom As String, ByVal strTo As String) As String
+Private Function Replace(ByVal strFind As String, ByVal strOld As String, ByVal strNew As String) As String
 
 	Dim strLine1 As String = strFind
-	Dim FromLength As Integer = Len(strFrom)
+	Dim FromLength As Integer = Len(strOld)
 
-	Dim Finded As Integer = InStr(strLine1, strFrom)
+	Dim Finded As Integer = InStr(strLine1, strOld)
 
 	Do While Finded
 		Dim strLeft As String = Mid(strLine1, 1, Finded - 1)
 		Dim strRight As String = Mid(strLine1, Finded + FromLength)
 
-		strLine1 = strLeft & strTo & strRight
+		strLine1 = strLeft & strNew & strRight
 
-		Finded = InStr(strLine1, strFrom)
+		Finded = InStr(strLine1, strOld)
 	Loop
 
 	Return strLine1
@@ -1192,6 +1192,51 @@ Private Function ReadTextStream(ByVal Stream As Long) As String
 
 End Function
 
+Private Function GetBasFileWithoutPath(ByVal BasFile As String, ByVal p As Parameter Ptr) As String
+
+	Dim ReplaceFind As String = AppendPathSeparator(p->SourceFolder)
+
+	Return Replace(BasFile, ReplaceFind, "")
+
+End Function
+
+Private Sub WriteTextFile(ByVal MakefileStream As Long, ByVal BasFile As String, ByVal DependenciesLine As String, ByVal p As Parameter Ptr)
+
+	Dim BasFileWithoutPath As String = GetBasFileWithoutPath(BasFile, p)
+
+	Dim FileNameCExtenstionWitthSuffix As String
+	Dim ObjectFileName As String
+
+	Dim Finded As Integer = InStr(BasFile, ".bas")
+	If Finded Then
+		FileNameCExtenstionWitthSuffix = Replace(BasFileWithoutPath, ".bas", FileSuffix & ".c")
+		ObjectFileName = Replace(BasFileWithoutPath, ".bas", FileSuffix & ".o")
+	Else
+		FileNameCExtenstionWitthSuffix = Replace(BasFileWithoutPath, ".RC", FileSuffix & ".obj")
+		ObjectFileName = Replace(BasFileWithoutPath, ".RC", FileSuffix & ".obj")
+	End If
+
+	Dim FileNameWithPathSep As String = Replace(FileNameCExtenstionWitthSuffix, Solidus, MakefilePathSeparator)
+	Dim ObjectFileNameWithPathSep As String = Replace(ObjectFileName, Solidus, MakefilePathSeparator)
+
+	Dim FileNameWithDebug As String = DebugDirPrefix & FileNameWithPathSep
+	Dim FileNameWithRelease As String = ReleaseDirPrefix & FileNameWithPathSep
+
+	Dim ObjectFileNameWithDebug As String = ObjectFilesDebug & "+=" & DebugDirPrefix & ObjectFileNameWithPathSep
+	Dim ObjectFileNameRelease As String = ObjectFilesRelease & "+=" & ReleaseDirPrefix & ObjectFileNameWithPathSep
+
+	Dim ResultDebugString As String = FileNameWithDebug & ": " & DependenciesLine
+	Dim ResultReleaseString As String = FileNameWithRelease & ": " & DependenciesLine
+
+	Print #MakefileStream, ObjectFileNameWithDebug
+	Print #MakefileStream, ObjectFileNameRelease
+	Print #MakefileStream,
+	Print #MakefileStream, ResultDebugString
+	Print #MakefileStream, ResultReleaseString
+	Print #MakefileStream,
+
+End Sub
+
 Dim Params As Parameter = Any
 var resParse = ParseCommandLine(@Params)
 If resParse Then
@@ -1284,62 +1329,6 @@ Sub RemoveDefaultIncludes(LinesArray, p)
 			LinesArray(i) = ""
 		End If
 	Next
-End Sub
-
-Function GetBasFileWithoutPath(BasFile, p)
-	Dim ReplaceFind
-	ReplaceFind = AppendPathSeparator(p.SourceFolder)
-
-	GetBasFileWithoutPath = Replace(BasFile, ReplaceFind, "")
-
-End Function
-
-Sub WriteTextFile(MakefileStream, BasFile, DependenciesLine, p)
-
-	Dim BasFileWithoutPath
-	BasFileWithoutPath = GetBasFileWithoutPath(BasFile, p)
-
-	Dim FileNameCExtenstionWitthSuffix
-	Dim ObjectFileName
-
-	Dim Finded
-	Finded = InStr(BasFile, ".bas")
-	If Finded Then
-		FileNameCExtenstionWitthSuffix = Replace(BasFileWithoutPath, ".bas", FileSuffix & ".c")
-		ObjectFileName = Replace(BasFileWithoutPath, ".bas", FileSuffix & ".o")
-	Else
-		FileNameCExtenstionWitthSuffix = Replace(BasFileWithoutPath, ".RC", FileSuffix & ".obj")
-		ObjectFileName = Replace(BasFileWithoutPath, ".RC", FileSuffix & ".obj")
-	End If
-
-	Dim FileNameWithPathSep
-	Dim ObjectFileNameWithPathSep
-	FileNameWithPathSep = Replace(FileNameCExtenstionWitthSuffix, Solidus, MakefilePathSeparator)
-	ObjectFileNameWithPathSep = Replace(ObjectFileName, Solidus, MakefilePathSeparator)
-
-	Dim FileNameWithDebug
-	FileNameWithDebug = DebugDirPrefix & FileNameWithPathSep
-	Dim FileNameWithRelease
-	FileNameWithRelease = ReleaseDirPrefix & FileNameWithPathSep
-
-	Dim ObjectFileNameWithDebug
-	ObjectFileNameWithDebug = ObjectFilesDebug & "+=" & DebugDirPrefix & ObjectFileNameWithPathSep
-	Dim ObjectFileNameRelease
-	ObjectFileNameRelease = ObjectFilesRelease & "+=" & ReleaseDirPrefix & ObjectFileNameWithPathSep
-
-	Dim ResultDebugString
-	ResultDebugString = FileNameWithDebug & ": " & DependenciesLine
-	Dim ResultReleaseString
-	ResultReleaseString = FileNameWithRelease & ": " & DependenciesLine
-
-	' записываем строку в текстовый файл
-	MakefileStream.WriteLine ObjectFileNameWithDebug
-	MakefileStream.WriteLine ObjectFileNameRelease
-	MakefileStream.WriteLine
-	MakefileStream.WriteLine ResultDebugString
-	MakefileStream.WriteLine ResultReleaseString
-	MakefileStream.WriteLine
-
 End Sub
 
 Function GetIncludesFromBasFile(Filepath, p)
