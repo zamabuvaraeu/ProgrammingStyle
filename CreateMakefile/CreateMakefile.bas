@@ -165,7 +165,8 @@ Private Function ParseCommandLine(ByVal p As Parameter Ptr) As Integer
 	p->UseRuntimeLibrary = DEFINE_RUNTIME
 	p->AddressAware = LARGE_ADDRESS_UNAWARE
 	p->ThreadingMode = DEFINE_SINGLETHREADING_RUNTIME
-	p->MinimalOSVersion = 1024
+	' p->MinimalOSVersion = 1024
+	p->MinimalOSVersion = 0
 	p->UseFileSuffix = False
 	p->Pedantic = False
 
@@ -1055,6 +1056,72 @@ Private Sub WriteBasRule(ByVal MakefileStream As Long, ByVal p As Parameter Ptr)
 
 End Sub
 
+Private Function CreateCompilerParams(ByVal p As Parameter Ptr) As String
+
+	Dim EmitterFlag As String = CodeGenerationToString(p)
+
+	Dim UnicodeFlag As String
+	Select Case p->Unicode
+
+		Case DEFINE_ANSI
+			UnicodeFlag = ""
+
+		Case DEFINE_UNICODE
+			UnicodeFlag = "-d UNICODE"
+
+	End Select
+
+	Dim RuntimeFlag As String
+	Select Case p->UseRuntimeLibrary
+
+		Case DEFINE_RUNTIME
+			RuntimeFlag = ""
+
+		Case DEFINE_WITHOUT_RUNTIME
+			RuntimeFlag = "-d WITHOUT_RUNTIME"
+
+	End Select
+
+	Dim WinverFlag As String
+	If p->MinimalOSVersion Then
+		WinverFlag = "-d WINVER=" & p->MinimalOSVersion & " -d _WIN32_WINNT=" & p->MinimalOSVersion
+	Else
+		WinverFlag = ""
+	End If
+
+	Dim SubSystemFlag As String
+	If p->FileSubsystem = SUBSYSTEM_WINDOW Then
+		SubSystemFlag = "-s gui"
+	Else
+		SubSystemFlag = "-s console"
+	End If
+
+	Dim MaxErrorFlag As String = "-w error -maxerr 1"
+
+	Dim OptimizationFlag As String = "-O 0"
+
+	Dim OnlyAssemblyFlag As String = "-r"
+
+	Dim ShowIncludesFlag As String = "-showincludes"
+
+	Dim MainModuleFlag As String = "-m " & p->MainModuleName
+
+	Dim CompilerParam As String = _
+		EmitterFlag      & " " & _
+		UnicodeFlag      & " " & _
+		RuntimeFlag      & " " & _
+		WinverFlag       & " " & _
+		SubSystemFlag    & " " & _
+		MaxErrorFlag     & " " & _
+		OptimizationFlag & " " & _
+		OnlyAssemblyFlag & " " & _
+		ShowIncludesFlag & " " & _
+	MainModuleFlag
+
+	Return CompilerParam
+
+End Function
+
 Dim Params As Parameter = Any
 var resParse = ParseCommandLine(@Params)
 If resParse Then
@@ -1132,85 +1199,6 @@ Close(FileNumber)
 '/
 
 /'
-Function CreateCompilerParams(p)
-
-	Dim EmitterFlag
-	EmitterFlag = CodeGenerationToString(p)
-
-	Dim UnicodeFlag
-	Select Case p.Unicode
-		Case DEFINE_ANSI
-			UnicodeFlag = ""
-		Case DEFINE_UNICODE
-			UnicodeFlag = "-d UNICODE"
-	End Select
-
-	Dim RuntimeFlag
-	Select Case p.UseRuntimeLibrary
-		Case DEFINE_RUNTIME
-			RuntimeFlag = ""
-		Case DEFINE_WITHOUT_RUNTIME
-			RuntimeFlag = "-d WITHOUT_RUNTIME"
-	End Select
-
-	Dim WinverFlag
-	WinverFlag = "-d WINVER=" & p.MinimalWindowsVersion & " -d _WIN32_WINNT=" & p.MinimalWindowsVersion
-
-	Dim SubSystemFlag
-	If p.FileSubsystem = SUBSYSTEM_WINDOW Then
-		SubSystemFlag = "-s gui"
-	Else
-		SubSystemFlag = "-s console"
-	End If
-
-	Dim MaxErrorFlag
-	MaxErrorFlag = "-w error -maxerr 1"
-
-	Dim OptimizationFlag
-	OptimizationFlag = "-O 0"
-
-	Dim OnlyAssemblyFlag
-	OnlyAssemblyFlag = "-r"
-
-	Dim ShowIncludesFlag
-	ShowIncludesFlag = "-showincludes"
-
-	Dim MainModuleFlag
-	MainModuleFlag = "-m " & p.MainModuleName
-
-	Dim CompilerParam
-	CompilerParam = _
-		EmitterFlag      & " " & _
-		UnicodeFlag      & " " & _
-		RuntimeFlag      & " " & _
-		WinverFlag       & " " & _
-		SubSystemFlag    & " " & _
-		MaxErrorFlag     & " " & _
-		OptimizationFlag & " " & _
-		OnlyAssemblyFlag & " " & _
-		ShowIncludesFlag & " " & _
-	MainModuleFlag
-
-	CreateCompilerParams = CompilerParam
-
-End Function
-
-Sub WriteIncludeFile(MakefileStream, p)
-	Dim SrcFolder
-	Set SrcFolder = FSO.GetFolder(p.SourceFolder)
-
-	Dim File
-	For Each File In SrcFolder.Files
-		Dim ext
-		ext = FSO.GetExtensionName(File.Path)
-		CreateDependencies MakefileStream, File, ext, p
-	Next
-
-	Set SrcFolder = Nothing
-
-	MakefileStream.WriteLine
-End Sub
-
 Sub RemoveVerticalLine(LinesArray)
 	Const VSPattern = "|"
 	' Удалим все вхождения "|"
@@ -1486,4 +1474,21 @@ Function CreateDependencies(MakefileStream, oFile, FileExtension, p)
 		WriteTextFile MakefileStream, Original, RTrim(OneLine), p
 	End If
 End Function
+
+Sub WriteIncludeFile(MakefileStream, p)
+	Dim SrcFolder
+	Set SrcFolder = FSO.GetFolder(p.SourceFolder)
+
+	Dim File
+	For Each File In SrcFolder.Files
+		Dim ext
+		ext = FSO.GetExtensionName(File.Path)
+		CreateDependencies MakefileStream, File, ext, p
+	Next
+
+	Set SrcFolder = Nothing
+
+	MakefileStream.WriteLine
+End Sub
+
 '/
