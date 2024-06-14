@@ -59,6 +59,7 @@ End Enum
 Const WINVER_DEFAULT = 0
 Const WINVER_XP = 0
 
+Const vbTab = !"\t"
 Const Solidus = "\"
 Const ReverseSolidus = "/"
 Const MakefilePathSeparator = "$(PATH_SEP)"
@@ -325,6 +326,124 @@ Private Function ParseCommandLine(ByVal p As Parameter Ptr) As Integer
 		i += 1
 		sKey = Command(i)
 	Loop
+
+	Return 0
+
+End Function
+
+Private Function WriteSetenv(ByVal p As Parameter Ptr) As Integer
+
+	var oStream = Freefile()
+	var resOpen = Open(MakefileParametersFile, For Output, As oStream)
+	If resOpen Then
+		Return 1
+	End If
+
+	' PROCESSOR_ARCHITECTURE = AMD64 или x86
+	Print #oStream, "if %PROCESSOR_ARCHITECTURE% == AMD64 ("
+	Print #oStream, "set BinFolder=bin\win64"
+	Print #oStream, "set LibFolder=lib\win64"
+	Print #oStream, "set FBC_FILENAME=fbc64.exe"
+	Print #oStream, ") else ("
+	Print #oStream, "set BinFolder=bin\win32"
+	Print #oStream, "set LibFolder=lib\win32"
+	Print #oStream, "set FBC_FILENAME=fbc32.exe"
+	Print #oStream, ")"
+	Print #oStream,
+
+	Print #oStream, "rem Add mingw64 directory to PATH"
+	Print #oStream, "set MINGW_W64_DIR=C:\Program Files\mingw64"
+	Print #oStream, "set PATH=%MINGW_W64_DIR%\bin;%PATH%"
+	Print #oStream,
+	Print #oStream, "rem Add compiler directory to PATH"
+	Print #oStream, "set FBC_DIR=" & p->CompilerPath
+	Print #oStream, "set PATH=%FBC_DIR%\%BinFolder%;%PATH%"
+	Print #oStream,
+
+	Print #oStream, "rem Source code directory"
+	Print #oStream, "set SRC_DIR=" & p->SourceFolder
+	Print #oStream,
+
+	Print #oStream, "rem Set to TRUE for use runtime libraries"
+	If p->UseRuntimeLibrary = DEFINE_WITHOUT_RUNTIME Then
+		Print #oStream, "set USE_RUNTIME=FALSE"
+	Else
+		Print #oStream, "set USE_RUNTIME=TRUE"
+	End If
+
+	Print #oStream, "rem WinAPI version"
+	Print #oStream, "set WINVER=" & p->MinimalOSVersion
+	Print #oStream, "set _WIN32_WINNT=" & p->MinimalOSVersion
+	Print #oStream,
+
+	Print #oStream, "rem Use unicode in WinAPI"
+	If p->Unicode = DEFINE_UNICODE Then
+		Print #oStream, "set USE_UNICODE=TRUE"
+	Else
+		Print #oStream, "set USE_UNICODE=FALSE"
+	End If
+
+	Print #oStream, "rem Set variable FILE_SUFFIX to make the executable name different"
+	Print #oStream, "rem for different toolchains, libraries, and compilation flags"
+	Print #oStream, "set GCC_VER=" & GCC_VER
+	Print #oStream, "set FBC_VER=" & FBC_VER
+	Print #oStream,
+
+	If p->UseFileSuffix Then
+		Print #oStream, "set FILE_SUFFIX=%GCC_VER%%FBC_VER%%RUNTIME%"
+	Else
+		Print #oStream, "set FILE_SUFFIX="
+	End If
+
+	Print #oStream,
+
+	Print #oStream, "rem Toolchain"
+	Print #oStream, "set FBC=""%FBC_DIR%\" & p->FbcCompilerName & """"
+	Print #oStream, "set CC=""%FBC_DIR%\%BinFolder%\gcc.exe"""
+	Print #oStream, "set AS=""%FBC_DIR%\%BinFolder%\as.exe"""
+	Print #oStream, "set AR=""%FBC_DIR%\%BinFolder%\ar.exe"""
+	Print #oStream, "set GORC=""%FBC_DIR%\%BinFolder%\GoRC.exe"""
+	Print #oStream, "set LD=""%FBC_DIR%\%BinFolder%\ld.exe"""
+	Print #oStream, "set DLL_TOOL=""%FBC_DIR%\%BinFolder%\dlltool.exe"""
+	Print #oStream,
+
+	Print #oStream, "rem Without quotes:"
+	Print #oStream, "set LIB_DIR==%FBC_DIR%\%LibFolder%"
+	Print #oStream, "set INC_DIR=%FBC_DIR%\inc"
+	Print #oStream,
+
+	Select Case p->Emitter
+
+		Case CODE_EMITTER_GCC, CODE_EMITTER_GAS, CODE_EMITTER_GAS64, CODE_EMITTER_LLVM
+			Print #oStream, "rem Linker script only for GCC x86, GCC x64 and Clang x86"
+			Print #oStream, "rem Without quotes:"
+			Print #oStream, "set LD_SCRIPT=%FBC_DIR%\%LibFolder%\fbextra.x"
+			Print #oStream,
+			Print #oStream, "rem Set processor architecture"
+			Print #oStream, "set MARCH=native"
+			Print #oStream,
+			Print #oStream, "rem Only for Clang x86"
+			Print #oStream, "rem set TARGET_TRIPLET=i686-pc-windows-gnu"
+			Print #oStream,
+			Print #oStream, "rem Only for Clang AMD64"
+			Print #oStream, "rem set TARGET_TRIPLET=x86_64-w64-pc-windows-msvc"
+			Print #oStream, "rem set FLTO=-flto"
+
+		Case CODE_EMITTER_WASM32, CODE_EMITTER_WASM64
+			Print #oStream, "rem Only for wasm"
+			Print #oStream, "set TARGET_TRIPLET=wasm32"
+
+	End Select
+
+	Print #oStream,
+
+	Print #oStream, "rem Create bin obj folders"
+	Print #oStream, "rem mingw32-make createdirs"
+	Print #oStream,
+	Print #oStream, "rem Compile"
+	Print #oStream, "rem mingw32-make all"
+
+	Close(oStream)
 
 	Return 0
 
@@ -747,14 +866,129 @@ Private Sub WriteLinkerLibraryes(ByVal MakefileStream As Long, ByVal p As Parame
 
 End Sub
 
+Private Sub WriteLegend(ByVal MakefileStream As Long)
+
+	Print #MakefileStream, "# Legends:"
+	Print #MakefileStream, "# $@ - target name"
+	Print #MakefileStream, "# $^ - set of dependent files"
+	Print #MakefileStream, "# $< - name of first dependency"
+	Print #MakefileStream, "# % - pattern"
+	Print #MakefileStream, "# $* - variable pattern"
+	Print #MakefileStream,
+
+End Sub
+
+Private Sub WriteReleaseTarget(ByVal MakefileStream As Long)
+
+	Print #MakefileStream, "release: $(BIN_RELEASE_DIR)$(PATH_SEP)$(OUTPUT_FILE_NAME)"
+	Print #MakefileStream,
+
+End Sub
+
+Private Sub WriteDebugTarget(ByVal MakefileStream As Long)
+
+	Print #MakefileStream, "debug: $(BIN_DEBUG_DIR)$(PATH_SEP)$(OUTPUT_FILE_NAME)"
+	Print #MakefileStream,
+
+End Sub
+
+Private Sub WriteCleanTarget(ByVal MakefileStream As Long)
+
+	Print #MakefileStream, "clean:"
+	Print #MakefileStream, vbTab & "$(DELETE_COMMAND) $(OBJ_RELEASE_DIR_MOVE)$(MOVE_PATH_SEP)*$(FILE_SUFFIX).c"
+	Print #MakefileStream, vbTab & "$(DELETE_COMMAND) $(OBJ_DEBUG_DIR_MOVE)$(MOVE_PATH_SEP)*$(FILE_SUFFIX).c"
+	Print #MakefileStream, vbTab & "$(DELETE_COMMAND) $(OBJ_RELEASE_DIR_MOVE)$(MOVE_PATH_SEP)*$(FILE_SUFFIX).asm"
+	Print #MakefileStream, vbTab & "$(DELETE_COMMAND) $(OBJ_DEBUG_DIR_MOVE)$(MOVE_PATH_SEP)*$(FILE_SUFFIX).asm"
+	Print #MakefileStream, vbTab & "$(DELETE_COMMAND) $(OBJ_RELEASE_DIR_MOVE)$(MOVE_PATH_SEP)*$(FILE_SUFFIX).o"
+	Print #MakefileStream, vbTab & "$(DELETE_COMMAND) $(OBJ_DEBUG_DIR_MOVE)$(MOVE_PATH_SEP)*$(FILE_SUFFIX).o"
+	Print #MakefileStream, vbTab & "$(DELETE_COMMAND) $(OBJ_RELEASE_DIR_MOVE)$(MOVE_PATH_SEP)*$(FILE_SUFFIX).obj"
+	Print #MakefileStream, vbTab & "$(DELETE_COMMAND) $(OBJ_DEBUG_DIR_MOVE)$(MOVE_PATH_SEP)*$(FILE_SUFFIX).obj"
+	Print #MakefileStream, vbTab & "$(DELETE_COMMAND) $(BIN_RELEASE_DIR_MOVE)$(MOVE_PATH_SEP)$(OUTPUT_FILE_NAME)"
+	Print #MakefileStream, vbTab & "$(DELETE_COMMAND) $(BIN_DEBUG_DIR_MOVE)$(MOVE_PATH_SEP)$(OUTPUT_FILE_NAME)"
+	Print #MakefileStream,
+
+End Sub
+
+Private Sub WriteCreateDirsTarget(ByVal MakefileStream As Long)
+
+	Print #MakefileStream, "createdirs:"
+	Print #MakefileStream, vbTab & "$(MKDIR_COMMAND) $(BIN_DEBUG_DIR_MOVE)"
+	Print #MakefileStream, vbTab & "$(MKDIR_COMMAND) $(BIN_RELEASE_DIR_MOVE)"
+	Print #MakefileStream, vbTab & "$(MKDIR_COMMAND) $(OBJ_DEBUG_DIR_MOVE)"
+	Print #MakefileStream, vbTab & "$(MKDIR_COMMAND) $(OBJ_RELEASE_DIR_MOVE)"
+	Print #MakefileStream,
+
+End Sub
+
+Private Sub WriteReleaseRule(ByVal MakefileStream As Long)
+
+	Print #MakefileStream, "$(BIN_RELEASE_DIR)$(PATH_SEP)$(OUTPUT_FILE_NAME): $(OBJECTFILES_RELEASE)"
+	' Print #MakefileStream, vbTab & "$(LD) $(LDFLAGS) $(LDLIBSBEGIN) $^ $(LDLIBS) $(LDLIBSEND) -o $@"
+	Print #MakefileStream, vbTab & "$(CC) $(LDFLAGS) $(LDLIBSBEGIN) $^ $(LDLIBS) $(LDLIBSEND) -o $@"
+	Print #MakefileStream,
+
+End Sub
+
+Private Sub WriteDebugRule(ByVal MakefileStream As Long)
+
+	Print #MakefileStream, "$(BIN_DEBUG_DIR)$(PATH_SEP)$(OUTPUT_FILE_NAME): $(OBJECTFILES_DEBUG)"
+	' Print #MakefileStream, vbTab & "$(LD) $(LDFLAGS) $(LDLIBSBEGIN) $^ $(LDLIBS) $(LDLIBSEND) -o $@"
+	Print #MakefileStream, vbTab & "$(CC) $(LDFLAGS) $(LDLIBSBEGIN) $^ $(LDLIBS) $(LDLIBSEND) -o $@"
+	Print #MakefileStream,
+
+End Sub
+
+Private Sub WriteAsmRule(ByVal MakefileStream As Long)
+
+	Print #MakefileStream, "$(OBJ_RELEASE_DIR)$(PATH_SEP)%$(FILE_SUFFIX).o: $(OBJ_RELEASE_DIR)$(PATH_SEP)%$(FILE_SUFFIX).asm"
+	Print #MakefileStream, vbTab & "$(AS) $(ASFLAGS) -o $@ $<"
+	Print #MakefileStream,
+	Print #MakefileStream, "$(OBJ_DEBUG_DIR)$(PATH_SEP)%$(FILE_SUFFIX).o: $(OBJ_DEBUG_DIR)$(PATH_SEP)%$(FILE_SUFFIX).asm"
+	Print #MakefileStream, vbTab & "$(AS) $(ASFLAGS) -o $@ $<"
+	Print #MakefileStream,
+
+End Sub
+
+Private Sub WriteCRule(ByVal MakefileStream As Long)
+
+	Print #MakefileStream, "$(OBJ_RELEASE_DIR)$(PATH_SEP)%$(FILE_SUFFIX).asm: $(OBJ_RELEASE_DIR)$(PATH_SEP)%$(FILE_SUFFIX).c"
+	Print #MakefileStream, vbTab & "$(CC) $(EXTRA_CFLAGS) $(CFLAGS) -o $@ $<"
+	Print #MakefileStream,
+	Print #MakefileStream, "$(OBJ_DEBUG_DIR)$(PATH_SEP)%$(FILE_SUFFIX).asm: $(OBJ_DEBUG_DIR)$(PATH_SEP)%$(FILE_SUFFIX).c"
+	Print #MakefileStream, vbTab & "$(CC) $(EXTRA_CFLAGS) $(CFLAGS) -o $@ $<"
+	Print #MakefileStream,
+
+End Sub
+
+Private Sub WriteResourceRule(ByVal MakefileStream As Long)
+
+	Print #MakefileStream, "$(OBJ_RELEASE_DIR)$(PATH_SEP)%$(FILE_SUFFIX).obj: src$(PATH_SEP)%.RC"
+	Print #MakefileStream, vbTab & "$(GORC) $(GORCFLAGS) /fo $@ $<"
+	Print #MakefileStream,
+	Print #MakefileStream, "$(OBJ_DEBUG_DIR)$(PATH_SEP)%$(FILE_SUFFIX).obj: src$(PATH_SEP)%.RC"
+	Print #MakefileStream, vbTab & "$(GORC) $(GORCFLAGS) /fo $@ $<"
+	Print #MakefileStream,
+
+End Sub
+
 Dim Params As Parameter = Any
-ParseCommandLine(@Params)
+var resParse = ParseCommandLine(@Params)
+If resParse Then
+	Print "Can not parse command line"
+	End(1)
+End If
+
+var resSetenv = WriteSetenv(@Params)
+If resSetenv Then
+	Print "Can not create environment file"
+	End(2)
+End If
 
 var MakefileNumber = Freefile()
 var resOpen = Open(Params.MakefileFileName, For Output, As MakefileNumber)
 If resOpen Then
 	Print "Can not open Makefile file"
-	End(1)
+	End(3)
 End If
 
 WriteTargets(MakefileNumber)
@@ -773,26 +1007,55 @@ WriteLinkerFlags(MakefileNumber, @Params)
 WriteLinkerLibraryes(MakefileNumber, @Params)
 
 ' WriteIncludeFile MakefileFileStream, Params
-' WriteReleaseTarget MakefileFileStream
-' WriteDebugTarget MakefileFileStream
-' WriteCleanTarget MakefileFileStream
-' WriteCreateDirsTarget MakefileFileStream
 
-' WriteReleaseRule MakefileFileStream
-' WriteDebugRule MakefileFileStream
+WriteReleaseTarget(MakefileNumber)
+WriteDebugTarget(MakefileNumber)
+WriteCleanTarget(MakefileNumber)
+WriteCreateDirsTarget(MakefileNumber)
 
-' WriteAsmRule MakefileFileStream
-' WriteCRule MakefileFileStream
+WriteReleaseRule(MakefileNumber)
+WriteDebugRule(MakefileNumber)
+
+WriteAsmRule(MakefileNumber)
+WriteCRule(MakefileNumber)
 ' WriteBasRule MakefileFileStream, Params
-' WriteResourceRule MakefileFileStream
+WriteResourceRule(MakefileNumber)
 
-' MakefileFileStream.Close
-' Set MakefileFileStream = Nothing
-
-' WriteMakefileParameters Params
-
+Close(MakefileNumber)
 
 /'
+Private Sub WriteBasRule(ByVal MakefileStream As Long, ByVal p As Parameter Ptr)
+
+	Dim SourceFolderWithPathSep
+	SourceFolderWithPathSep = GetSourceFolderWithPathSep(p.SourceFolder)
+
+	Dim AnyBasFile
+	AnyBasFile = ReplaceSolidusToPathSeparator(SourceFolderWithPathSep) & "%.bas"
+
+	Dim AnyCFile
+	AnyCFile = ReplaceSolidusToMovePathSeparator(SourceFolderWithPathSep) & "$*.c"
+
+	MakefileStream.WriteLine "$(OBJ_RELEASE_DIR)$(PATH_SEP)%$(FILE_SUFFIX).c: " & AnyBasFile
+	MakefileStream.WriteLine vbTab & "$(FBC) $(FBCFLAGS) $<"
+
+	If p.FixEmittedCode = FIX_EMITTED_CODE Then
+		MakefileStream.WriteLine vbTab & "$(SCRIPT_COMMAND) /release " & AnyCFile
+	End If
+
+	MakefileStream.WriteLine vbTab & "$(MOVE_COMMAND) " & AnyCFile & " $(OBJ_RELEASE_DIR_MOVE)$(MOVE_PATH_SEP)$*$(FILE_SUFFIX).c"
+	MakefileStream.WriteLine
+
+	MakefileStream.WriteLine "$(OBJ_DEBUG_DIR)$(PATH_SEP)%$(FILE_SUFFIX).c: " & AnyBasFile
+	MakefileStream.WriteLine vbTab & "$(FBC) $(FBCFLAGS) $<"
+
+	If p.FixEmittedCode = FIX_EMITTED_CODE Then
+		MakefileStream.WriteLine vbTab & "$(SCRIPT_COMMAND) /debug " & AnyCFile
+	End If
+
+	MakefileStream.WriteLine vbTab & "$(MOVE_COMMAND) " & AnyCFile & " $(OBJ_DEBUG_DIR_MOVE)$(MOVE_PATH_SEP)$*$(FILE_SUFFIX).c"
+	MakefileStream.WriteLine
+End Sub
+
 #ifdef __FB_UNIX__
 Const TEST_COMMAND = "ls *"
 #else
@@ -816,117 +1079,6 @@ Close(FileNumber)
 '/
 
 /'
-Sub WriteMakefileParameters(p)
-	Dim oStream
-	Set oStream = FSO.OpenTextFile(MakefileParametersFile, FILEOPEN_WRITEONLY, FILEOPEN_CREATENEW, FILEFORMAT_ASCII)
-
-	' PROCESSOR_ARCHITECTURE = AMD64 или x86
-	oStream.WriteLine "if %PROCESSOR_ARCHITECTURE% == AMD64 ("
-	oStream.WriteLine "set BinFolder=bin\win64"
-	oStream.WriteLine "set LibFolder=lib\win64"
-	oStream.WriteLine "set FBC_FILENAME=fbc64.exe"
-	oStream.WriteLine ") else ("
-	oStream.WriteLine "set BinFolder=bin\win32"
-	oStream.WriteLine "set LibFolder=lib\win32"
-	oStream.WriteLine "set FBC_FILENAME=fbc32.exe"
-	oStream.WriteLine ")"
-	oStream.WriteLine
-
-	oStream.WriteLine "rem Add mingw64 directory to PATH"
-	oStream.WriteLine "set MINGW_W64_DIR=C:\Program Files\mingw64"
-	oStream.WriteLine "set PATH=%MINGW_W64_DIR%\bin;%PATH%"
-	oStream.WriteLine
-	oStream.WriteLine "rem Add compiler directory to PATH"
-	oStream.WriteLine "set FBC_DIR=" & p.CompilerPath
-	oStream.WriteLine "set PATH=%FBC_DIR%\%BinFolder%;%PATH%"
-	oStream.WriteLine
-
-	oStream.WriteLine "rem Source code directory"
-	oStream.WriteLine "set SRC_DIR=" & p.SourceFolder
-	oStream.WriteLine
-
-	oStream.WriteLine "rem Set to TRUE for use runtime libraries"
-	If p.UseRuntimeLibrary = DEFINE_WITHOUT_RUNTIME Then
-		oStream.WriteLine "set USE_RUNTIME=FALSE"
-	Else
-		oStream.WriteLine "set USE_RUNTIME=TRUE"
-	End If
-
-	oStream.WriteLine "rem WinAPI version"
-	oStream.WriteLine "set WINVER=" & p.MinimalWindowsVersion
-	oStream.WriteLine "set _WIN32_WINNT=" & p.MinimalWindowsVersion
-	oStream.WriteLine
-
-	oStream.WriteLine "rem Use unicode in WinAPI"
-	If p.Unicode = DEFINE_UNICODE Then
-		oStream.WriteLine "set USE_UNICODE=TRUE"
-	Else
-		oStream.WriteLine "set USE_UNICODE=FALSE"
-	End If
-
-	oStream.WriteLine "rem Set variable FILE_SUFFIX to make the executable name different"
-	oStream.WriteLine "rem for different toolchains, libraries, and compilation flags"
-	oStream.WriteLine "set GCC_VER=" & GCC_VER
-	oStream.WriteLine "set FBC_VER=" & FBC_VER
-	oStream.WriteLine
-
-	If p.UseFileSuffix Then
-		oStream.WriteLine "set FILE_SUFFIX=%GCC_VER%%FBC_VER%%RUNTIME%"
-	Else
-		oStream.WriteLine "set FILE_SUFFIX="
-	End If
-
-	oStream.WriteLine
-
-	oStream.WriteLine "rem Toolchain"
-	oStream.WriteLine "set FBC=""%FBC_DIR%\" & p.FbcCompilerName & """"
-	oStream.WriteLine "set CC=""%FBC_DIR%\%BinFolder%\gcc.exe"""
-	oStream.WriteLine "set AS=""%FBC_DIR%\%BinFolder%\as.exe"""
-	oStream.WriteLine "set AR=""%FBC_DIR%\%BinFolder%\ar.exe"""
-	oStream.WriteLine "set GORC=""%FBC_DIR%\%BinFolder%\GoRC.exe"""
-	oStream.WriteLine "set LD=""%FBC_DIR%\%BinFolder%\ld.exe"""
-	oStream.WriteLine "set DLL_TOOL=""%FBC_DIR%\%BinFolder%\dlltool.exe"""
-	oStream.WriteLine
-
-	oStream.WriteLine "rem Without quotes:"
-	oStream.WriteLine "set LIB_DIR==%FBC_DIR%\%LibFolder%"
-	oStream.WriteLine "set INC_DIR=%FBC_DIR%\inc"
-	oStream.WriteLine
-
-	Select Case p.Emitter
-
-		Case CODE_EMITTER_GCC, CODE_EMITTER_GAS, CODE_EMITTER_GAS64, CODE_EMITTER_LLVM
-			oStream.WriteLine "rem Linker script only for GCC x86, GCC x64 and Clang x86"
-			oStream.WriteLine "rem Without quotes:"
-			oStream.WriteLine "set LD_SCRIPT=%FBC_DIR%\%LibFolder%\fbextra.x"
-			oStream.WriteLine
-			oStream.WriteLine "rem Set processor architecture"
-			oStream.WriteLine "set MARCH=native"
-			oStream.WriteLine
-			oStream.WriteLine "rem Only for Clang x86"
-			oStream.WriteLine "rem set TARGET_TRIPLET=i686-pc-windows-gnu"
-			oStream.WriteLine
-			oStream.WriteLine "rem Only for Clang AMD64"
-			oStream.WriteLine "rem set TARGET_TRIPLET=x86_64-w64-pc-windows-msvc"
-			oStream.WriteLine "rem set FLTO=-flto"
-
-		Case CODE_EMITTER_WASM32, CODE_EMITTER_WASM64
-			oStream.WriteLine "rem Only for wasm"
-			oStream.WriteLine "set TARGET_TRIPLET=wasm32"
-
-	End Select
-	oStream.WriteLine
-
-	oStream.WriteLine "rem Create bin obj folders"
-	oStream.WriteLine "rem mingw32-make createdirs"
-	oStream.WriteLine
-	oStream.WriteLine "rem Compile"
-	oStream.Write "rem mingw32-make all"
-
-	oStream.Close
-	Set oStream = Nothing
-End Sub
-
 Function CreateCompilerParams(p)
 
 	Dim EmitterFlag
@@ -1006,79 +1158,6 @@ Sub WriteIncludeFile(MakefileStream, p)
 	MakefileStream.WriteLine
 End Sub
 
-Sub WriteReleaseTarget(MakefileStream)
-	' MakefileStream.WriteLine
-	' MakefileStream.WriteLine "# $@ - target name"
-	' MakefileStream.WriteLine "# $^ - set of dependent files"
-	' MakefileStream.WriteLine "# $< - name of first dependency"
-	' MakefileStream.WriteLine "# % - pattern"
-	' MakefileStream.WriteLine "# $* - variable pattern"
-	' MakefileStream.WriteLine
-	MakefileStream.WriteLine "release: $(BIN_RELEASE_DIR)$(PATH_SEP)$(OUTPUT_FILE_NAME)"
-	MakefileStream.WriteLine
-End Sub
-
-Sub WriteDebugTarget(MakefileStream)
-	MakefileStream.WriteLine "debug: $(BIN_DEBUG_DIR)$(PATH_SEP)$(OUTPUT_FILE_NAME)"
-	MakefileStream.WriteLine
-End Sub
-
-Sub WriteCleanTarget(MakefileStream)
-	MakefileStream.WriteLine "clean:"
-	MakefileStream.WriteLine vbTab & "$(DELETE_COMMAND) $(OBJ_RELEASE_DIR_MOVE)$(MOVE_PATH_SEP)*$(FILE_SUFFIX).c"
-	MakefileStream.WriteLine vbTab & "$(DELETE_COMMAND) $(OBJ_DEBUG_DIR_MOVE)$(MOVE_PATH_SEP)*$(FILE_SUFFIX).c"
-	MakefileStream.WriteLine vbTab & "$(DELETE_COMMAND) $(OBJ_RELEASE_DIR_MOVE)$(MOVE_PATH_SEP)*$(FILE_SUFFIX).asm"
-	MakefileStream.WriteLine vbTab & "$(DELETE_COMMAND) $(OBJ_DEBUG_DIR_MOVE)$(MOVE_PATH_SEP)*$(FILE_SUFFIX).asm"
-	MakefileStream.WriteLine vbTab & "$(DELETE_COMMAND) $(OBJ_RELEASE_DIR_MOVE)$(MOVE_PATH_SEP)*$(FILE_SUFFIX).o"
-	MakefileStream.WriteLine vbTab & "$(DELETE_COMMAND) $(OBJ_DEBUG_DIR_MOVE)$(MOVE_PATH_SEP)*$(FILE_SUFFIX).o"
-	MakefileStream.WriteLine vbTab & "$(DELETE_COMMAND) $(OBJ_RELEASE_DIR_MOVE)$(MOVE_PATH_SEP)*$(FILE_SUFFIX).obj"
-	MakefileStream.WriteLine vbTab & "$(DELETE_COMMAND) $(OBJ_DEBUG_DIR_MOVE)$(MOVE_PATH_SEP)*$(FILE_SUFFIX).obj"
-	MakefileStream.WriteLine vbTab & "$(DELETE_COMMAND) $(BIN_RELEASE_DIR_MOVE)$(MOVE_PATH_SEP)$(OUTPUT_FILE_NAME)"
-	MakefileStream.WriteLine vbTab & "$(DELETE_COMMAND) $(BIN_DEBUG_DIR_MOVE)$(MOVE_PATH_SEP)$(OUTPUT_FILE_NAME)"
-	MakefileStream.WriteLine
-End Sub
-
-Sub WriteCreateDirsTarget(MakefileStream)
-	MakefileStream.WriteLine "createdirs:"
-	MakefileStream.WriteLine vbTab & "$(MKDIR_COMMAND) $(BIN_DEBUG_DIR_MOVE)"
-	MakefileStream.WriteLine vbTab & "$(MKDIR_COMMAND) $(BIN_RELEASE_DIR_MOVE)"
-	MakefileStream.WriteLine vbTab & "$(MKDIR_COMMAND) $(OBJ_DEBUG_DIR_MOVE)"
-	MakefileStream.WriteLine vbTab & "$(MKDIR_COMMAND) $(OBJ_RELEASE_DIR_MOVE)"
-	MakefileStream.WriteLine
-End Sub
-
-Sub WriteReleaseRule(MakefileStream)
-	MakefileStream.WriteLine "$(BIN_RELEASE_DIR)$(PATH_SEP)$(OUTPUT_FILE_NAME): $(OBJECTFILES_RELEASE)"
-	' MakefileStream.WriteLine vbTab & "$(LD) $(LDFLAGS) $(LDLIBSBEGIN) $^ $(LDLIBS) $(LDLIBSEND) -o $@"
-	MakefileStream.WriteLine vbTab & "$(CC) $(LDFLAGS) $(LDLIBSBEGIN) $^ $(LDLIBS) $(LDLIBSEND) -o $@"
-	MakefileStream.WriteLine
-End Sub
-
-Sub WriteDebugRule(MakefileStream)
-	MakefileStream.WriteLine "$(BIN_DEBUG_DIR)$(PATH_SEP)$(OUTPUT_FILE_NAME): $(OBJECTFILES_DEBUG)"
-	' MakefileStream.WriteLine vbTab & "$(LD) $(LDFLAGS) $(LDLIBSBEGIN) $^ $(LDLIBS) $(LDLIBSEND) -o $@"
-	MakefileStream.WriteLine vbTab & "$(CC) $(LDFLAGS) $(LDLIBSBEGIN) $^ $(LDLIBS) $(LDLIBSEND) -o $@"
-	MakefileStream.WriteLine
-End Sub
-
-Sub WriteAsmRule(MakefileStream)
-	MakefileStream.WriteLine "$(OBJ_RELEASE_DIR)$(PATH_SEP)%$(FILE_SUFFIX).o: $(OBJ_RELEASE_DIR)$(PATH_SEP)%$(FILE_SUFFIX).asm"
-	MakefileStream.WriteLine vbTab & "$(AS) $(ASFLAGS) -o $@ $<"
-	MakefileStream.WriteLine
-	MakefileStream.WriteLine "$(OBJ_DEBUG_DIR)$(PATH_SEP)%$(FILE_SUFFIX).o: $(OBJ_DEBUG_DIR)$(PATH_SEP)%$(FILE_SUFFIX).asm"
-	MakefileStream.WriteLine vbTab & "$(AS) $(ASFLAGS) -o $@ $<"
-	MakefileStream.WriteLine
-End Sub
-
-Sub WriteCRule(MakefileStream)
-	MakefileStream.WriteLine "$(OBJ_RELEASE_DIR)$(PATH_SEP)%$(FILE_SUFFIX).asm: $(OBJ_RELEASE_DIR)$(PATH_SEP)%$(FILE_SUFFIX).c"
-	MakefileStream.WriteLine vbTab & "$(CC) $(EXTRA_CFLAGS) $(CFLAGS) -o $@ $<"
-	MakefileStream.WriteLine
-	MakefileStream.WriteLine "$(OBJ_DEBUG_DIR)$(PATH_SEP)%$(FILE_SUFFIX).asm: $(OBJ_DEBUG_DIR)$(PATH_SEP)%$(FILE_SUFFIX).c"
-	MakefileStream.WriteLine vbTab & "$(CC) $(EXTRA_CFLAGS) $(CFLAGS) -o $@ $<"
-	MakefileStream.WriteLine
-End Sub
-
 Function GetSourceFolderWithPathSep(strLine)
 	Dim Length
 	Length = Len(strLine)
@@ -1092,46 +1171,6 @@ Function GetSourceFolderWithPathSep(strLine)
 		GetSourceFolderWithPathSep = strLine & "\"
 	End If
 End Function
-
-Sub WriteBasRule(MakefileStream, p)
-	Dim SourceFolderWithPathSep
-	SourceFolderWithPathSep = GetSourceFolderWithPathSep(p.SourceFolder)
-
-	Dim AnyBasFile
-	AnyBasFile = ReplaceSolidusToPathSeparator(SourceFolderWithPathSep) & "%.bas"
-
-	Dim AnyCFile
-	AnyCFile = ReplaceSolidusToMovePathSeparator(SourceFolderWithPathSep) & "$*.c"
-
-	MakefileStream.WriteLine "$(OBJ_RELEASE_DIR)$(PATH_SEP)%$(FILE_SUFFIX).c: " & AnyBasFile
-	MakefileStream.WriteLine vbTab & "$(FBC) $(FBCFLAGS) $<"
-
-	If p.FixEmittedCode = FIX_EMITTED_CODE Then
-		MakefileStream.WriteLine vbTab & "$(SCRIPT_COMMAND) /release " & AnyCFile
-	End If
-
-	MakefileStream.WriteLine vbTab & "$(MOVE_COMMAND) " & AnyCFile & " $(OBJ_RELEASE_DIR_MOVE)$(MOVE_PATH_SEP)$*$(FILE_SUFFIX).c"
-	MakefileStream.WriteLine
-
-	MakefileStream.WriteLine "$(OBJ_DEBUG_DIR)$(PATH_SEP)%$(FILE_SUFFIX).c: " & AnyBasFile
-	MakefileStream.WriteLine vbTab & "$(FBC) $(FBCFLAGS) $<"
-
-	If p.FixEmittedCode = FIX_EMITTED_CODE Then
-		MakefileStream.WriteLine vbTab & "$(SCRIPT_COMMAND) /debug " & AnyCFile
-	End If
-
-	MakefileStream.WriteLine vbTab & "$(MOVE_COMMAND) " & AnyCFile & " $(OBJ_DEBUG_DIR_MOVE)$(MOVE_PATH_SEP)$*$(FILE_SUFFIX).c"
-	MakefileStream.WriteLine
-End Sub
-
-Sub WriteResourceRule(MakefileStream)
-	MakefileStream.WriteLine "$(OBJ_RELEASE_DIR)$(PATH_SEP)%$(FILE_SUFFIX).obj: src$(PATH_SEP)%.RC"
-	MakefileStream.WriteLine vbTab & "$(GORC) $(GORCFLAGS) /fo $@ $<"
-	MakefileStream.WriteLine
-	MakefileStream.WriteLine "$(OBJ_DEBUG_DIR)$(PATH_SEP)%$(FILE_SUFFIX).obj: src$(PATH_SEP)%.RC"
-	MakefileStream.WriteLine vbTab & "$(GORC) $(GORCFLAGS) /fo $@ $<"
-	MakefileStream.WriteLine
-End Sub
 
 Sub RemoveVerticalLine(LinesArray)
 	Const VSPattern = "|"
