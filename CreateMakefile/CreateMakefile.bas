@@ -1255,6 +1255,61 @@ Private Sub WriteTextFile(ByVal MakefileStream As Long, ByVal BasFile As String,
 
 End Sub
 
+Private Sub RemoveDefaultIncludes(LinesVector() As String, ByVal p As Parameter Ptr)
+
+	' Remove default include files
+
+	For i As Integer = LBound(LinesVector) To UBound(LinesVector)
+
+		Dim IncludeFullName As String = BuildPath(p->CompilerPath, "inc")
+
+		Dim Finded As Integer = InStr(LinesVector(i), IncludeFullName)
+
+		If Finded Then
+			LinesVector(i) = ""
+		End If
+	Next
+
+End Sub
+
+Private Function GetIncludesFromBasFile(ByVal Filepath As String, ByVal p As Parameter Ptr) As String
+
+	Dim FbcParam As String = CreateCompilerParams(p)
+
+	Dim CompilerFullName As String = BuildPath(p->CompilerPath, p->FbcCompilerName)
+
+	Dim IncludeFullName As String = BuildPath(p->CompilerPath, "inc")
+
+	Dim ProgramName As String = """" & CompilerFullName & """" & " " & _
+		FbcParam & _
+		" -i " & p->SourceFolder & _
+		" -i " & """" & IncludeFullName & """" & " """ & Filepath & """"
+	' WScript.Echo ProgramName
+
+	Dim FileNumber As Long = Freefile()
+	Dim resOpen As Long = Open Pipe(ProgramName, For Input, As FileNumber)
+	If resOpen Then
+		Print "Can not create process"
+		End(1)
+	End If
+
+	Dim Lines As String = ReadTextStream(FileNumber)
+
+	Close(FileNumber)
+
+	' Remove temporary "c" file
+	Dim FileC As String = Replace(Filepath, ".bas", ".c")
+	' WScript.Echo FileC
+	Kill(FileC)
+
+	' If code > 0 Then
+	' 	Call Err.Raise(vbObjectError + 10, "FreeBASIC compiler error", Lines)
+	' End If
+
+	Return Lines
+
+End Function
+
 Dim Params As Parameter = Any
 var resParse = ParseCommandLine(@Params)
 If resParse Then
@@ -1315,86 +1370,9 @@ Const TEST_COMMAND = "fbc"
 Const TEST_COMMAND = """C:\Program Files (x86)\FreeBASIC-1.10.1-winlibs-gcc-9.3.0\fbc64.exe"""
 #endif
 
-Dim FileNumber As Long = Freefile()
-Dim resOpen As Long = Open Pipe(TEST_COMMAND, For Input, As FileNumber)
-If resOpen Then
-	Print "Can not create process"
-	End(1)
-End If
-
-Dim As String ln
-Do Until EOF(FileNumber)
-    Line Input #FileNumber, ln
-    Print ln
-Loop
-
-Close(FileNumber)
 '/
 
 /'
-
-Sub RemoveDefaultIncludes(LinesArray, p)
-	' заголовочные файлы в системном каталоге обнуляем
-	Dim i
-	For i = LBound(LinesArray) To UBound(LinesArray)
-		Dim IncludeFullName
-		IncludeFullName = FSO.BuildPath(p.CompilerPath, "inc")
-
-		Dim Finded
-		Finded = InStr(LinesArray(i), IncludeFullName)
-
-		If Finded Then
-			LinesArray(i) = ""
-		End If
-	Next
-End Sub
-
-Function GetIncludesFromBasFile(Filepath, p)
-	Dim FbcParam
-	FbcParam = CreateCompilerParams(p)
-
-	Dim CompilerFullName
-	CompilerFullName = FSO.BuildPath(p.CompilerPath, p.FbcCompilerName)
-
-	Dim IncludeFullName
-	IncludeFullName = FSO.BuildPath(p.CompilerPath, "inc")
-
-	Dim ProgramName
-	ProgramName = """" & CompilerFullName & """" & " " & _
-		FbcParam & _
-		" -i " & p.SourceFolder & _
-		" -i " & """" & IncludeFullName & """" & " """ & Filepath & """"
-	WScript.Echo ProgramName
-
-	Dim WshShell
-	Set WshShell = CreateObject("WScript.Shell")
-	Dim WshExec
-	Set WshExec = WshShell.Exec(ProgramName)
-
-	Dim Stream
-	Set Stream = WshExec.StdOut
-	Dim Lines
-	Lines = ReadTextStream(Stream)
-
-	Dim code
-	code = WshExec.ExitCode
-
-	Set Stream = Nothing
-	Set WshExec = Nothing
-	Set WshShell = Nothing
-
-	' Remove temporary "c" file
-	Dim FileC
-	FileC = Replace(Filepath, ".bas", ".c")
-	WScript.Echo FileC
-	FSO.DeleteFile FileC
-
-	If code > 0 Then
-		Call Err.Raise(vbObjectError + 10, "FreeBASIC compiler error", Lines)
-	End If
-
-	GetIncludesFromBasFile = Lines
-End Function
 
 Function GetIncludesFromResFile(Filepath, p)
 	' TODO Get real dependencies from resource file
