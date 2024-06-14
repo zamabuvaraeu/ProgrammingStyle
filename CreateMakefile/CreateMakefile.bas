@@ -110,6 +110,20 @@ Private Function AppendPathSeparator(ByVal strLine As String) As String
 
 End Function
 
+Private Function BuildPath(ByVal Directory As String, ByVal File As String) As String
+
+	Dim DirWithPathSeparator As String = AppendPathSeparator(Directory)
+
+	Dim FirstChar As String = Mid(File, 1, 1)
+
+	If FirstChar = "\" Then
+		Return DirWithPathSeparator & Mid(File, 2)
+	Else
+		Return DirWithPathSeparator & File
+	End If
+
+End Function
+
 Private Function Replace(ByVal strFind As String, ByVal strOld As String, ByVal strNew As String) As String
 
 	Dim strLine1 As String = strFind
