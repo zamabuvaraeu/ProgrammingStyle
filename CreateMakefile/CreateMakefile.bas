@@ -60,6 +60,7 @@ Const WINVER_DEFAULT = 0
 Const WINVER_XP = 0
 
 Const vbTab = !"\t"
+Const vbCrLf = !"\r\n"
 Const Solidus = "\"
 Const ReverseSolidus = "/"
 Const MakefilePathSeparator = "$(PATH_SEP)"
@@ -1176,6 +1177,20 @@ Private Sub AddSpaces(LinesVector() As String)
 
 End Sub
 
+Private Function ReadTextStream(ByVal Stream As Long) As String
+
+	' Read file and return strings
+	Dim Lines As String
+
+	Do Until EOF(Stream)
+		Dim ln As String
+		Line Input #Stream, ln
+		Lines = Lines & Trim(ln) & vbCrLf
+	Loop
+
+	Return Lines
+
+End Function
 
 Dim Params As Parameter = Any
 var resParse = ParseCommandLine(@Params)
@@ -1193,7 +1208,7 @@ End If
 var MakefileNumber = Freefile()
 var resOpen = Open(Params.MakefileFileName, For Output, As MakefileNumber)
 If resOpen Then
-	Print "Can not open Makefile file"
+	Print "Can not create Makefile file"
 	End(3)
 End If
 
@@ -1270,30 +1285,6 @@ Sub RemoveDefaultIncludes(LinesArray, p)
 		End If
 	Next
 End Sub
-
-Function ReadTextFile(FileName)
-	' читаем текстовый файл и возвращаем строку
-	Dim TextStream
-	Set TextStream = FSO.OpenTextFile(FileName, 1)
-
-	Dim strLines
-	strLines = TextStream.ReadAll
-
-	TextStream.Close
-	Set TextStream = Nothing
-
-	ReadTextFile = strLines
-End Function
-
-Function ReadTextStream(Stream)
-	' Читаем текстовый поток и возвращаем строку
-	Dim Lines
-	Lines = ""
-	Do While Not Stream.AtEndOfStream
-		Lines = Lines & Trim(Stream.ReadLine()) & vbCrLf
-	Loop
-	ReadTextStream = Lines
-End Function
 
 Function GetBasFileWithoutPath(BasFile, p)
 	Dim ReplaceFind
