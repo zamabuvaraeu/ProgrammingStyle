@@ -1124,7 +1124,7 @@ End Sub
 
 Private Function CreateCompilerParams(ByVal p As Parameter Ptr) As String
 
-	Dim ParamVector(9) As String
+	Dim ParamVector(10) As String
 
 	ParamVector(0) = CodeGenerationToString(p)
 
@@ -1169,6 +1169,8 @@ Private Function CreateCompilerParams(ByVal p As Parameter Ptr) As String
 	ParamVector(8) = "-showincludes"
 
 	ParamVector(9) = "-m " & p->MainModuleName
+
+	ParamVector(10) = "-i " & p->SourceFolder
 
 	Dim CompilerParam As String = Join(ParamVector(), " ")
 
@@ -1320,7 +1322,6 @@ Private Function GetIncludesFromBasFile(ByVal Filepath As String, ByVal p As Par
 	Dim ProgramName As String = _
 		"""" & CompilerFullName & """" & " " & _
 		FbcParam & " " & _
-		"-i " & p->SourceFolder & " " & _
 		Filepath
 	Print ProgramName
 
