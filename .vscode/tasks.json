@@ -28,7 +28,7 @@
 			"problemMatcher": [],
 			"group": {
 				"kind":"build",
-				"isDefault": true
+				"isDefault": false
 			}
 		},
 		{
@@ -39,16 +39,15 @@
 				"-m", "CreateMakefile",
 				"-x", "CreateMakefile.exe",
 				"-gen", "gcc",
-				"-O", "3",
-				"-Wc", "-ffunction-sections,-fdata-sections",
-				"-Wl", "--gc-sections",
+				"-O", "0",
+				"-g",
 				"-s", "console",
 				"CreateMakefile\\CreateMakefile.bas",
 			],
 			"problemMatcher": [],
 			"group": {
 				"kind": "build",
-				"isDefault": false
+				"isDefault": true
 			}
 		}
 	]
