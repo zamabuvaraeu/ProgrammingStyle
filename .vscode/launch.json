@@ -38,6 +38,44 @@
                     "ignoreFailures": true
                 }
             ]
+        },
+        {
+            "name": "test",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/CreateMakefile.exe",
+            "args": [
+                "-makefile", "Makefile",
+                "-src", "src",
+                "-fbc-path", "C:\\Program Files (x86)\\FreeBASIC-1.10.1-winlibs-gcc-9.3.0",
+                "-fbc", "fbc64.exe",
+                "-out", "Station922",
+                "-module", "CreateMakefile"
+                "-exetype", "exe",
+                "-subsystem", "console"
+                "-emitter", "gcc",
+                "-fix", "false",
+                "-unicode", "false",
+                "-wrt", "true",
+                "-addressaware", "true"
+                "-multithreading", "true"
+                "-usefilesuffix", "true"
+                "-pedantic", "true"
+                "-winver", "1281",
+            ],
+            "stopAtEntry": true,
+            /* "cwd": "${fileDirname}", */
+            "cwd": "${workspaceFolder}",
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "C:\\Program Files\\mingw64\\bin\\gdb.exe",
+            "setupCommands": [
+                {
+                    "description": "Включить автоматическое форматирование для gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
         }
     ]
 }
