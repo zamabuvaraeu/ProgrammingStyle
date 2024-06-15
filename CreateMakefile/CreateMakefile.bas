@@ -88,6 +88,44 @@ Type Parameter
 	Pedantic As Boolean
 End Type
 
+Private Sub SplitRecursive(LinesVector() As String, ByVal strSource As String, ByVal Separator As String)
+
+	Dim u As Integer = UBound(LinesVector)
+
+	Dim Finded As Integer = InStr(strSource, Separator)
+
+	If Finded Then
+		Dim strLeft As String = Mid(strSource, 1, Finded - 1)
+
+		ReDim Preserve LinesVector(u + 1)
+		LinesVector(u) = strLeft
+
+		Dim FromLength As Integer = Len(Separator)
+		Dim strRight As String = Mid(strSource, Finded + FromLength)
+
+		SplitRecursive(LinesVector(), strRight, Separator)
+	Else
+		LinesVector(u) = strSource
+	End If
+
+End Sub
+
+Private Function Join(LinesVector() As String, ByVal Separator As String) As String
+
+	Dim resString As String
+
+	For i As Integer = LBound(LinesVector) To UBound(LinesVector) - 1
+		If Len(LinesVector(i)) Then
+			resString = resString & Separator & LinesVector(i)
+		End If
+	Next
+
+	resString = resString & LinesVector(UBound(LinesVector))
+
+	Return resString
+
+End Function
+
 Private Function AppendPathSeparator(ByVal strLine As String) As String
 
 	var Length = Len(strLine)
