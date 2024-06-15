@@ -133,7 +133,7 @@ Private Function GetExtensionName(ByVal filename As String) As String
 	Dim DotPosition As Integer = InStrRev(filename, ".")
 
 	If DotPosition Then
-		Return Mid(filename, DotPosition)
+		Return Mid(filename, DotPosition + 1)
 	End If
 
 	Return ""
