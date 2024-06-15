@@ -114,15 +114,13 @@ Private Function Join(LinesVector() As String, ByVal Separator As String) As Str
 
 	Dim resString As String
 
-	For i As Integer = LBound(LinesVector) To UBound(LinesVector) - 1
+	For i As Integer = LBound(LinesVector) To UBound(LinesVector)
 		If Len(LinesVector(i)) Then
 			resString = resString & Separator & LinesVector(i)
 		End If
 	Next
 
-	resString = resString & LinesVector(UBound(LinesVector))
-
-	Return resString
+	Return Trim(resString)
 
 End Function
 
