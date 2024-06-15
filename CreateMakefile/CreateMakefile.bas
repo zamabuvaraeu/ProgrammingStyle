@@ -566,13 +566,16 @@ Private Function WriteSetenv(ByVal p As Parameter Ptr) As Integer
 End Function
 
 Private Sub WriteTargets(ByVal MakefileStream As Long)
+
 	Print #MakefileStream, ".PHONY: all debug release clean createdirs"
 	Print #MakefileStream,
 	Print #MakefileStream, "all: release debug"
 	Print #MakefileStream,
+
 End Sub
 
 Private Sub WriteCompilerToolChain(ByVal MakefileStream As Long)
+	
 	Print #MakefileStream, "FBC ?= fbc.exe"
 	Print #MakefileStream, "CC ?= gcc.exe"
 	Print #MakefileStream, "AS ?= as.exe"
@@ -584,12 +587,15 @@ Private Sub WriteCompilerToolChain(ByVal MakefileStream As Long)
 	Print #MakefileStream, "INC_DIR ?="
 	Print #MakefileStream, "LD_SCRIPT ?="
 	Print #MakefileStream,
+	
 End Sub
 
 Private Sub WriteProcessorArch(ByVal MakefileStream As Long)
+
 	Print #MakefileStream, "TARGET_TRIPLET ?="
 	Print #MakefileStream, "MARCH ?= native"
 	Print #MakefileStream,
+
 End Sub
 
 Private Sub WriteOutputFilename(ByVal MakefileStream As Long, ByVal p As Parameter Ptr)
