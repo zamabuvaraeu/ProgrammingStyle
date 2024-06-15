@@ -575,7 +575,7 @@ Private Sub WriteTargets(ByVal MakefileStream As Long)
 End Sub
 
 Private Sub WriteCompilerToolChain(ByVal MakefileStream As Long)
-	
+
 	Print #MakefileStream, "FBC ?= fbc.exe"
 	Print #MakefileStream, "CC ?= gcc.exe"
 	Print #MakefileStream, "AS ?= as.exe"
@@ -587,7 +587,7 @@ Private Sub WriteCompilerToolChain(ByVal MakefileStream As Long)
 	Print #MakefileStream, "INC_DIR ?="
 	Print #MakefileStream, "LD_SCRIPT ?="
 	Print #MakefileStream,
-	
+
 End Sub
 
 Private Sub WriteProcessorArch(ByVal MakefileStream As Long)
@@ -1326,13 +1326,16 @@ Private Function GetIncludesFromBasFile(ByVal Filepath As String, ByVal p As Par
 
 	Dim CompilerFullName As String = BuildPath(p->CompilerPath, p->FbcCompilerName)
 
-	Dim IncludeFullName As String = BuildPath(p->CompilerPath, "inc")
+	Dim IncludeDirFullName As String = BuildPath(p->CompilerPath, "inc")
 
-	Dim ProgramName As String = """" & CompilerFullName & """" & " " & _
-		FbcParam & _
-		" -i " & p->SourceFolder & _
-		" -i " & """" & IncludeFullName & """" & " """ & Filepath & """"
-	' WScript.Echo ProgramName
+	' TODO Find a way to use parameters with spaces
+
+	Dim ProgramName As String = _
+		"""" & CompilerFullName & """" & " " & _
+		FbcParam & " " & _
+		"-i " & p->SourceFolder & " " & _
+		Filepath
+	Print ProgramName
 
 	Dim FileNumber As Long = Freefile()
 	Dim resOpen As Long = Open Pipe(ProgramName, For Input, As FileNumber)
@@ -1347,7 +1350,6 @@ Private Function GetIncludesFromBasFile(ByVal Filepath As String, ByVal p As Par
 
 	' Remove temporary "c" file
 	Dim FileC As String = Replace(Filepath, ".bas", ".c")
-	' WScript.Echo FileC
 	Kill(FileC)
 
 	' If code > 0 Then
@@ -1357,6 +1359,105 @@ Private Function GetIncludesFromBasFile(ByVal Filepath As String, ByVal p As Par
 	Return Lines
 
 End Function
+
+Private Function GetIncludesFromResFile(ByVal Filepath As String, ByVal p As Parameter Ptr) As String
+
+	' TODO Get real dependencies from resource file
+	Dim ResourceIncludes As String = "src\Resources.RC"
+
+	Dim filespec As String = BuildPath(p->SourceFolder, "*.*")
+
+	Dim filename As String = Dir(filespec)
+	Do While Len(filename)
+
+		Dim FileNameWithParentDir As String = BuildPath(p->SourceFolder, filename)
+
+		Dim ext As String = GetExtensionName(filename)
+		Select Case UCase(ext)
+
+			Case "RH"
+				ResourceIncludes = ResourceIncludes & vbCrLf & FileNameWithParentDir
+
+		End Select
+
+		Select Case UCase(filename)
+
+			Case "MANIFEST.XML"
+				ResourceIncludes = ResourceIncludes & vbCrLf & FileNameWithParentDir
+
+			Case "RESOURCES.RC"
+				ResourceIncludes = ResourceIncludes & vbCrLf & FileNameWithParentDir
+
+			Case "APP.ICO"
+				ResourceIncludes = ResourceIncludes & vbCrLf & FileNameWithParentDir
+
+		End Select
+
+		filename = Dir()
+	Loop
+
+	Return ResourceIncludes
+
+End Function
+
+Private Sub CreateDependencies(ByVal MakefileStream As Long, ByVal oFile As String, ByVal FileExtension As String, ByVal p As Parameter Ptr)
+
+	ReDim LinesArray(0) As String
+	Dim LinesArrayCreated As Boolean = Any
+
+	Select Case UCase(FileExtension)
+
+		Case "RC"
+			SplitRecursive(LinesArray(), GetIncludesFromResFile(oFile, p), vbCrLf)
+			LinesArrayCreated = True
+
+		Case "BAS"
+			SplitRecursive(LinesArray(), GetIncludesFromBasFile(oFile, p), vbCrLf)
+			LinesArrayCreated = True
+
+		Case Else
+			LinesArrayCreated = False
+
+	End Select
+
+	If LinesArrayCreated Then
+		Dim Original As String = LinesArray(0)
+
+		' First item is not needed
+		LinesArray(0) = ""
+
+		RemoveVerticalLine(LinesArray())
+		RemoveOmmittedIncludes(LinesArray())
+		RemoveDefaultIncludes(LinesArray(), p)
+		ReplaceSolidusToPathSeparatorVector(LinesArray())
+		AddSpaces(LinesArray())
+
+		Dim OneLine As String = Join(LinesArray(), "")
+
+		WriteTextFile(MakefileStream, Original, RTrim(OneLine), p)
+	End If
+
+End Sub
+
+Private Sub WriteIncludeFile(ByVal MakefileStream As Long, ByVal p As Parameter Ptr)
+
+	Dim filespec As String = BuildPath(p->SourceFolder, "*.*")
+
+	Dim filename As String = Dir(filespec)
+
+	Do While Len(filename)
+
+		Dim ext As String = GetExtensionName(filename)
+		Dim FullFileName As String = BuildPath(p->SourceFolder, filename)
+		' CreateDependencies(MakefileStream, FullFileName, ext, p)
+		Print FullFileName
+
+		filename = Dir()
+	Loop
+
+	Print #MakefileStream,
+
+End Sub
 
 Dim Params As Parameter = Any
 var resParse = ParseCommandLine(@Params)
@@ -1406,113 +1507,6 @@ WriteCRule(MakefileNumber)
 WriteBasRule(MakefileNumber, @Params)
 WriteResourceRule(MakefileNumber)
 
-' WriteIncludeFile MakefileFileStream, Params
+WriteIncludeFile(MakefileNumber, @Params)
 
 Close(MakefileNumber)
-
-/'
-
-#ifdef __FB_UNIX__
-Const TEST_COMMAND = "fbc"
-#else
-Const TEST_COMMAND = """C:\Program Files (x86)\FreeBASIC-1.10.1-winlibs-gcc-9.3.0\fbc64.exe"""
-#endif
-
-'/
-
-/'
-
-Function GetIncludesFromResFile(Filepath, p)
-	' TODO Get real dependencies from resource file
-	GetIncludesFromResFile = "src\Resources.RC"
-
-	Dim SrcFolder
-	Set SrcFolder = FSO.GetFolder(p.SourceFolder)
-
-	Dim File
-	For Each File In SrcFolder.Files
-		Dim ext
-		ext = FSO.GetExtensionName(File.Path)
-		Dim FileNameWithParentDir
-		FileNameWithParentDir = FSO.BuildPath(SrcFolder.Name, File.Name)
-
-		Select Case UCase(ext)
-
-			Case "RH"
-				GetIncludesFromResFile = GetIncludesFromResFile & vbCrLf & FileNameWithParentDir
-
-		End Select
-
-		Select Case UCase(File.Name)
-
-			Case "MANIFEST.XML"
-				GetIncludesFromResFile = GetIncludesFromResFile & vbCrLf & FileNameWithParentDir
-
-			Case "RESOURCES.RC"
-				GetIncludesFromResFile = GetIncludesFromResFile & vbCrLf & FileNameWithParentDir
-
-			Case "APP.ICO"
-				GetIncludesFromResFile = GetIncludesFromResFile & vbCrLf & FileNameWithParentDir
-
-		End Select
-	Next
-
-	Set SrcFolder = Nothing
-
-End Function
-
-Function CreateDependencies(MakefileStream, oFile, FileExtension, p)
-
-	Dim LinesArray
-	Dim LinesArrayCreated
-
-	Select Case UCase(FileExtension)
-		Case "RC"
-			LinesArray = Split(GetIncludesFromResFile(oFile.Path, p), vbCrLf)
-			LinesArrayCreated = True
-		Case "BAS"
-			LinesArray = Split(GetIncludesFromBasFile(oFile.Path, p), vbCrLf)
-			LinesArrayCreated = True
-		Case Else
-			LinesArray = Split("", vbCrLf)
-			LinesArrayCreated = False
-	End Select
-
-	If LinesArrayCreated Then
-		Dim Original
-		Original = LinesArray(0)
-
-		' Первая строка не нужна — там имя самого файла
-		LinesArray(0) = ""
-
-		RemoveVerticalLine LinesArray
-		RemoveOmmittedIncludes LinesArray
-		RemoveDefaultIncludes LinesArray, p
-		ReplaceSolidusToPathSeparatorVector LinesArray
-		AddSpaces LinesArray
-
-		' Весь массив в одну линию
-		Dim OneLine
-		OneLine = Join(LinesArray, "")
-
-		WriteTextFile MakefileStream, Original, RTrim(OneLine), p
-	End If
-End Function
-
-Sub WriteIncludeFile(MakefileStream, p)
-	Dim SrcFolder
-	Set SrcFolder = FSO.GetFolder(p.SourceFolder)
-
-	Dim File
-	For Each File In SrcFolder.Files
-		Dim ext
-		ext = FSO.GetExtensionName(File.Path)
-		CreateDependencies MakefileStream, File, ext, p
-	Next
-
-	Set SrcFolder = Nothing
-
-	MakefileStream.WriteLine
-End Sub
-
-'/
