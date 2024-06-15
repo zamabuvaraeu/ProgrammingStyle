@@ -1360,41 +1360,75 @@ Private Function GetIncludesFromBasFile(ByVal Filepath As String, ByVal p As Par
 
 End Function
 
+Private Function FileExists(ByVal Filepath As String) As Boolean
+
+	var Filenumber = Freefile()
+	var resOpen = Open(Filepath, For Input, As Filenumber)
+	If resOpen Then
+		Return False
+	End If
+
+	Close(Filenumber)
+	Return True
+
+End Function
+
 Private Function GetIncludesFromResFile(ByVal Filepath As String, ByVal p As Parameter Ptr) As String
 
 	' TODO Get real dependencies from resource file
-	Dim ResourceIncludes As String = "src\Resources.RC"
+	Dim ResourceIncludes As String = Filepath
 
-	Dim filespec As String = BuildPath(p->SourceFolder, "*.*")
+	' Dim filespec As String = BuildPath(p->SourceFolder, "*.*")
 
-	Dim filename As String = Dir(filespec)
-	Do While Len(filename)
+	Scope
+		Dim FileNameWithParentDir As String = BuildPath(p->SourceFolder, "Resources.RH")
+		If FileExists(FileNameWithParentDir) Then
+			ResourceIncludes = ResourceIncludes & vbCrLf & FileNameWithParentDir
+		End If
+	End Scope
 
-		Dim FileNameWithParentDir As String = BuildPath(p->SourceFolder, filename)
+	Scope
+		Dim FileNameWithParentDir As String = BuildPath(p->SourceFolder, "MANIFEST.XML")
+		If FileExists(FileNameWithParentDir) Then
+			ResourceIncludes = ResourceIncludes & vbCrLf & FileNameWithParentDir
+		End If
+	End Scope
 
-		Dim ext As String = GetExtensionName(filename)
-		Select Case UCase(ext)
+	Scope
+		Dim FileNameWithParentDir As String = BuildPath(p->SourceFolder, "APP.ICO")
+		If FileExists(FileNameWithParentDir) Then
+			ResourceIncludes = ResourceIncludes & vbCrLf & FileNameWithParentDir
+		End If
+	End Scope
 
-			Case "RH"
-				ResourceIncludes = ResourceIncludes & vbCrLf & FileNameWithParentDir
+	' Dim filename As String = Dir(filespec)
+	' Do While Len(filename)
 
-		End Select
+	' 	Dim FileNameWithParentDir As String = BuildPath(p->SourceFolder, filename)
 
-		Select Case UCase(filename)
+	' 	Dim ext As String = GetExtensionName(filename)
+	' 	Select Case UCase(ext)
 
-			Case "MANIFEST.XML"
-				ResourceIncludes = ResourceIncludes & vbCrLf & FileNameWithParentDir
+	' 		Case "RH"
+	' 			ResourceIncludes = ResourceIncludes & vbCrLf & FileNameWithParentDir
 
-			Case "RESOURCES.RC"
-				ResourceIncludes = ResourceIncludes & vbCrLf & FileNameWithParentDir
+	' 	End Select
 
-			Case "APP.ICO"
-				ResourceIncludes = ResourceIncludes & vbCrLf & FileNameWithParentDir
+	' 	Select Case UCase(filename)
 
-		End Select
+	' 		Case "MANIFEST.XML"
+	' 			ResourceIncludes = ResourceIncludes & vbCrLf & FileNameWithParentDir
 
-		filename = Dir()
-	Loop
+	' 		Case "RESOURCES.RC"
+	' 			ResourceIncludes = ResourceIncludes & vbCrLf & FileNameWithParentDir
+
+	' 		Case "APP.ICO"
+	' 			ResourceIncludes = ResourceIncludes & vbCrLf & FileNameWithParentDir
+
+	' 	End Select
+
+	' 	filename = Dir()
+	' Loop
 
 	Return ResourceIncludes
 
@@ -1449,8 +1483,7 @@ Private Sub WriteIncludeFile(ByVal MakefileStream As Long, ByVal p As Parameter 
 
 		Dim ext As String = GetExtensionName(filename)
 		Dim FullFileName As String = BuildPath(p->SourceFolder, filename)
-		' CreateDependencies(MakefileStream, FullFileName, ext, p)
-		Print FullFileName
+		CreateDependencies(MakefileStream, FullFileName, ext, p)
 
 		filename = Dir()
 	Loop
