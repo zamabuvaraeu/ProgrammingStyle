@@ -55,6 +55,7 @@ Const vbTab = !"\t"
 Const vbCrLf = !"\r\n"
 Const Solidus = "\"
 Const ReverseSolidus = "/"
+Const PathSeparator = "\"
 Const MakefilePathSeparator = "$(PATH_SEP)"
 Const MakefileMovePathSeparator = "$(MOVE_PATH_SEP)"
 Const ReleaseDirPrefix = "$(OBJ_RELEASE_DIR)$(PATH_SEP)"
@@ -130,10 +131,10 @@ Private Function AppendPathSeparator(ByVal strLine As String) As String
 
 	var LastChar = Mid(strLine, Length, 1)
 
-	If LastChar = "\" Then
+	If LastChar = PathSeparator Then
 		Return strLine
 	Else
-		Return strLine & "\"
+		Return strLine & PathSeparator
 	End If
 
 End Function
@@ -148,7 +149,7 @@ Private Function BuildPath(ByVal Directory As String, ByVal File As String) As S
 
 	Dim FirstChar As String = Mid(File, 1, 1)
 
-	If FirstChar = "\" Then
+	If FirstChar = PathSeparator Then
 		Return DirWithPathSeparator & Mid(File, 2)
 	Else
 		Return DirWithPathSeparator & File
@@ -726,11 +727,11 @@ Private Sub WriteFbcFlags(ByVal MakefileStream As Long, ByVal p As Parameter Ptr
 	Print #MakefileStream, "endif"
 
 	Print #MakefileStream, "FBCFLAGS+=-w error -maxerr 1"
-	Print #MakefileStream, "FBCFLAGS+=-i " & p->SourceFolder
 
 	Print #MakefileStream, "ifneq ($(INC_DIR),)"
 	Print #MakefileStream, "FBCFLAGS+=-i ""$(INC_DIR)"""
 	Print #MakefileStream, "endif"
+	Print #MakefileStream, "FBCFLAGS+=-i " & p->SourceFolder
 
 	Print #MakefileStream, "FBCFLAGS+=-r"
 
