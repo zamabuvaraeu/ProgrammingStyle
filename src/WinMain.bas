@@ -1,5 +1,6 @@
 #include once "WinMain.bi"
 #include once "win\commctrl.bi"
+#include once "win\windowsx.bi"
 #include once "Resources.RH"
 
 Type InputDialogParam
