@@ -1125,65 +1125,53 @@ End Sub
 
 Private Function CreateCompilerParams(ByVal p As Parameter Ptr) As String
 
-	Dim EmitterFlag As String = CodeGenerationToString(p)
+	Dim ParamVector(9) As String
 
-	Dim UnicodeFlag As String
+	ParamVector(0) = CodeGenerationToString(p)
+
 	Select Case p->Unicode
 
 		Case DEFINE_ANSI
-			UnicodeFlag = ""
+			ParamVector(1) = ""
 
 		Case DEFINE_UNICODE
-			UnicodeFlag = "-d UNICODE"
+			ParamVector(1) = "-d UNICODE"
 
 	End Select
 
-	Dim RuntimeFlag As String
 	Select Case p->UseRuntimeLibrary
 
 		Case DEFINE_RUNTIME
-			RuntimeFlag = ""
+			ParamVector(2) = ""
 
 		Case DEFINE_WITHOUT_RUNTIME
-			RuntimeFlag = "-d WITHOUT_RUNTIME"
+			ParamVector(2) = "-d WITHOUT_RUNTIME"
 
 	End Select
 
-	Dim WinverFlag As String
 	If p->MinimalOSVersion Then
-		WinverFlag = "-d WINVER=" & p->MinimalOSVersion & " -d _WIN32_WINNT=" & p->MinimalOSVersion
+		ParamVector(3) = "-d WINVER=" & p->MinimalOSVersion & " -d _WIN32_WINNT=" & p->MinimalOSVersion
 	Else
-		WinverFlag = ""
+		ParamVector(3) = ""
 	End If
 
-	Dim SubSystemFlag As String
 	If p->FileSubsystem = SUBSYSTEM_WINDOW Then
-		SubSystemFlag = "-s gui"
+		ParamVector(4) = "-s gui"
 	Else
-		SubSystemFlag = "-s console"
+		ParamVector(4) = "-s console"
 	End If
 
-	Dim MaxErrorFlag As String = "-w error -maxerr 1"
+	ParamVector(5) = "-w error -maxerr 1"
 
-	Dim OptimizationFlag As String = "-O 0"
+	ParamVector(6) = "-O 0"
 
-	Dim OnlyAssemblyFlag As String = "-r"
+	ParamVector(7) = "-r"
 
-	Dim ShowIncludesFlag As String = "-showincludes"
+	ParamVector(8) = "-showincludes"
 
-	Dim MainModuleFlag As String = "-m " & p->MainModuleName
+	ParamVector(9) = "-m " & p->MainModuleName
 
-	Dim CompilerParam As String = _
-		EmitterFlag      & " " & _
-		UnicodeFlag      & " " & _
-		RuntimeFlag      & " " & _
-		WinverFlag       & " " & _
-		SubSystemFlag    & " " & _
-		MaxErrorFlag     & " " & _
-		OptimizationFlag & " " & _
-		OnlyAssemblyFlag & " " & _
-		ShowIncludesFlag & " " & _
-	MainModuleFlag
+	Dim CompilerParam As String = Join(ParamVector(), " ")
 
 	Return CompilerParam
 
