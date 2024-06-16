@@ -440,7 +440,7 @@ Private Function WriteSetenv(ByVal p As Parameter Ptr) As Integer
 	Print #oStream,
 
 	Print #oStream, "rem Without quotes:"
-	Print #oStream, "set LIB_DIR==%FBC_DIR%\%LibFolder%"
+	Print #oStream, "set LIB_DIR=%FBC_DIR%\%LibFolder%"
 	Print #oStream, "set INC_DIR=%FBC_DIR%\inc"
 	Print #oStream,
 
@@ -781,7 +781,7 @@ Private Sub WriteLinkerFlags(ByVal MakefileStream As Long, ByVal p As Parameter 
 
 			' WinMainCRTStartup or mainCRTStartup
 			Print #MakefileStream, "ifeq ($(USE_RUNTIME),FALSE)"
-			Print #MakefileStream, "LDFLAGS+=-Wl,-e EntryPoint"
+			Print #MakefileStream, "LDFLAGS+=-Wl,-e,EntryPoint"
 			Print #MakefileStream, "endif"
 
 			' MakefileStream.WriteLine "LDFLAGS+=-m i386pep"
@@ -789,7 +789,7 @@ Private Sub WriteLinkerFlags(ByVal MakefileStream As Long, ByVal p As Parameter 
 			Print #MakefileStream, "else"
 
 			Print #MakefileStream, "ifeq ($(USE_RUNTIME),FALSE)"
-			Print #MakefileStream, "LDFLAGS+=-Wl,-e _EntryPoint@0"
+			Print #MakefileStream, "LDFLAGS+=-Wl,-e,_EntryPoint@0"
 			Print #MakefileStream, "endif"
 
 			' MakefileStream.WriteLine "LDFLAGS+=-m i386pe"
@@ -808,18 +808,18 @@ Private Sub WriteLinkerFlags(ByVal MakefileStream As Long, ByVal p As Parameter 
 			Select Case p->FileSubsystem
 
 				Case SUBSYSTEM_CONSOLE
-					Print #MakefileStream, "LDFLAGS+=-Wl,--subsystem console"
+					Print #MakefileStream, "LDFLAGS+=-Wl,--subsystem,console"
 
 				Case SUBSYSTEM_WINDOW
-					Print #MakefileStream, "LDFLAGS+=-Wl,--subsystem windows"
+					Print #MakefileStream, "LDFLAGS+=-Wl,--subsystem,windows"
 
 				Case SUBSYSTEM_NATIVE
-					Print #MakefileStream, "LDFLAGS+=-Wl,--subsystem native"
+					Print #MakefileStream, "LDFLAGS+=-Wl,--subsystem,native"
 
 			End Select
 
 			Print #MakefileStream, "LDFLAGS+=-Wl,--no-seh -Wl,--nxcompat"
-			Print #MakefileStream, "LDFLAGS+=-Wl,--disable-dynamicbase"
+			' Print #MakefileStream, "LDFLAGS+=-Wl,--disable-dynamicbase"
 
 			Print #MakefileStream, "LDFLAGS+=-pipe -nostdlib"
 
@@ -1432,6 +1432,8 @@ WriteLinkerFlags(MakefileNumber, @Params)
 
 WriteLinkerLibraryes(MakefileNumber, @Params)
 
+WriteIncludeFile(MakefileNumber, @Params)
+
 WriteReleaseTarget(MakefileNumber)
 WriteDebugTarget(MakefileNumber)
 WriteCleanTarget(MakefileNumber)
@@ -1444,7 +1446,5 @@ WriteAsmRule(MakefileNumber)
 WriteCRule(MakefileNumber)
 WriteBasRule(MakefileNumber, @Params)
 WriteResourceRule(MakefileNumber)
-
-WriteIncludeFile(MakefileNumber, @Params)
 
 Close(MakefileNumber)
