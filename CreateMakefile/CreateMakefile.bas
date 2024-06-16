@@ -59,17 +59,27 @@ Const vbTab = !"\t"
 Const vbCrLf = !"\r\n"
 Const Solidus = "\"
 Const ReverseSolidus = "/"
+
+#ifdef __FB_LINUX__
+#define WriteSetenv WriteSetenvLinux
+Const PathSeparator = "/"
+Const MakefileParametersFile = "setenv.sh"
+Const DefaultCompilerFolder = ""
+Const DefaultCompilerName = "fbc"
+#else
+#define WriteSetenv WriteSetenvWin32
 Const PathSeparator = "\"
+Const MakefileParametersFile = "setenv.cmd"
+Const DefaultCompilerFolder = "C:\Program Files (x86)\FreeBASIC-1.10.1-winlibs-gcc-9.3.0"
+Const DefaultCompilerName = "fbc64.exe"
+#endif
+
+' Makefile variables
 Const MakefilePathSeparator = "$(PATH_SEP)"
 Const MakefileMovePathSeparator = "$(MOVE_PATH_SEP)"
 Const ReleaseDirPrefix = "$(OBJ_RELEASE_DIR)$(PATH_SEP)"
 Const DebugDirPrefix = "$(OBJ_DEBUG_DIR)$(PATH_SEP)"
 Const FileSuffix = "$(FILE_SUFFIX)"
-Const ObjectFilesRelease = "OBJECTFILES_RELEASE"
-Const ObjectFilesDebug = "OBJECTFILES_DEBUG"
-Const MakefileParametersFile = "setenv.cmd"
-Const DefaultCompilerFolder = "C:\Program Files (x86)\FreeBASIC-1.10.1-winlibs-gcc-9.3.0"
-Const DefaultCompilerName = "fbc64.exe"
 Const FBC_VER = "_FBC1101"
 Const GCC_VER = "_GCC0930"
 
@@ -367,7 +377,13 @@ Private Function ParseCommandLine(ByVal p As Parameter Ptr) As Integer
 
 End Function
 
-Private Function WriteSetenv(ByVal p As Parameter Ptr) As Integer
+Private Function WriteSetenvLinux(ByVal p As Parameter Ptr) As Integer
+
+	Return 0
+
+End Function
+
+Private Function WriteSetenvWin32(ByVal p As Parameter Ptr) As Integer
 
 	var oStream = Freefile()
 	var resOpen = Open(MakefileParametersFile, For Output, As oStream)
@@ -447,6 +463,13 @@ Private Function WriteSetenv(ByVal p As Parameter Ptr) As Integer
 	Print #oStream, "set LIB_DIR=%FBC_DIR%\%LibFolder%"
 	Print #oStream, "set INC_DIR=%FBC_DIR%\inc"
 	Print #oStream,
+
+	Print #oStream, "set PATH_SEP=/"
+	Print #oStream, "set MOVE_PATH_SEP=\\"
+	Print #oStream, "set MOVE_COMMAND=cmd.exe /c move /y"
+	Print #oStream, "set DELETE_COMMAND=cmd.exe /c del /f /q"
+	Print #oStream, "set MKDIR_COMMAND=cmd.exe /c mkdir"
+	Print #oStream, "set SCRIPT_COMMAND=cscript.exe //nologo fix-emitted-code.vbs"
 
 	Select Case p->Emitter
 
@@ -1203,8 +1226,8 @@ Private Sub WriteTextFile(ByVal MakefileStream As Long, ByVal BasFile As String,
 	Dim FileNameWithDebug As String = DebugDirPrefix & FileNameWithPathSep
 	Dim FileNameWithRelease As String = ReleaseDirPrefix & FileNameWithPathSep
 
-	Dim ObjectFileNameWithDebug As String = ObjectFilesDebug & "+=" & DebugDirPrefix & ObjectFileNameWithPathSep
-	Dim ObjectFileNameRelease As String = ObjectFilesRelease & "+=" & ReleaseDirPrefix & ObjectFileNameWithPathSep
+	Dim ObjectFileNameWithDebug As String = "OBJECTFILES_DEBUG+=" & DebugDirPrefix & ObjectFileNameWithPathSep
+	Dim ObjectFileNameRelease As String = "OBJECTFILES_RELEASE+=" & ReleaseDirPrefix & ObjectFileNameWithPathSep
 
 	Dim ResultDebugString As String = FileNameWithDebug & ": " & DependenciesLine
 	Dim ResultReleaseString As String = FileNameWithRelease & ": " & DependenciesLine
