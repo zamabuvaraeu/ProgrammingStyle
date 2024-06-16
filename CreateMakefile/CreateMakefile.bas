@@ -137,9 +137,9 @@ Private Function AppendPathSeparator(ByVal strLine As String) As String
 
 	If LastChar = PathSeparator Then
 		Return strLine
-	Else
-		Return strLine & PathSeparator
 	End If
+
+	Return strLine & PathSeparator
 
 End Function
 
@@ -155,9 +155,9 @@ Private Function BuildPath(ByVal Directory As String, ByVal File As String) As S
 
 	If FirstChar = PathSeparator Then
 		Return DirWithPathSeparator & Mid(File, 2)
-	Else
-		Return DirWithPathSeparator & File
 	End If
+
+	Return DirWithPathSeparator & File
 
 End Function
 
@@ -971,7 +971,6 @@ End Sub
 Private Sub WriteReleaseRule(ByVal MakefileStream As Long)
 
 	Print #MakefileStream, "$(BIN_RELEASE_DIR)$(PATH_SEP)$(OUTPUT_FILE_NAME): $(OBJECTFILES_RELEASE)"
-	' Print #MakefileStream, vbTab & "$(LD) $(LDFLAGS) $(LDLIBSBEGIN) $^ $(LDLIBS) $(LDLIBSEND) -o $@"
 	Print #MakefileStream, vbTab & "$(CC) $(LDFLAGS) $(LDLIBSBEGIN) $^ $(LDLIBS) $(LDLIBSEND) -o $@"
 	Print #MakefileStream,
 
@@ -980,7 +979,6 @@ End Sub
 Private Sub WriteDebugRule(ByVal MakefileStream As Long)
 
 	Print #MakefileStream, "$(BIN_DEBUG_DIR)$(PATH_SEP)$(OUTPUT_FILE_NAME): $(OBJECTFILES_DEBUG)"
-	' Print #MakefileStream, vbTab & "$(LD) $(LDFLAGS) $(LDLIBSBEGIN) $^ $(LDLIBS) $(LDLIBSEND) -o $@"
 	Print #MakefileStream, vbTab & "$(CC) $(LDFLAGS) $(LDLIBSBEGIN) $^ $(LDLIBS) $(LDLIBSEND) -o $@"
 	Print #MakefileStream,
 
@@ -1135,6 +1133,7 @@ Private Sub RemoveOmmittedIncludes(LinesVector() As String)
 			End If
 		End If
 	Next
+
 End Sub
 
 Private Sub ReplaceSolidusToPathSeparatorVector(LinesVector() As String)
@@ -1284,6 +1283,7 @@ Private Function FileExists(ByVal Filepath As String) As Boolean
 	End If
 
 	Close(Filenumber)
+
 	Return True
 
 End Function
