@@ -1,0 +1,11 @@
+.VSCodeCounter/
+bin/
+obj/
+breakpoints.txt
+run_gdb.cmd
+*.exe
+src/*.c
+CreateMakefile.cmd
+CreateMakefile.exe
+setenv.cmd
+Makefile
