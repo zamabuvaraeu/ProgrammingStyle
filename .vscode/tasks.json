@@ -32,7 +32,7 @@
 			}
 		},
 		{
-			"label": "Build CreateMakefile",
+			"label": "Build CreateMakefile Windows",
 			"type": "process",
 			"command": "C:\\Program Files (x86)\\FreeBASIC-1.10.1-winlibs-gcc-9.3.0\\fbc64.exe",
 			"args": [
@@ -41,7 +41,6 @@
 				"-gen", "gcc",
 				"-O", "0",
 				"-g",
-				"-s", "console",
 				"CreateMakefile\\CreateMakefile.bas",
 			],
 			"problemMatcher": [],
@@ -49,6 +48,29 @@
 				"kind": "build",
 				"isDefault": true
 			}
-		}
+		},
+		{
+			"label": "Build CreateMakefile Linux",
+			"type": "process",
+			// "command": "/home/mabu/Загрузки/FreeBASIC-1.10.1-ubuntu-18.04-x86_64/bin/fbc",
+			"command": "fbc",
+			"args": [
+				"-m", "CreateMakefile",
+				"-x", "CreateMakefile.exe",
+				"-gen", "gcc",
+				"-O", "0",
+				"-g",
+				"CreateMakefile/CreateMakefile.bas",
+			],
+			"options": {
+				"cwd": "./"
+			},
+			/* Оставляем как есть */
+			"problemMatcher": [],
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+		},
 	]
 }
