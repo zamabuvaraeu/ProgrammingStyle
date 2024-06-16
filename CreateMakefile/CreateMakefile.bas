@@ -718,7 +718,10 @@ Private Sub WriteGccFlags(ByVal MakefileStream As Long, ByVal p As Parameter Ptr
 	Print #MakefileStream, "release: CFLAGS+=-fno-math-errno -fno-exceptions"
 	Print #MakefileStream, "release: CFLAGS+=-fno-unwind-tables -fno-asynchronous-unwind-tables"
 	Print #MakefileStream, "release: CFLAGS+=-O3 -fno-ident -fdata-sections -ffunction-sections"
+
+	Print #MakefileStream, "ifneq ($(FLTO),)"
 	Print #MakefileStream, "release: CFLAGS+=-flto"
+	Print #MakefileStream, "endif"
 
 	Print #MakefileStream, "debug: CFLAGS+=$(CFLAGS_DEBUG)"
 
@@ -830,7 +833,10 @@ Private Sub WriteLinkerFlags(ByVal MakefileStream As Long, ByVal p As Parameter 
 			Print #MakefileStream, "LDFLAGS+=-T ""$(LD_SCRIPT)"""
 			Print #MakefileStream, "endif"
 
-			Print #MakefileStream, "release: LDFLAGS+=-flto -s -Wl,--gc-sections"
+			Print #MakefileStream, "release: LDFLAGS+=-s -Wl,--gc-sections"
+			Print #MakefileStream, "ifneq ($(FLTO),)"
+			Print #MakefileStream, "release: LDFLAGS+=-flto"
+			Print #MakefileStream, "endif"
 
 			Print #MakefileStream, "debug: LDFLAGS+=$(LDFLAGS_DEBUG)"
 			Print #MakefileStream, "debug: LDLIBS+=$(LDLIBS_DEBUG)"
