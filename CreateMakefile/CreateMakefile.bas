@@ -225,7 +225,6 @@ Private Function ParseCommandLine(ByVal p As Parameter Ptr) As Integer
 	p->UseRuntimeLibrary = DEFINE_RUNTIME
 	p->AddressAware = LARGE_ADDRESS_UNAWARE
 	p->ThreadingMode = DEFINE_SINGLETHREADING_RUNTIME
-	' p->MinimalOSVersion = 1024
 	p->MinimalOSVersion = 0
 	p->UseFileSuffix = False
 	p->Pedantic = False
@@ -275,9 +274,6 @@ Private Function ParseCommandLine(ByVal p As Parameter Ptr) As Integer
 					Case "wasm64"
 						p->ExeType = OUTPUT_FILETYPE_WASM64
 
-					Case Else
-						p->ExeType = OUTPUT_FILETYPE_EXE
-
 				End Select
 
 			Case "-subsystem"
@@ -292,9 +288,6 @@ Private Function ParseCommandLine(ByVal p As Parameter Ptr) As Integer
 
 					Case "native"
 						p->FileSubsystem = SUBSYSTEM_NATIVE
-
-					Case Else
-						p->FileSubsystem = SUBSYSTEM_CONSOLE
 
 				End Select
 
@@ -320,121 +313,45 @@ Private Function ParseCommandLine(ByVal p As Parameter Ptr) As Integer
 					Case "wasm64"
 						p->Emitter = CODE_EMITTER_WASM64
 
-					Case Else
-						p->Emitter = CODE_EMITTER_GCC
-
 				End Select
 
 			Case "-fix"
-
-				Select Case sValue
-
-					Case "true"
-						p->FixEmittedCode = FIX_EMITTED_CODE
-
-					Case "false"
-						p->FixEmittedCode = NOT_FIX_EMITTED_CODE
-
-					Case Else
-						p->FixEmittedCode = NOT_FIX_EMITTED_CODE
-
-				End Select
+				If sValue = "true" Then
+					p->FixEmittedCode = FIX_EMITTED_CODE
+				End If
 
 			Case "-unicode"
-
-				Select Case sValue
-
-					Case "true"
-						p->Unicode = DEFINE_UNICODE
-
-					Case "false"
-						p->Unicode = DEFINE_ANSI
-
-					Case Else
-						p->Unicode = DEFINE_ANSI
-
-				End Select
+				If sValue = "true" Then
+					p->Unicode = DEFINE_UNICODE
+				End If
 
 			Case "-wrt"
-
-				Select Case sValue
-
-					Case "true"
-						p->UseRuntimeLibrary = DEFINE_WITHOUT_RUNTIME
-
-					Case "false"
-						p->UseRuntimeLibrary = DEFINE_RUNTIME
-
-					Case Else
-						p->UseRuntimeLibrary = DEFINE_RUNTIME
-
-				End Select
+				If sValue = "true" Then
+					p->UseRuntimeLibrary = DEFINE_WITHOUT_RUNTIME
+				End If
 
 			Case "-addressaware"
-
-				Select Case sValue
-
-					Case "true"
-						p->AddressAware = LARGE_ADDRESS_AWARE
-
-					Case "false"
-						p->AddressAware = LARGE_ADDRESS_UNAWARE
-
-					Case Else
-						p->AddressAware = LARGE_ADDRESS_UNAWARE
-
-				End Select
+				If sValue = "true" Then
+					p->AddressAware = LARGE_ADDRESS_AWARE
+				End If
 
 			Case "-multithreading"
-
-				Select Case sValue
-
-					Case "true"
-						p->ThreadingMode = DEFINE_MULTITHREADING_RUNTIME
-
-					Case "false"
-						p->ThreadingMode = DEFINE_SINGLETHREADING_RUNTIME
-
-					Case Else
-						p->ThreadingMode = DEFINE_SINGLETHREADING_RUNTIME
-
-				End Select
+				If sValue = "true" Then
+					p->ThreadingMode = DEFINE_MULTITHREADING_RUNTIME
+				End If
 
 			Case "-usefilesuffix"
-
-				Select Case sValue
-
-					Case "true"
-						p->UseFileSuffix = True
-
-					Case "false"
-						p->UseFileSuffix = False
-
-					Case Else
-						p->UseFileSuffix = True
-
-				End Select
+				If sValue = "true" Then
+					p->UseFileSuffix = True
+				End If
 
 			Case "-pedantic"
-
-				Select Case sValue
-
-					Case "true"
-						p->Pedantic = True
-
-					Case "false"
-						p->Pedantic = False
-
-					Case Else
-						p->Pedantic = False
-
-				End Select
+				If sValue = "true" Then
+					p->Pedantic = True
+				End If
 
 			Case "-winver"
-				' 	p.MinimalWindowsVersion = colArgs.Item("winver")
-				' Else
-				' 	p.MinimalWindowsVersion = "1024"
-				' End If
+				p->MinimalOSVersion = CInt(sValue)
 
 		End Select
 
