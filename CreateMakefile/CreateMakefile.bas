@@ -510,7 +510,7 @@ Private Function WriteSetenvWin32(ByVal p As Parameter Ptr) As Integer
 	End If
 	Print #oStream, "set OBJ_CRT_START=" & crtLib & " ""%FBC_DIR%\%LibFolder%\crtbegin.o"" ""%FBC_DIR%\%LibFolder%\fbrt0.o"""
 
-	Dim OsLibs As String = "set LIBS_OS=-ladvapi32 -lcomctl32 -lcomdlg32 -lcrypt32 -lgdi32 -lgdiplus -lkernel32 -lmswsock -lole32 -loleaut32 -lshell32 -lshlwapi -lwsock32 -lws2_32 -luser32 -lmsvcrt"
+	Dim OsLibs As String = "set LIBS_OS=-ladvapi32 -lcomctl32 -lcomdlg32 -lcrypt32 -lgdi32 -lgdiplus -lkernel32 -lmswsock -lole32 -loleaut32 -lshell32 -lshlwapi -lwsock32 -lws2_32 -luser32 -luuid -lmsvcrt"
 	If p->ThreadingMode = DEFINE_MULTITHREADING_RUNTIME Then
 		OsLibs &= " -lfbmt"
 	Else
@@ -905,58 +905,90 @@ Private Sub WriteLinkerLibraryes(ByVal MakefileStream As Long, ByVal p As Parame
 		Case CODE_EMITTER_WASM32, CODE_EMITTER_WASM64
 
 		Case Else
-			' TODO Replace path separator \ to $(PATH_SEP)
+			Scope
+				' mainCRTStartup libraries
 
-			Print #MakefileStream, "ifeq ($(USE_RUNTIME),TRUE)"
+				Print #MakefileStream, "ifeq ($(USE_RUNTIME),TRUE)"
 
-			' For profile
-			' Print #MakefileStream, "LDLIBSBEGIN+=gcrt2.o"
+				Print #MakefileStream, "ifeq ($(OBJ_CRT_START),)"
 
-			Print #MakefileStream, "LDLIBSBEGIN+=""$(LIB_DIR)\crt2.o"""
-			Print #MakefileStream, "LDLIBSBEGIN+=""$(LIB_DIR)\crtbegin.o"""
-			Print #MakefileStream, "LDLIBSBEGIN+=""$(LIB_DIR)\fbrt0.o"""
-			Print #MakefileStream, "endif"
+				' For profile
+				' Print #MakefileStream, "LDLIBSBEGIN+=gcrt2.o"
 
-			Print #MakefileStream, "LDLIBS+=-Wl,--start-group"
+				Print #MakefileStream, "LDLIBSBEGIN+=""$(LIB_DIR)\crt2.o"""
+				Print #MakefileStream, "LDLIBSBEGIN+=""$(LIB_DIR)\crtbegin.o"""
+				Print #MakefileStream, "LDLIBSBEGIN+=""$(LIB_DIR)\fbrt0.o"""
 
-			' Windows API
-			Print #MakefileStream, "LDLIBS+=-ladvapi32 -lcomctl32 -lcomdlg32 -lcrypt32"
-			Print #MakefileStream, "LDLIBS+=-lgdi32 -lgdiplus -lkernel32 -lmswsock"
-			Print #MakefileStream, "LDLIBS+=-lole32 -loleaut32 -lshell32 -lshlwapi"
-			Print #MakefileStream, "LDLIBS+=-lwsock32 -lws2_32 -luser32"
-			Print #MakefileStream, "LDLIBS+=-lmsvcrt"
+				Print #MakefileStream, "else"
+				Print #MakefileStream, "LDLIBSBEGIN+=$(OBJ_CRT_START)"
+				Print #MakefileStream, "endif"
 
-			Print #MakefileStream, "ifeq ($(USE_RUNTIME),TRUE)"
+				Print #MakefileStream, "endif"
+			End Scope
 
-			' For Multithreading
-			Select Case p->ThreadingMode
+			Print #MakefileStream,
 
-				Case DEFINE_SINGLETHREADING_RUNTIME
-					Print #MakefileStream, "LDLIBS+=-lfb"
+			Scope
+				' Windows API libraries
 
-				Case DEFINE_MULTITHREADING_RUNTIME
-					Print #MakefileStream, "LDLIBS+=-lfbmt"
+				Print #MakefileStream, "LDLIBS+=-Wl,--start-group"
 
-			End Select
+				Print #MakefileStream, "ifeq ($(LIBS_OS),)"
 
-			Print #MakefileStream, "LDLIBS+=-luuid"
+				Print #MakefileStream, "LDLIBS+=-ladvapi32 -lcomctl32 -lcomdlg32 -lcrypt32"
+				Print #MakefileStream, "LDLIBS+=-lgdi32 -lgdiplus -lkernel32 -lmswsock"
+				Print #MakefileStream, "LDLIBS+=-lole32 -loleaut32 -lshell32 -lshlwapi"
+				Print #MakefileStream, "LDLIBS+=-lwsock32 -lws2_32 -luser32 -luuid"
+				Print #MakefileStream, "LDLIBS+=-lmsvcrt"
 
-			Print #MakefileStream, "endif"
+				Print #MakefileStream, "ifeq ($(USE_RUNTIME),TRUE)"
 
-			' For profile
-			' Print #MakefileStream, "LDLIBS_DEBUG+=-lgmon"
+				' For Multithreading
+				Select Case p->ThreadingMode
 
-			Print #MakefileStream, "LDLIBS_DEBUG+=-lgcc -lmingw32 -lmingwex -lmoldname -lgcc_eh"
+					Case DEFINE_SINGLETHREADING_RUNTIME
+						Print #MakefileStream, "LDLIBS+=-lfb"
 
-			Print #MakefileStream, "ifeq ($(USE_RUNTIME),TRUE)"
-			Print #MakefileStream, "LDLIBS+=-lgcc -lmingw32 -lmingwex -lmoldname -lgcc_eh"
-			Print #MakefileStream, "endif"
+					Case DEFINE_MULTITHREADING_RUNTIME
+						Print #MakefileStream, "LDLIBS+=-lfbmt"
 
-			Print #MakefileStream, "LDLIBS+=-Wl,--end-group"
+				End Select
 
-			Print #MakefileStream, "ifeq ($(USE_RUNTIME),TRUE)"
-			Print #MakefileStream, "LDLIBSEND+=""$(LIB_DIR)\crtend.o"""
-			Print #MakefileStream, "endif"
+				Print #MakefileStream, "LDLIBS+=-lgcc -lmingw32 -lmingwex -lmoldname -lgcc_eh"
+				Print #MakefileStream, "endif"
+
+				Print #MakefileStream, "else"
+				Print #MakefileStream, "LDLIBS+=$(LIBS_OS)"
+				Print #MakefileStream, "endif"
+
+				Print #MakefileStream, "LDLIBS+=-Wl,--end-group"
+			End Scope
+
+			Print #MakefileStream,
+
+			Scope
+				' Debug libraries
+				Print #MakefileStream, "ifeq ($(LIBS_DEBUG),)"
+				' For profile
+				' Print #MakefileStream, "LDLIBS_DEBUG+=-lgmon"
+
+				Print #MakefileStream, "LDLIBS_DEBUG+=-lgcc -lmingw32 -lmingwex -lmoldname -lgcc_eh"
+				Print #MakefileStream, "else"
+				Print #MakefileStream, "LDLIBS_DEBUG+=$(LIBS_DEBUG)"
+				Print #MakefileStream, "endif"
+			End Scope
+
+			Print #MakefileStream,
+
+			Scope
+				Print #MakefileStream, "ifeq ($(USE_RUNTIME),TRUE)"
+				Print #MakefileStream, "ifeq ($(OBJ_CRT_END),)"
+				Print #MakefileStream, "LDLIBSEND+=""$(LIB_DIR)\crtend.o"""
+				Print #MakefileStream, "else"
+				Print #MakefileStream, "LDLIBSEND+=$(OBJ_CRT_END)"
+				Print #MakefileStream, "endif"
+				Print #MakefileStream, "endif"
+			End Scope
 
 	End Select
 
