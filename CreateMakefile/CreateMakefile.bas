@@ -496,6 +496,31 @@ Private Function WriteSetenvWin32(ByVal p As Parameter Ptr) As Integer
 
 	Print #oStream,
 
+	Print #oStream, "rem Libraries list"
+
+	Dim Profile As Boolean = False
+	Dim crtLib As String
+	Dim crtDebug As String
+	If Profile Then
+		crtLib = """%FBC_DIR%\%LibFolder%\gcrt2.o"""
+		crtDebug = "-lgcc -lmingw32 -lmingwex -lmoldname -lgcc_eh -lgmon"
+	Else
+		crtLib = """%FBC_DIR%\%LibFolder%\crt2.o"""
+		crtDebug = "-lgcc -lmingw32 -lmingwex -lmoldname -lgcc_eh"
+	End If
+	Print #oStream, "set OBJ_CRT_START=" & crtLib & " ""%FBC_DIR%\%LibFolder%\crtbegin.o"" ""%FBC_DIR%\%LibFolder%\fbrt0.o"""
+
+	Dim OsLibs As String = "set LIBS_OS=-ladvapi32 -lcomctl32 -lcomdlg32 -lcrypt32 -lgdi32 -lgdiplus -lkernel32 -lmswsock -lole32 -loleaut32 -lshell32 -lshlwapi -lwsock32 -lws2_32 -luser32 -lmsvcrt"
+	If p->ThreadingMode = DEFINE_MULTITHREADING_RUNTIME Then
+		OsLibs &= " -lfbmt"
+	Else
+		OsLibs &= " -lfb"
+	End If
+	Print #oStream, OsLibs
+	Print #oStream, "set LIBS_DEBUG=" & crtDebug
+	Print #oStream, "set OBJ_CRT_END=""%FBC_DIR%\%LibFolder%\crtend.o"""
+	Print #oStream,
+
 	Print #oStream, "rem Create bin obj folders"
 	Print #oStream, "rem mingw32-make createdirs"
 	Print #oStream,
@@ -880,6 +905,8 @@ Private Sub WriteLinkerLibraryes(ByVal MakefileStream As Long, ByVal p As Parame
 		Case CODE_EMITTER_WASM32, CODE_EMITTER_WASM64
 
 		Case Else
+			' TODO Replace path separator \ to $(PATH_SEP)
+
 			Print #MakefileStream, "ifeq ($(USE_RUNTIME),TRUE)"
 
 			' For profile
