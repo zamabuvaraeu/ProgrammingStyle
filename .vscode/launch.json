@@ -40,7 +40,7 @@
             ]
         },
         {
-            "name": "test",
+            "name": "CreateMakefile Windows",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/CreateMakefile.exe",
@@ -64,11 +64,48 @@
                 "-winver", "1281",
             ],
             "stopAtEntry": true,
-            /* "cwd": "${fileDirname}", */
             "cwd": "${workspaceFolder}",
             "externalConsole": false,
             "MIMode": "gdb",
             "miDebuggerPath": "C:\\Program Files\\mingw64\\bin\\gdb.exe",
+            "setupCommands": [
+                {
+                    "description": "Включить автоматическое форматирование для gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "CreateMakefile Linux",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/CreateMakefile.exe",
+            "args": [
+                "-makefile", "Makefile",
+                "-src", "src",
+                "-fbc-path", "/usr/bin",
+                "-i", "/usr/include/freebasic",
+                "-fbc", "fbc",
+                "-out", "Station922",
+                "-module", "CreateMakefile"
+                "-exetype", "exe",
+                "-subsystem", "console"
+                "-emitter", "gcc",
+                "-fix", "false",
+                "-unicode", "false",
+                "-wrt", "true",
+                "-addressaware", "true"
+                "-multithreading", "true"
+                "-usefilesuffix", "true"
+                "-pedantic", "true"
+                "-winver", "0",
+            ],
+            "stopAtEntry": true,
+            "cwd": "${workspaceFolder}",
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "miDebuggerPath": "gdb",
             "setupCommands": [
                 {
                     "description": "Включить автоматическое форматирование для gdb",
