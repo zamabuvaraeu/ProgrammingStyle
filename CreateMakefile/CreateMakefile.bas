@@ -64,7 +64,7 @@ Const ReverseSolidus = "/"
 #define WriteSetenv WriteSetenvLinux
 Const PathSeparator = "/"
 Const MakefileParametersFile = "setenv.sh"
-Const DefaultCompilerFolder = ""
+Const DefaultCompilerFolder = "/usr/bin"
 Const DefaultCompilerName = "fbc"
 #else
 #define WriteSetenv WriteSetenvWin32
@@ -87,6 +87,7 @@ Type Parameter
 	MakefileFileName As ZString * MAX_PATH
 	SourceFolder As ZString * MAX_PATH
 	CompilerPath As ZString * MAX_PATH
+	IncludePath As ZString * MAX_PATH
 	FbcCompilerName As ZString * MAX_PATH
 	OutputFileName As ZString * MAX_PATH
 	MainModuleName As ZString * MAX_PATH
@@ -228,6 +229,7 @@ Private Function ParseCommandLine(ByVal p As Parameter Ptr) As Integer
 	p->MakefileFileName = "Makefile"
 	p->SourceFolder = "src"
 	p->CompilerPath = DefaultCompilerFolder
+	p->IncludePath = BuildPath(DefaultCompilerFolder, "inc")
 	p->FbcCompilerName = DefaultCompilerName
 	p->OutputFileName = "a"
 	p->MainModuleName = "a"
@@ -259,6 +261,9 @@ Private Function ParseCommandLine(ByVal p As Parameter Ptr) As Integer
 
 			Case "-fbc-path"
 				p->CompilerPath = sValue
+
+			Case "-i"
+				p->IncludePath = sValue
 
 			Case "-fbc"
 				p->FbcCompilerName = sValue
@@ -1306,9 +1311,7 @@ Private Sub RemoveDefaultIncludes(LinesVector() As String, ByVal p As Parameter 
 
 	For i As Integer = LBound(LinesVector) To UBound(LinesVector)
 
-		Dim IncludeFullName As String = BuildPath(p->CompilerPath, "inc")
-
-		Dim Finded As Integer = InStr(LinesVector(i), IncludeFullName)
+		Dim Finded As Integer = InStr(LinesVector(i), p->IncludePath)
 
 		If Finded Then
 			LinesVector(i) = ""
@@ -1322,8 +1325,6 @@ Private Function GetIncludesFromBasFile(ByVal Filepath As String, ByVal p As Par
 	Dim FbcParam As String = CreateCompilerParams(p)
 
 	Dim CompilerFullName As String = BuildPath(p->CompilerPath, p->FbcCompilerName)
-
-	Dim IncludeDirFullName As String = BuildPath(p->CompilerPath, "inc")
 
 	' TODO Find a way to use parameters with spaces
 
