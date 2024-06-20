@@ -57,8 +57,6 @@ Const WINVER_XP = 0
 
 Const vbTab = !"\t"
 Const vbCrLf = !"\r\n"
-Const Solidus = "\"
-Const ReverseSolidus = "/"
 
 #ifdef __FB_LINUX__
 #define WriteSetenv WriteSetenvLinux
@@ -204,21 +202,21 @@ Private Function Replace(ByVal strFind As String, ByVal strOld As String, ByVal 
 
 End Function
 
-Private Function ReplaceSolidusToPathSeparator(ByVal strLine As String) As String
+Private Function ReplaceOSPathSeparatorToMakePathSeparator(ByVal strLine As String) As String
 
 	' Replace "\" to "$(PATH_SEP)"
 
-	Dim strLine1 As String = Replace(strLine, Solidus, MakefilePathSeparator)
+	Dim strLine1 As String = Replace(strLine, PathSeparator, MakefilePathSeparator)
 
 	Return strLine1
 
 End Function
 
-Private Function ReplaceSolidusToMovePathSeparator(ByVal strLine As String) As String
+Private Function ReplaceOSPathSeparatorToMovePathSeparator(ByVal strLine As String) As String
 
 	' Replace "\" to "$(MOVE_PATH_SEP)"
 
-	Dim strLine1 As String = Replace(strLine, Solidus, MakefileMovePathSeparator)
+	Dim strLine1 As String = Replace(strLine, PathSeparator, MakefileMovePathSeparator)
 
 	Return strLine1
 
@@ -1108,9 +1106,9 @@ Private Sub WriteBasRule(ByVal MakefileStream As Long, ByVal p As Parameter Ptr)
 
 	Dim SourceFolderWithPathSep As String = AppendPathSeparator(p->SourceFolder)
 
-	Dim AnyBasFile As String = ReplaceSolidusToPathSeparator(SourceFolderWithPathSep) & "%.bas"
+	Dim AnyBasFile As String = ReplaceOSPathSeparatorToMakePathSeparator(SourceFolderWithPathSep) & "%.bas"
 
-	Dim AnyCFile As String = ReplaceSolidusToMovePathSeparator(SourceFolderWithPathSep) & "$*.c"
+	Dim AnyCFile As String = ReplaceOSPathSeparatorToMovePathSeparator(SourceFolderWithPathSep) & "$*.c"
 
 	Print #MakefileStream, "$(OBJ_RELEASE_DIR)$(PATH_SEP)%$(FILE_SUFFIX).c: " & AnyBasFile
 	Print #MakefileStream, vbTab & "$(FBC) $(FBCFLAGS) $<"
@@ -1228,7 +1226,7 @@ Private Sub ReplaceSolidusToPathSeparatorVector(LinesVector() As String)
 	' Replace "\" to "$(PATH_SEP)"
 
 	For i As Integer = LBound(LinesVector) To UBound(LinesVector)
-		LinesVector(i) = ReplaceSolidusToPathSeparator(LinesVector(i))
+		LinesVector(i) = ReplaceOSPathSeparatorToMakePathSeparator(LinesVector(i))
 	Next
 
 End Sub
@@ -1284,8 +1282,8 @@ Private Sub WriteTextFile(ByVal MakefileStream As Long, ByVal BasFile As String,
 		ObjectFileName = Replace(BasFileWithoutPath, ".RC", FileSuffix & ".obj")
 	End If
 
-	Dim FileNameWithPathSep As String = Replace(FileNameCExtenstionWitthSuffix, Solidus, MakefilePathSeparator)
-	Dim ObjectFileNameWithPathSep As String = Replace(ObjectFileName, Solidus, MakefilePathSeparator)
+	Dim FileNameWithPathSep As String = ReplaceOSPathSeparatorToMakePathSeparator(FileNameCExtenstionWitthSuffix)
+	Dim ObjectFileNameWithPathSep As String = ReplaceOSPathSeparatorToMakePathSeparator(ObjectFileName)
 
 	Dim FileNameWithDebug As String = DebugDirPrefix & FileNameWithPathSep
 	Dim FileNameWithRelease As String = ReleaseDirPrefix & FileNameWithPathSep
