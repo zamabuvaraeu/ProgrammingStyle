@@ -382,6 +382,14 @@ End Function
 
 Private Function WriteSetenvLinux(ByVal p As Parameter Ptr) As Integer
 
+	var oStream = Freefile()
+	var resOpen = Open(MakefileParametersFile, For Output, As oStream)
+	If resOpen Then
+		Return 1
+	End If
+
+	Close(oStream)
+
 	Return 0
 
 End Function
