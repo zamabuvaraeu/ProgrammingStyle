@@ -451,6 +451,7 @@ Function GetParameters()
 	If colArgs.Exists("winver") Then
 		p.MinimalWindowsVersion = colArgs.Item("winver")
 	Else
+		' Windows NT 4.0 и Windows 95
 		p.MinimalWindowsVersion = "1024"
 	End If
 

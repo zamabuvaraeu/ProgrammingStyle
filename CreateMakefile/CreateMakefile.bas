@@ -239,7 +239,8 @@ Private Function ParseCommandLine(ByVal p As Parameter Ptr) As Integer
 	p->UseRuntimeLibrary = DEFINE_RUNTIME
 	p->AddressAware = LARGE_ADDRESS_UNAWARE
 	p->ThreadingMode = DEFINE_SINGLETHREADING_RUNTIME
-	p->MinimalOSVersion = 0
+	' Windows NT 4.0 и Windows 95
+	p->MinimalOSVersion = 1024
 	p->UseFileSuffix = False
 	p->Pedantic = False
 
