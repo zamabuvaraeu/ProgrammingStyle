@@ -8,16 +8,15 @@ Type InputDialogParam
 	hWin As HWND
 End Type
 
-Private Sub AppendLengthTextW( _
+Private Sub AppendLengthText( _
 		ByVal hwndControl As HWND, _
-		ByVal lpwszText As LPWSTR, _
-		ByVal Length As Integer _
+		ByVal lptszText As LPTSTR _
 	)
 
-	Dim OldTextLength As Long = GetWindowTextLengthW(hwndControl)
+	Dim OldTextLength As Long = GetWindowTextLength(hwndControl)
 
-	SendMessageW(hwndControl, EM_SETSEL, OldTextLength, Cast(LPARAM, OldTextLength))
-	SendMessageW(hwndControl, EM_REPLACESEL, FALSE, Cast(LPARAM, lpwszText))
+	Edit_SetSel(hwndControl, OldTextLength, OldTextLength)
+	Edit_ReplaceSel(hwndControl, lptszText)
 	Edit_ScrollCaret(hwndControl)
 
 End Sub
