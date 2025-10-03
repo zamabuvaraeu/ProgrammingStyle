@@ -50,17 +50,17 @@
                 "-fbc-path", "C:\\Program Files (x86)\\FreeBASIC-1.10.1-winlibs-gcc-9.3.0",
                 "-fbc", "fbc64.exe",
                 "-out", "Station922",
-                "-module", "CreateMakefile"
+                "-module", "CreateMakefile",
                 "-exetype", "exe",
-                "-subsystem", "console"
+                "-subsystem", "console",
                 "-emitter", "gcc",
                 "-fix", "false",
                 "-unicode", "false",
                 "-wrt", "true",
-                "-addressaware", "true"
-                "-multithreading", "true"
-                "-usefilesuffix", "true"
-                "-pedantic", "true"
+                "-addressaware", "true",
+                "-multithreading", "true",
+                "-usefilesuffix", "true",
+                "-pedantic", "true",
                 "-winver", "1281",
             ],
             "stopAtEntry": true,
@@ -88,17 +88,17 @@
                 "-i", "/usr/include/freebasic",
                 "-fbc", "fbc",
                 "-out", "Station922",
-                "-module", "CreateMakefile"
+                "-module", "CreateMakefile",
                 "-exetype", "exe",
-                "-subsystem", "console"
+                "-subsystem", "console",
                 "-emitter", "gcc",
                 "-fix", "false",
                 "-unicode", "false",
                 "-wrt", "true",
-                "-addressaware", "true"
-                "-multithreading", "true"
-                "-usefilesuffix", "true"
-                "-pedantic", "true"
+                "-addressaware", "true",
+                "-multithreading", "true",
+                "-usefilesuffix", "true",
+                "-pedantic", "true",
                 "-winver", "0",
             ],
             "stopAtEntry": true,
