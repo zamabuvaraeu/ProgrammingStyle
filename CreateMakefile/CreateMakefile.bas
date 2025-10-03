@@ -102,7 +102,11 @@ Type Parameter
 	Pedantic As Boolean
 End Type
 
-Private Sub SplitRecursive(LinesVector() As String, ByVal strSource As String, ByVal Separator As String)
+Private Sub SplitRecursive( _
+		LinesVector() As String, _
+		ByVal strSource As String, _
+		ByVal Separator As String _
+	)
 
 	Dim u As Integer = UBound(LinesVector)
 
@@ -124,7 +128,10 @@ Private Sub SplitRecursive(LinesVector() As String, ByVal strSource As String, B
 
 End Sub
 
-Private Function Join(LinesVector() As String, ByVal Separator As String) As String
+Private Function Join( _
+		LinesVector() As String, _
+		ByVal Separator As String _
+	) As String
 
 	Dim resString As String
 
@@ -138,7 +145,9 @@ Private Function Join(LinesVector() As String, ByVal Separator As String) As Str
 
 End Function
 
-Private Function AppendPathSeparator(ByVal strLine As String) As String
+Private Function AppendPathSeparator( _
+		ByVal strLine As String _
+	) As String
 
 	var Length = Len(strLine)
 
@@ -152,7 +161,10 @@ Private Function AppendPathSeparator(ByVal strLine As String) As String
 
 End Function
 
-Private Function BuildPath(ByVal Directory As String, ByVal File As String) As String
+Private Function BuildPath( _
+		ByVal Directory As String, _
+		ByVal File As String _
+	) As String
 
 	Dim DirLength As Integer = Len(Directory)
 	Dim DirWithPathSeparator As String
@@ -170,7 +182,9 @@ Private Function BuildPath(ByVal Directory As String, ByVal File As String) As S
 
 End Function
 
-Private Function GetExtensionName(ByVal filename As String) As String
+Private Function GetExtensionName( _
+		ByVal filename As String _
+	) As String
 
 	Dim DotPosition As Integer = InStrRev(filename, ".")
 
@@ -182,7 +196,11 @@ Private Function GetExtensionName(ByVal filename As String) As String
 
 End Function
 
-Private Function Replace(ByVal strFind As String, ByVal strOld As String, ByVal strNew As String) As String
+Private Function Replace( _
+		ByVal strFind As String, _
+		ByVal strOld As String, _
+		ByVal strNew As String _
+	) As String
 
 	Dim strLine1 As String = strFind
 	Dim FromLength As Integer = Len(strOld)
@@ -202,7 +220,9 @@ Private Function Replace(ByVal strFind As String, ByVal strOld As String, ByVal 
 
 End Function
 
-Private Function ReplaceOSPathSeparatorToMakePathSeparator(ByVal strLine As String) As String
+Private Function ReplaceOSPathSeparatorToMakePathSeparator( _
+		ByVal strLine As String _
+	) As String
 
 	' Replace "\" to "$(PATH_SEP)"
 
@@ -212,7 +232,9 @@ Private Function ReplaceOSPathSeparatorToMakePathSeparator(ByVal strLine As Stri
 
 End Function
 
-Private Function ReplaceOSPathSeparatorToMovePathSeparator(ByVal strLine As String) As String
+Private Function ReplaceOSPathSeparatorToMovePathSeparator( _
+		ByVal strLine As String _
+	) As String
 
 	' Replace "\" to "$(MOVE_PATH_SEP)"
 
@@ -222,7 +244,9 @@ Private Function ReplaceOSPathSeparatorToMovePathSeparator(ByVal strLine As Stri
 
 End Function
 
-Private Function ParseCommandLine(ByVal p As Parameter Ptr) As Integer
+Private Function ParseCommandLine( _
+		ByVal p As Parameter Ptr _
+	) As Integer
 
 	p->MakefileFileName = "Makefile"
 	p->SourceFolder = "src"
@@ -381,7 +405,9 @@ Private Function ParseCommandLine(ByVal p As Parameter Ptr) As Integer
 
 End Function
 
-Private Function WriteSetenvLinux(ByVal p As Parameter Ptr) As Integer
+Private Function WriteSetenvLinux( _
+		ByVal p As Parameter Ptr _
+	) As Integer
 
 	var oStream = Freefile()
 	var resOpen = Open(MakefileParametersFile, For Output, As oStream)
@@ -395,7 +421,9 @@ Private Function WriteSetenvLinux(ByVal p As Parameter Ptr) As Integer
 
 End Function
 
-Private Function WriteSetenvWin32(ByVal p As Parameter Ptr) As Integer
+Private Function WriteSetenvWin32( _
+		ByVal p As Parameter Ptr _
+	) As Integer
 
 	var oStream = Freefile()
 	var resOpen = Open(MakefileParametersFile, For Output, As oStream)
@@ -515,6 +543,7 @@ Private Function WriteSetenvWin32(ByVal p As Parameter Ptr) As Integer
 
 	Print #oStream, "rem Libraries list"
 
+	' TODO Add profile libraries
 	Dim Profile As Boolean = False
 	Dim crtLib As String
 	Dim crtDebug As String
@@ -550,7 +579,9 @@ Private Function WriteSetenvWin32(ByVal p As Parameter Ptr) As Integer
 
 End Function
 
-Private Sub WriteTargets(ByVal MakefileStream As Long)
+Private Sub WriteTargets( _
+		ByVal MakefileStream As Long _
+	)
 
 	Print #MakefileStream, ".PHONY: all debug release clean createdirs"
 	Print #MakefileStream,
@@ -559,7 +590,9 @@ Private Sub WriteTargets(ByVal MakefileStream As Long)
 
 End Sub
 
-Private Sub WriteCompilerToolChain(ByVal MakefileStream As Long)
+Private Sub WriteCompilerToolChain( _
+		ByVal MakefileStream As Long _
+	)
 
 	Print #MakefileStream, "FBC ?= fbc.exe"
 	Print #MakefileStream, "CC ?= gcc.exe"
@@ -575,7 +608,9 @@ Private Sub WriteCompilerToolChain(ByVal MakefileStream As Long)
 
 End Sub
 
-Private Sub WriteProcessorArch(ByVal MakefileStream As Long)
+Private Sub WriteProcessorArch( _
+		ByVal MakefileStream As Long _
+	)
 
 	Print #MakefileStream, "TARGET_TRIPLET ?="
 	Print #MakefileStream, "MARCH ?= native"
@@ -583,7 +618,10 @@ Private Sub WriteProcessorArch(ByVal MakefileStream As Long)
 
 End Sub
 
-Private Sub WriteOutputFilename(ByVal MakefileStream As Long, ByVal p As Parameter Ptr)
+Private Sub WriteOutputFilename( _
+		ByVal MakefileStream As Long, _
+		ByVal p As Parameter Ptr _
+	)
 
 	Dim Extension As String
 	Select Case p->ExeType
@@ -623,7 +661,9 @@ Private Sub WriteOutputFilename(ByVal MakefileStream As Long, ByVal p As Paramet
 
 End Sub
 
-Private Sub WriteUtilsPath(ByVal MakefileStream As Long)
+Private Sub WriteUtilsPath( _
+		ByVal MakefileStream As Long _
+	)
 
 	Print #MakefileStream, "PATH_SEP ?= /"
 	Print #MakefileStream, "MOVE_PATH_SEP ?= \\"
@@ -636,7 +676,9 @@ Private Sub WriteUtilsPath(ByVal MakefileStream As Long)
 
 End Sub
 
-Private Sub WriteArchSpecifiedPath(ByVal MakefileStream As Long)
+Private Sub WriteArchSpecifiedPath( _
+		ByVal MakefileStream As Long _
+	)
 
 	Print #MakefileStream, "ifeq ($(PROCESSOR_ARCHITECTURE),AMD64)"
 	Print #MakefileStream, "BIN_DEBUG_DIR ?= bin$(PATH_SEP)Debug$(PATH_SEP)x64"
@@ -661,7 +703,9 @@ Private Sub WriteArchSpecifiedPath(ByVal MakefileStream As Long)
 
 End Sub
 
-Private Function CodeGenerationToString(ByVal p As Parameter Ptr) As String
+Private Function CodeGenerationToString( _
+		ByVal p As Parameter Ptr _
+	) As String
 
 	Dim ep As String
 
@@ -691,7 +735,10 @@ Private Function CodeGenerationToString(ByVal p As Parameter Ptr) As String
 
 End Function
 
-Private Sub WriteFbcFlags(ByVal MakefileStream As Long, ByVal p As Parameter Ptr)
+Private Sub WriteFbcFlags( _
+		ByVal MakefileStream As Long, _
+		ByVal p As Parameter Ptr _
+	)
 
 	Dim EmitterParam As String = CodeGenerationToString(p)
 
@@ -737,7 +784,10 @@ Private Sub WriteFbcFlags(ByVal MakefileStream As Long, ByVal p As Parameter Ptr
 
 End Sub
 
-Private Sub WriteGccFlags(ByVal MakefileStream As Long, ByVal p As Parameter Ptr)
+Private Sub WriteGccFlags( _
+		ByVal MakefileStream As Long, _
+		ByVal p As Parameter Ptr _
+	)
 
 	Select Case p->Emitter
 
@@ -798,7 +848,9 @@ Private Sub WriteGccFlags(ByVal MakefileStream As Long, ByVal p As Parameter Ptr
 
 End Sub
 
-Private Sub WriteAsmFlags(ByVal MakefileStream As Long)
+Private Sub WriteAsmFlags( _
+		ByVal MakefileStream As Long _
+	)
 
 	Print #MakefileStream, "ifeq ($(PROCESSOR_ARCHITECTURE),AMD64)"
 	Print #MakefileStream, "ASFLAGS+=--64"
@@ -813,7 +865,9 @@ Private Sub WriteAsmFlags(ByVal MakefileStream As Long)
 
 End Sub
 
-Private Sub WriteGorcFlags(ByVal MakefileStream As Long)
+Private Sub WriteGorcFlags( _
+		ByVal MakefileStream As Long _
+	)
 
 	Print #MakefileStream, "ifeq ($(PROCESSOR_ARCHITECTURE),AMD64)"
 	Print #MakefileStream, "GORCFLAGS+=/machine X64"
@@ -826,7 +880,10 @@ Private Sub WriteGorcFlags(ByVal MakefileStream As Long)
 
 End Sub
 
-Private Sub WriteLinkerFlags(ByVal MakefileStream As Long, ByVal p As Parameter Ptr)
+Private Sub WriteLinkerFlags( _
+		ByVal MakefileStream As Long, _
+		ByVal p As Parameter Ptr _
+	)
 
 	Select Case p->Emitter
 
@@ -915,7 +972,10 @@ Private Sub WriteLinkerFlags(ByVal MakefileStream As Long, ByVal p As Parameter 
 
 End Sub
 
-Private Sub WriteLinkerLibraryes(ByVal MakefileStream As Long, ByVal p As Parameter Ptr)
+Private Sub WriteLinkerLibraryes( _
+		ByVal MakefileStream As Long, _
+		ByVal p As Parameter Ptr _
+	)
 
 	Select Case p->Emitter
 
@@ -1013,7 +1073,9 @@ Private Sub WriteLinkerLibraryes(ByVal MakefileStream As Long, ByVal p As Parame
 
 End Sub
 
-Private Sub WriteLegend(ByVal MakefileStream As Long)
+Private Sub WriteLegend( _
+		ByVal MakefileStream As Long _
+	)
 
 	Print #MakefileStream, "# Legends:"
 	Print #MakefileStream, "# $@ - target name"
@@ -1025,21 +1087,27 @@ Private Sub WriteLegend(ByVal MakefileStream As Long)
 
 End Sub
 
-Private Sub WriteReleaseTarget(ByVal MakefileStream As Long)
+Private Sub WriteReleaseTarget( _
+		ByVal MakefileStream As Long _
+	)
 
 	Print #MakefileStream, "release: $(BIN_RELEASE_DIR)$(PATH_SEP)$(OUTPUT_FILE_NAME)"
 	Print #MakefileStream,
 
 End Sub
 
-Private Sub WriteDebugTarget(ByVal MakefileStream As Long)
+Private Sub WriteDebugTarget( _
+		ByVal MakefileStream As Long _
+	)
 
 	Print #MakefileStream, "debug: $(BIN_DEBUG_DIR)$(PATH_SEP)$(OUTPUT_FILE_NAME)"
 	Print #MakefileStream,
 
 End Sub
 
-Private Sub WriteCleanTarget(ByVal MakefileStream As Long)
+Private Sub WriteCleanTarget( _
+		ByVal MakefileStream As Long _
+	)
 
 	Print #MakefileStream, "clean:"
 	Print #MakefileStream, vbTab & "$(DELETE_COMMAND) $(OBJ_RELEASE_DIR_MOVE)$(MOVE_PATH_SEP)*$(FILE_SUFFIX).c"
@@ -1056,7 +1124,9 @@ Private Sub WriteCleanTarget(ByVal MakefileStream As Long)
 
 End Sub
 
-Private Sub WriteCreateDirsTarget(ByVal MakefileStream As Long)
+Private Sub WriteCreateDirsTarget( _
+		ByVal MakefileStream As Long _
+	)
 
 	Print #MakefileStream, "createdirs:"
 	Print #MakefileStream, vbTab & "$(MKDIR_COMMAND) $(BIN_DEBUG_DIR_MOVE)"
@@ -1067,7 +1137,9 @@ Private Sub WriteCreateDirsTarget(ByVal MakefileStream As Long)
 
 End Sub
 
-Private Sub WriteReleaseRule(ByVal MakefileStream As Long)
+Private Sub WriteReleaseRule( _
+		ByVal MakefileStream As Long _
+	)
 
 	Print #MakefileStream, "$(BIN_RELEASE_DIR)$(PATH_SEP)$(OUTPUT_FILE_NAME): $(OBJECTFILES_RELEASE)"
 	Print #MakefileStream, vbTab & "$(CC) $(LDFLAGS) $(LDLIBSBEGIN) $^ $(LDLIBS) $(LDLIBSEND) -o $@"
@@ -1075,7 +1147,9 @@ Private Sub WriteReleaseRule(ByVal MakefileStream As Long)
 
 End Sub
 
-Private Sub WriteDebugRule(ByVal MakefileStream As Long)
+Private Sub WriteDebugRule( _
+		ByVal MakefileStream As Long _
+	)
 
 	Print #MakefileStream, "$(BIN_DEBUG_DIR)$(PATH_SEP)$(OUTPUT_FILE_NAME): $(OBJECTFILES_DEBUG)"
 	Print #MakefileStream, vbTab & "$(CC) $(LDFLAGS) $(LDLIBSBEGIN) $^ $(LDLIBS) $(LDLIBSEND) -o $@"
@@ -1083,7 +1157,9 @@ Private Sub WriteDebugRule(ByVal MakefileStream As Long)
 
 End Sub
 
-Private Sub WriteAsmRule(ByVal MakefileStream As Long)
+Private Sub WriteAsmRule( _
+		ByVal MakefileStream As Long _
+	)
 
 	Print #MakefileStream, "$(OBJ_RELEASE_DIR)$(PATH_SEP)%$(FILE_SUFFIX).o: $(OBJ_RELEASE_DIR)$(PATH_SEP)%$(FILE_SUFFIX).asm"
 	Print #MakefileStream, vbTab & "$(AS) $(ASFLAGS) -o $@ $<"
@@ -1094,7 +1170,9 @@ Private Sub WriteAsmRule(ByVal MakefileStream As Long)
 
 End Sub
 
-Private Sub WriteCRule(ByVal MakefileStream As Long)
+Private Sub WriteCRule( _
+		ByVal MakefileStream As Long _
+	)
 
 	Print #MakefileStream, "$(OBJ_RELEASE_DIR)$(PATH_SEP)%$(FILE_SUFFIX).asm: $(OBJ_RELEASE_DIR)$(PATH_SEP)%$(FILE_SUFFIX).c"
 	Print #MakefileStream, vbTab & "$(CC) $(EXTRA_CFLAGS) $(CFLAGS) -o $@ $<"
@@ -1105,7 +1183,9 @@ Private Sub WriteCRule(ByVal MakefileStream As Long)
 
 End Sub
 
-Private Sub WriteResourceRule(ByVal MakefileStream As Long)
+Private Sub WriteResourceRule( _
+		ByVal MakefileStream As Long _
+	)
 
 	Print #MakefileStream, "$(OBJ_RELEASE_DIR)$(PATH_SEP)%$(FILE_SUFFIX).obj: src$(PATH_SEP)%.RC"
 	Print #MakefileStream, vbTab & "$(GORC) $(GORCFLAGS) /fo $@ $<"
@@ -1116,7 +1196,10 @@ Private Sub WriteResourceRule(ByVal MakefileStream As Long)
 
 End Sub
 
-Private Sub WriteBasRule(ByVal MakefileStream As Long, ByVal p As Parameter Ptr)
+Private Sub WriteBasRule( _
+		ByVal MakefileStream As Long, _
+		ByVal p As Parameter Ptr _
+	)
 
 	Dim SourceFolderWithPathSep As String = AppendPathSeparator(p->SourceFolder)
 
@@ -1146,7 +1229,9 @@ Private Sub WriteBasRule(ByVal MakefileStream As Long, ByVal p As Parameter Ptr)
 
 End Sub
 
-Private Function CreateCompilerParams(ByVal p As Parameter Ptr) As String
+Private Function CreateCompilerParams( _
+		ByVal p As Parameter Ptr _
+	) As String
 
 	Dim ParamVector(10) As String
 
@@ -1202,7 +1287,9 @@ Private Function CreateCompilerParams(ByVal p As Parameter Ptr) As String
 
 End Function
 
-Private Sub RemoveVerticalLine(LinesVector() As String)
+Private Sub RemoveVerticalLine( _
+		LinesVector() As String _
+	)
 
 	' Remove all "|"
 
@@ -1215,7 +1302,9 @@ Private Sub RemoveVerticalLine(LinesVector() As String)
 
 End Sub
 
-Private Sub RemoveOmmittedIncludes(LinesVector() As String)
+Private Sub RemoveOmmittedIncludes( _
+		LinesVector() As String _
+	)
 
 	' Remove all strings "(filename.bi)"
 
@@ -1235,7 +1324,9 @@ Private Sub RemoveOmmittedIncludes(LinesVector() As String)
 
 End Sub
 
-Private Sub ReplaceSolidusToPathSeparatorVector(LinesVector() As String)
+Private Sub ReplaceSolidusToPathSeparatorVector( _
+		LinesVector() As String _
+	)
 
 	' Replace "\" to "$(PATH_SEP)"
 
@@ -1245,7 +1336,9 @@ Private Sub ReplaceSolidusToPathSeparatorVector(LinesVector() As String)
 
 End Sub
 
-Private Sub AddSpaces(LinesVector() As String)
+Private Sub AddSpaces( _
+		LinesVector() As String _
+	)
 
 	' Append space to all strings
 	For i As Integer = LBound(LinesVector) To UBound(LinesVector)
@@ -1257,7 +1350,9 @@ Private Sub AddSpaces(LinesVector() As String)
 
 End Sub
 
-Private Function ReadTextStream(ByVal Stream As Long) As String
+Private Function ReadTextStream( _
+		ByVal Stream As Long _
+	) As String
 
 	' Read file and return strings
 	Dim Lines As String
@@ -1272,7 +1367,10 @@ Private Function ReadTextStream(ByVal Stream As Long) As String
 
 End Function
 
-Private Function GetBasFileWithoutPath(ByVal BasFile As String, ByVal p As Parameter Ptr) As String
+Private Function GetBasFileWithoutPath( _
+		ByVal BasFile As String, _
+		ByVal p As Parameter Ptr _
+	) As String
 
 	Dim ReplaceFind As String = AppendPathSeparator(p->SourceFolder)
 
@@ -1280,7 +1378,12 @@ Private Function GetBasFileWithoutPath(ByVal BasFile As String, ByVal p As Param
 
 End Function
 
-Private Sub WriteTextFile(ByVal MakefileStream As Long, ByVal BasFile As String, ByVal DependenciesLine As String, ByVal p As Parameter Ptr)
+Private Sub WriteTextFile( _
+		ByVal MakefileStream As Long, _
+		ByVal BasFile As String, _
+		ByVal DependenciesLine As String, _
+		ByVal p As Parameter Ptr _
+	)
 
 	Dim BasFileWithoutPath As String = GetBasFileWithoutPath(BasFile, p)
 
@@ -1317,7 +1420,10 @@ Private Sub WriteTextFile(ByVal MakefileStream As Long, ByVal BasFile As String,
 
 End Sub
 
-Private Sub RemoveDefaultIncludes(LinesVector() As String, ByVal p As Parameter Ptr)
+Private Sub RemoveDefaultIncludes( _
+		LinesVector() As String, _
+		ByVal p As Parameter Ptr _
+	)
 
 	' Remove default include files
 
@@ -1332,7 +1438,10 @@ Private Sub RemoveDefaultIncludes(LinesVector() As String, ByVal p As Parameter 
 
 End Sub
 
-Private Function GetIncludesFromBasFile(ByVal Filepath As String, ByVal p As Parameter Ptr) As String
+Private Function GetIncludesFromBasFile( _
+		ByVal Filepath As String, _
+		ByVal p As Parameter Ptr _
+	) As String
 
 	Dim FbcParam As String = CreateCompilerParams(p)
 
@@ -1369,7 +1478,9 @@ Private Function GetIncludesFromBasFile(ByVal Filepath As String, ByVal p As Par
 
 End Function
 
-Private Function FileExists(ByVal Filepath As String) As Boolean
+Private Function FileExists( _
+		ByVal Filepath As String _
+	) As Boolean
 
 	var Filenumber = Freefile()
 	var resOpen = Open(Filepath, For Input, As Filenumber)
@@ -1383,7 +1494,10 @@ Private Function FileExists(ByVal Filepath As String) As Boolean
 
 End Function
 
-Private Function GetIncludesFromResFile(ByVal Filepath As String, ByVal p As Parameter Ptr) As String
+Private Function GetIncludesFromResFile( _
+		ByVal Filepath As String, _
+		ByVal p As Parameter Ptr _
+	) As String
 
 	' TODO Get real dependencies from resource file
 	Dim ResourceIncludes As String = Filepath
@@ -1411,40 +1525,16 @@ Private Function GetIncludesFromResFile(ByVal Filepath As String, ByVal p As Par
 		End If
 	End Scope
 
-	' Dim filename As String = Dir(filespec)
-	' Do While Len(filename)
-
-	' 	Dim FileNameWithParentDir As String = BuildPath(p->SourceFolder, filename)
-
-	' 	Dim ext As String = GetExtensionName(filename)
-	' 	Select Case UCase(ext)
-
-	' 		Case "RH"
-	' 			ResourceIncludes = ResourceIncludes & vbCrLf & FileNameWithParentDir
-
-	' 	End Select
-
-	' 	Select Case UCase(filename)
-
-	' 		Case "MANIFEST.XML"
-	' 			ResourceIncludes = ResourceIncludes & vbCrLf & FileNameWithParentDir
-
-	' 		Case "RESOURCES.RC"
-	' 			ResourceIncludes = ResourceIncludes & vbCrLf & FileNameWithParentDir
-
-	' 		Case "APP.ICO"
-	' 			ResourceIncludes = ResourceIncludes & vbCrLf & FileNameWithParentDir
-
-	' 	End Select
-
-	' 	filename = Dir()
-	' Loop
-
 	Return ResourceIncludes
 
 End Function
 
-Private Sub CreateDependencies(ByVal MakefileStream As Long, ByVal oFile As String, ByVal FileExtension As String, ByVal p As Parameter Ptr)
+Private Sub CreateDependencies( _
+		ByVal MakefileStream As Long, _
+		ByVal oFile As String, _
+		ByVal FileExtension As String, _
+		ByVal p As Parameter Ptr _
+	)
 
 	ReDim LinesArray(0) As String
 	Dim LinesArrayCreated As Boolean = Any
@@ -1483,7 +1573,10 @@ Private Sub CreateDependencies(ByVal MakefileStream As Long, ByVal oFile As Stri
 
 End Sub
 
-Private Sub WriteIncludeFile(ByVal MakefileStream As Long, ByVal p As Parameter Ptr)
+Private Sub WriteIncludeFile( _
+		ByVal MakefileStream As Long, _
+		ByVal p As Parameter Ptr _
+	)
 
 	Dim filespec As String = BuildPath(p->SourceFolder, "*.*")
 
