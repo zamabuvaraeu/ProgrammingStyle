@@ -435,8 +435,13 @@ Private Function WriteSetenvWin32(ByVal p As Parameter Ptr) As Integer
 	End If
 
 	Print #oStream, "rem WinAPI version"
-	Print #oStream, "set WINVER=" & p->MinimalOSVersion
-	Print #oStream, "set _WIN32_WINNT=" & p->MinimalOSVersion
+	If p->MinimalOSVersion Then
+		Print #oStream, "set WINVER=" & p->MinimalOSVersion
+		Print #oStream, "set _WIN32_WINNT=" & p->MinimalOSVersion
+	Else
+		Print #oStream, "rem set WINVER=" & p->MinimalOSVersion
+		Print #oStream, "rem set _WIN32_WINNT=" & p->MinimalOSVersion
+	End If
 	Print #oStream,
 
 	Print #oStream, "rem Use unicode in WinAPI"

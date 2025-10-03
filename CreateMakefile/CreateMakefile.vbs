@@ -127,7 +127,7 @@ Sub WriteMakefileParameters(p)
 	Dim oStream
 	Set oStream = FSO.OpenTextFile(MakefileParametersFile, FILEOPEN_WRITEONLY, FILEOPEN_CREATENEW, FILEFORMAT_ASCII)
 
-	' PROCESSOR_ARCHITECTURE = AMD64 или x86
+	' PROCESSOR_ARCHITECTURE = AMD64 пїЅпїЅпїЅ x86
 	oStream.WriteLine "if %PROCESSOR_ARCHITECTURE% == AMD64 ("
 	oStream.WriteLine "set BinFolder=bin\win64"
 	oStream.WriteLine "set LibFolder=lib\win64"
@@ -160,8 +160,13 @@ Sub WriteMakefileParameters(p)
 	End If
 
 	oStream.WriteLine "rem WinAPI version"
-	oStream.WriteLine "set WINVER=" & p.MinimalWindowsVersion
-	oStream.WriteLine "set _WIN32_WINNT=" & p.MinimalWindowsVersion
+	If p.MinimalWindowsVersion > 0 Then
+		oStream.WriteLine "set WINVER=" & p.MinimalWindowsVersion
+		oStream.WriteLine "set _WIN32_WINNT=" & p.MinimalWindowsVersion
+	Else
+		oStream.WriteLine "rem set WINVER=" & p.MinimalWindowsVersion
+		oStream.WriteLine "rem set _WIN32_WINNT=" & p.MinimalWindowsVersion
+	End If
 	oStream.WriteLine
 
 	oStream.WriteLine "rem Use unicode in WinAPI"
@@ -1050,7 +1055,7 @@ End Sub
 
 Sub RemoveVerticalLine(LinesArray)
 	Const VSPattern = "|"
-	' Удалим все вхождения "|"
+	' пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ "|"
 	Dim i
 	For i = LBound(LinesArray) To UBound(LinesArray)
 		Dim Finded
@@ -1064,8 +1069,8 @@ Sub RemoveVerticalLine(LinesArray)
 End Sub
 
 Sub RemoveOmmittedIncludes(LinesArray)
-	' Если строка в списке в виде "(filename.bi)"
-	' мы её обнуляем
+	' пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅ "(filename.bi)"
+	' пїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 	Dim i
 	For i = LBound(LinesArray) To UBound(LinesArray)
 		Dim First
@@ -1083,7 +1088,7 @@ Sub RemoveOmmittedIncludes(LinesArray)
 End Sub
 
 Sub RemoveDefaultIncludes(LinesArray, p)
-	' заголовочные файлы в системном каталоге обнуляем
+	' пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 	Dim i
 	For i = LBound(LinesArray) To UBound(LinesArray)
 		Dim IncludeFullName
@@ -1099,7 +1104,7 @@ Sub RemoveDefaultIncludes(LinesArray, p)
 End Sub
 
 Function ReplaceSolidusToPathSeparator(strLine)
-	' заменяем "\" на "$(PATH_SEP)"
+	' пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ "\" пїЅпїЅ "$(PATH_SEP)"
 	Dim strLine1
 	strLine1 = strLine
 
@@ -1115,7 +1120,7 @@ Function ReplaceSolidusToPathSeparator(strLine)
 End Function
 
 Function ReplaceSolidusToMovePathSeparator(strLine)
-	' заменяем "\" на "$(MOVE_PATH_SEP)"
+	' пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ "\" пїЅпїЅ "$(MOVE_PATH_SEP)"
 	Dim strLine1
 	strLine1 = strLine
 
@@ -1131,7 +1136,7 @@ Function ReplaceSolidusToMovePathSeparator(strLine)
 End Function
 
 Sub ReplaceSolidusToPathSeparatorVector(LinesArray)
-	' заменяем "\" на "$(PATH_SEP)"
+	' пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ "\" пїЅпїЅ "$(PATH_SEP)"
 	Dim i
 	For i = LBound(LinesArray) To UBound(LinesArray)
 		Dim strLine
@@ -1141,7 +1146,7 @@ Sub ReplaceSolidusToPathSeparatorVector(LinesArray)
 End Sub
 
 Sub AddSpaces(LinesArray)
-	' Добавляем пробел в конце каждой строки
+	' пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
 	Dim i
 	For i = LBound(LinesArray) To UBound(LinesArray)
 		Dim Length
@@ -1153,7 +1158,7 @@ Sub AddSpaces(LinesArray)
 End Sub
 
 Function ReadTextFile(FileName)
-	' читаем текстовый файл и возвращаем строку
+	' пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
 	Dim TextStream
 	Set TextStream = FSO.OpenTextFile(FileName, 1)
 
@@ -1167,7 +1172,7 @@ Function ReadTextFile(FileName)
 End Function
 
 Function ReadTextStream(Stream)
-	' Читаем текстовый поток и возвращаем строку
+	' пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
 	Dim Lines
 	Lines = ""
 	Do While Not Stream.AtEndOfStream
@@ -1222,7 +1227,7 @@ Sub WriteTextFile(MakefileStream, BasFile, DependenciesLine, p)
 	Dim ResultReleaseString
 	ResultReleaseString = FileNameWithRelease & ": " & DependenciesLine
 
-	' записываем строку в текстовый файл
+	' пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
 	MakefileStream.WriteLine ObjectFileNameWithDebug
 	MakefileStream.WriteLine ObjectFileNameRelease
 	MakefileStream.WriteLine
@@ -1339,7 +1344,7 @@ Function CreateDependencies(MakefileStream, oFile, FileExtension, p)
 		Dim Original
 		Original = LinesArray(0)
 
-		' Первая строка не нужна — там имя самого файла
+		' пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
 		LinesArray(0) = ""
 
 		RemoveVerticalLine LinesArray
@@ -1348,7 +1353,7 @@ Function CreateDependencies(MakefileStream, oFile, FileExtension, p)
 		ReplaceSolidusToPathSeparatorVector LinesArray
 		AddSpaces LinesArray
 
-		' Весь массив в одну линию
+		' пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
 		Dim OneLine
 		OneLine = Join(LinesArray, "")
 
