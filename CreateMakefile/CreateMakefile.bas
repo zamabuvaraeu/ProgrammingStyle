@@ -980,6 +980,7 @@ Private Sub WriteLinkerLibraryes( _
 	Select Case p->Emitter
 
 		Case CODE_EMITTER_WASM32, CODE_EMITTER_WASM64
+			' do Nothing
 
 		Case Else
 			Scope
@@ -1006,16 +1007,16 @@ Private Sub WriteLinkerLibraryes( _
 			Print #MakefileStream,
 
 			Scope
-				' Windows API libraries
-
 				Print #MakefileStream, "LDLIBS+=-Wl,--start-group"
 
 				Print #MakefileStream, "ifeq ($(LIBS_OS),)"
 
+				' Windows API libraries
 				Print #MakefileStream, "LDLIBS+=-ladvapi32 -lcomctl32 -lcomdlg32 -lcrypt32"
 				Print #MakefileStream, "LDLIBS+=-lgdi32 -lgdiplus -lkernel32 -lmswsock"
 				Print #MakefileStream, "LDLIBS+=-lole32 -loleaut32 -lshell32 -lshlwapi"
 				Print #MakefileStream, "LDLIBS+=-lwsock32 -lws2_32 -luser32 -luuid"
+				' C Runtime
 				Print #MakefileStream, "LDLIBS+=-lmsvcrt"
 
 				Print #MakefileStream, "ifeq ($(USE_RUNTIME),TRUE)"
@@ -1471,6 +1472,7 @@ Private Function GetIncludesFromBasFile( _
 	Dim FileC As String = Replace(Filepath, ".bas", ".c")
 	Kill(FileC)
 
+	' TODO Get error code from child process
 	' If code > 0 Then
 	' 	Call Err.Raise(vbObjectError + 10, "FreeBASIC compiler error", Lines)
 	' End If
