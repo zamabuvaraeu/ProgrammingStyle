@@ -2,7 +2,15 @@
 
 Этот сценарий генерирует `Makefile` для утилиты `make`. Теперь можно забыть про пакетные файлы и компиляцию из командной строки.
 
-## Почему утилита make
+## Достоинства и недостатки
+
+Можно забыть про командные файлы компиляции.
+
+### Недостатки
+
+Требует перегенерации сценария при изменении в файлах исходного кода.
+
+### Почему утилита make
 
 В простых проектах утилита `make` не даёт преимуществ по сравнению ручной компиляцией, но она проявит себя, когда программы станут более сложными. Когда исходный код вырастает до нескольких файлов, гораздо проще позволить утилите координировать сборку.
 
@@ -18,8 +26,8 @@
 MyProject:
 	bin\          — каталог для исполняемых файлов
 		Debug\    — отладочная версия
-			x64\  — для Windows 64 бит
-			x86\  — для Windows 64 бит
+			x64\  — для 64 бит
+			x86\  — для 32 бит
 		Release   — окончательная версия
 			x64\
 			x86\
@@ -33,17 +41,17 @@ MyProject:
 	src\          — каталог для файлов исходного кода
 		main.bas  — все файлы исходного кода
 		main.bi
-	
-	CreateMakefile.vbs — Генератор makefile
-	
+
+	CreateMakefile.exe — Генератор makefile
+
 	fix-emitted-code.vbs — сценарий для исправления промежуточного си‐кода
-	
+
 	Makefile           — сгенерированный файл
 ```
 
 ## Параметры генератора Makefile
 
-Параметры для сценария указываются в именованном виде: `/параметр:значение`.
+Параметры для утилиты указываются в виде пары: `-параметр значение`.
 
 ### makefile
 
@@ -187,7 +195,7 @@ MyProject:
 
 | Именованная константа | 16‐ричный | Десятичный | Описание |
 |-----------------------|-----------|------------|----------|
-| _WIN32_WINNT_NT4      | 0x0400    | 1024       | Windows NT 4.0 |
+| _WIN32_WINNT_NT4      | 0x0400    | 1024       | Windows NT 4.0 и Windows 95 |
 | _WIN32_WINNT_WIN2K    | 0x0500    | 1280       | Windows 2000 |
 | _WIN32_WINNT_WINXP    | 0x0501    | 1281       | Windows XP |
 | _WIN32_WINNT_WS03     | 0x0502    | 1282       | Windows Server 2003 |
@@ -202,6 +210,12 @@ MyProject:
 | _WIN32_WINNT_WIN10    | 0x0A00    | 2560       | Windows 10 |
 
 По умолчанию `1024` (Windows NT 4.0).
+
+### create-environment-file
+
+Создавать ли файл настроек среды выполнения для утилиты make.
+
+По умолчанию `true`.
 
 ## Параметры для утилиты make
 
@@ -247,7 +261,7 @@ _WIN32_WINNT ?=
 Оконная программа с поддержкой юникода, библиотеками времени выполнения и адресного пространства больше 2 гигабайт:
 
 ```
-cscript.exe //nologo CreateMakefile.vbs /out:HelloWorld /subsystem:windows /unicode:true /addressaware:true
+CreateMakefile.exe -out HelloWorld -subsystem windows -unicode true -addressaware true
 ```
 
 ### Консольная программа
@@ -255,17 +269,17 @@ cscript.exe //nologo CreateMakefile.vbs /out:HelloWorld /subsystem:windows /unic
 Консольная программа с поддержкой юникода и адресного пространства больше 2 гигабайт:
 
 ```
-cscript.exe //nologo CreateMakefile.vbs /out:HelloWorld /subsystem:console /unicode:true /addressaware:true /wrt:true
+CreateMakefile.exe -out HelloWorld -subsystem console -unicode true -addressaware true
 ```
 
 ### Все параметры
 
 ```
-cscript.exe //nologo CreateMakefile.vbs /makefile:Makefile /src:src "/fbc-path:C:\Program Files (x86)\FreeBASIC-1.10.0-winlibs-gcc-9.3.0" /fbc:fbc64.exe /out:HelloWorld /module:WinMain /exetype:exe /subsystem:console /emitter:gcc /fix:true /unicode:true /wrt:true /addressaware:true /multithreading:false /usefilesuffix:true /pedantic:true /winver:1281
+CreateMakefile.exe -makefile Makefile -src src -fbc-path "C:\Program Files (x86)\FreeBASIC-1.10.0-winlibs-gcc-9.3.0" -fbc fbc64.exe -out HelloWorld -module WinMain -exetype exe -subsystem console -emitter gcc -fix true -unicode true -wrt true -addressaware true -multithreading false -usefilesuffix true -pedantic true -winver 1281
 ```
 
 ### WebAssembly
 
 ```
-cscript.exe //nologo CreateMakefile.vbs /out:add /fix:true /emitter:wasm32 /exetype:wasm32
+CreateMakefile.exe /out:add /fix:true /emitter:wasm32 /exetype:wasm32
 ```

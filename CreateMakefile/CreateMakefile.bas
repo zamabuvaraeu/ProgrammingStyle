@@ -52,6 +52,11 @@ Enum MultiThreading
 	DEFINE_MULTITHREADING_RUNTIME
 End Enum
 
+Enum UseSettingsEnvironment
+	SETTINGS_ENVIRONMENT_ALWAYS
+	DO_NOT_USE_SETTINGS_ENVIRONMENT
+End Enum
+
 Const WINVER_DEFAULT = 0
 Const WINVER_XP = 0
 
@@ -97,6 +102,7 @@ Type Parameter
 	UseRuntimeLibrary As UseRuntime
 	AddressAware As ProcessAddressSpace
 	ThreadingMode As MultiThreading
+	UseEnvironmentFile As UseSettingsEnvironment
 	MinimalOSVersion As Integer
 	UseFileSuffix As Boolean
 	Pedantic As Boolean
@@ -263,6 +269,7 @@ Private Function ParseCommandLine( _
 	p->UseRuntimeLibrary = DEFINE_RUNTIME
 	p->AddressAware = LARGE_ADDRESS_UNAWARE
 	p->ThreadingMode = DEFINE_SINGLETHREADING_RUNTIME
+	p->UseEnvironmentFile = SETTINGS_ENVIRONMENT_ALWAYS
 	' Windows NT 4.0 и Windows 95
 	p->MinimalOSVersion = 1024
 	p->UseFileSuffix = False
@@ -392,6 +399,11 @@ Private Function ParseCommandLine( _
 					p->Pedantic = True
 				End If
 
+			Case "-create-environment-file"
+				If sValue = "false" Then
+					p->UseEnvironmentFile = DO_NOT_USE_SETTINGS_ENVIRONMENT
+				End If
+
 			Case "-winver"
 				p->MinimalOSVersion = CInt(sValue)
 
@@ -430,6 +442,9 @@ Private Function WriteSetenvWin32( _
 	If resOpen Then
 		Return 1
 	End If
+
+	Print #oStream, "rem Setting up environment parameters for Makefile"
+	Print #oStream,
 
 	' PROCESSOR_ARCHITECTURE = AMD64 или x86
 	Print #oStream, "if %PROCESSOR_ARCHITECTURE% == AMD64 ("
@@ -543,10 +558,11 @@ Private Function WriteSetenvWin32( _
 
 	Print #oStream, "rem Libraries list"
 
-	' TODO Add profile libraries
-	Dim Profile As Boolean = False
 	Dim crtLib As String
 	Dim crtDebug As String
+
+	' TODO Add profile libraries
+	Dim Profile As Boolean = False
 	If Profile Then
 		crtLib = """%FBC_DIR%\%LibFolder%\gcrt2.o"""
 		crtDebug = "-lgcc -lmingw32 -lmingwex -lmoldname -lgcc_eh -lgmon"
@@ -1605,10 +1621,12 @@ If resParse Then
 	End(1)
 End If
 
-var resSetenv = WriteSetenv(@Params)
-If resSetenv Then
-	Print "Can not create environment file"
-	End(2)
+If Params.UseEnvironmentFile = SETTINGS_ENVIRONMENT_ALWAYS Then
+	var resSetenv = WriteSetenv(@Params)
+	If resSetenv Then
+		Print "Can not create environment file"
+		End(2)
+	End If
 End If
 
 var MakefileNumber = Freefile()
