@@ -530,13 +530,14 @@ Private Function WriteSetenvWin32( _
 	Print #oStream, "set DELETE_COMMAND=cmd.exe /c del /f /q"
 	Print #oStream, "set MKDIR_COMMAND=cmd.exe /c mkdir"
 	Print #oStream, "set SCRIPT_COMMAND=cscript.exe //nologo fix-emitted-code.vbs"
+	Print #oStream,
 
 	Select Case p->Emitter
 
 		Case CODE_EMITTER_GCC, CODE_EMITTER_GAS, CODE_EMITTER_GAS64, CODE_EMITTER_LLVM
 			Print #oStream, "rem Linker script only for GCC x86, GCC x64 and Clang x86"
 			Print #oStream, "rem Without quotes:"
-			Print #oStream, "set LD_SCRIPT=%FBC_DIR%\%LibFolder%\fbextra.x"
+			Print #oStream, "set LD_SCRIPT=%LIB_DIR%\fbextra.x"
 			Print #oStream,
 			Print #oStream, "rem Set processor architecture"
 			Print #oStream, "set MARCH=native"
@@ -546,6 +547,8 @@ Private Function WriteSetenvWin32( _
 			Print #oStream,
 			Print #oStream, "rem Only for Clang AMD64"
 			Print #oStream, "rem set TARGET_TRIPLET=x86_64-w64-pc-windows-msvc"
+			Print #oStream,
+			Print #oStream, "rem Link Time Optimization"
 			Print #oStream, "rem set FLTO=-flto"
 
 		Case CODE_EMITTER_WASM32, CODE_EMITTER_WASM64
@@ -564,13 +567,13 @@ Private Function WriteSetenvWin32( _
 	' TODO Add profile libraries
 	Dim Profile As Boolean = False
 	If Profile Then
-		crtLib = """%FBC_DIR%\%LibFolder%\gcrt2.o"""
+		crtLib = """%LIB_DIR%\gcrt2.o"""
 		crtDebug = "-lgcc -lmingw32 -lmingwex -lmoldname -lgcc_eh -lgmon"
 	Else
-		crtLib = """%FBC_DIR%\%LibFolder%\crt2.o"""
+		crtLib = """%LIB_DIR%\crt2.o"""
 		crtDebug = "-lgcc -lmingw32 -lmingwex -lmoldname -lgcc_eh"
 	End If
-	Print #oStream, "set OBJ_CRT_START=" & crtLib & " ""%FBC_DIR%\%LibFolder%\crtbegin.o"" ""%FBC_DIR%\%LibFolder%\fbrt0.o"""
+	Print #oStream, "set OBJ_CRT_START=" & crtLib & " ""%LIB_DIR%\crtbegin.o"" ""%LIB_DIR%\fbrt0.o"""
 
 	Dim OsLibs As String = "set LIBS_OS=-ladvapi32 -lcomctl32 -lcomdlg32 -lcrypt32 -lgdi32 -lgdiplus -lkernel32 -lmswsock -lole32 -loleaut32 -lshell32 -lshlwapi -lwsock32 -lws2_32 -luser32 -luuid -lmsvcrt"
 	If p->ThreadingMode = DEFINE_MULTITHREADING_RUNTIME Then
@@ -580,7 +583,7 @@ Private Function WriteSetenvWin32( _
 	End If
 	Print #oStream, OsLibs
 	Print #oStream, "set LIBS_DEBUG=" & crtDebug
-	Print #oStream, "set OBJ_CRT_END=""%FBC_DIR%\%LibFolder%\crtend.o"""
+	Print #oStream, "set OBJ_CRT_END=""%LIB_DIR%\crtend.o"""
 	Print #oStream,
 
 	Print #oStream, "rem Create bin obj folders"
@@ -1531,14 +1534,14 @@ Private Function GetIncludesFromResFile( _
 	End Scope
 
 	Scope
-		Dim FileNameWithParentDir As String = BuildPath(p->SourceFolder, "MANIFEST.XML")
+		Dim FileNameWithParentDir As String = BuildPath(p->SourceFolder, "manifest.xml")
 		If FileExists(FileNameWithParentDir) Then
 			ResourceIncludes = ResourceIncludes & vbCrLf & FileNameWithParentDir
 		End If
 	End Scope
 
 	Scope
-		Dim FileNameWithParentDir As String = BuildPath(p->SourceFolder, "APP.ICO")
+		Dim FileNameWithParentDir As String = BuildPath(p->SourceFolder, "app.ico")
 		If FileExists(FileNameWithParentDir) Then
 			ResourceIncludes = ResourceIncludes & vbCrLf & FileNameWithParentDir
 		End If

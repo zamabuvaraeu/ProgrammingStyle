@@ -23,7 +23,6 @@
 				"/fix:true",
 				"/multithreading:false",
 				"/pedantic:true"
-
 			],
 			"problemMatcher": [],
 			"group": {
@@ -52,7 +51,7 @@
 		{
 			"label": "Build CreateMakefile Linux",
 			"type": "process",
-			// "command": "/home/mabu/Загрузки/FreeBASIC-1.10.1-ubuntu-18.04-x86_64/bin/fbc",
+			/* "command": "/home/mabu/Загрузки/FreeBASIC-1.10.1-ubuntu-18.04-x86_64/bin/fbc", */
 			"command": "fbc",
 			"args": [
 				"-m", "CreateMakefile",
