@@ -108,7 +108,6 @@ WriteCleanTarget MakefileFileStream
 WriteCreateDirsTarget MakefileFileStream
 
 WriteReleaseRule MakefileFileStream
-WriteDebugRule MakefileFileStream
 
 WriteAsmRule MakefileFileStream
 WriteCRule MakefileFileStream
@@ -970,14 +969,9 @@ End Sub
 
 Sub WriteReleaseRule(MakefileStream)
 	MakefileStream.WriteLine "$(BIN_RELEASE_DIR)$(PATH_SEP)$(OUTPUT_FILE_NAME): $(OBJECTFILES_RELEASE)"
-	' MakefileStream.WriteLine vbTab & "$(LD) $(LDFLAGS) $(LDLIBSBEGIN) $^ $(LDLIBS) $(LDLIBSEND) -o $@"
 	MakefileStream.WriteLine vbTab & "$(CC) $(LDFLAGS) $(LDLIBSBEGIN) $^ $(LDLIBS) $(LDLIBSEND) -o $@"
 	MakefileStream.WriteLine
-End Sub
-
-Sub WriteDebugRule(MakefileStream)
 	MakefileStream.WriteLine "$(BIN_DEBUG_DIR)$(PATH_SEP)$(OUTPUT_FILE_NAME): $(OBJECTFILES_DEBUG)"
-	' MakefileStream.WriteLine vbTab & "$(LD) $(LDFLAGS) $(LDLIBSBEGIN) $^ $(LDLIBS) $(LDLIBSEND) -o $@"
 	MakefileStream.WriteLine vbTab & "$(CC) $(LDFLAGS) $(LDLIBSBEGIN) $^ $(LDLIBS) $(LDLIBSEND) -o $@"
 	MakefileStream.WriteLine
 End Sub

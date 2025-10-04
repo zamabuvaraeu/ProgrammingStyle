@@ -1145,12 +1145,6 @@ Private Sub WriteReleaseRule( _
 	Print #MakefileStream, vbTab & "$(CC) $(LDFLAGS) $(LDLIBSBEGIN) $^ $(LDLIBS) $(LDLIBSEND) -o $@"
 	Print #MakefileStream,
 
-End Sub
-
-Private Sub WriteDebugRule( _
-		ByVal MakefileStream As Long _
-	)
-
 	Print #MakefileStream, "$(BIN_DEBUG_DIR)$(PATH_SEP)$(OUTPUT_FILE_NAME): $(OBJECTFILES_DEBUG)"
 	Print #MakefileStream, vbTab & "$(CC) $(LDFLAGS) $(LDLIBSBEGIN) $^ $(LDLIBS) $(LDLIBSEND) -o $@"
 	Print #MakefileStream,
@@ -1164,6 +1158,7 @@ Private Sub WriteAsmRule( _
 	Print #MakefileStream, "$(OBJ_RELEASE_DIR)$(PATH_SEP)%$(FILE_SUFFIX).o: $(OBJ_RELEASE_DIR)$(PATH_SEP)%$(FILE_SUFFIX).asm"
 	Print #MakefileStream, vbTab & "$(AS) $(ASFLAGS) -o $@ $<"
 	Print #MakefileStream,
+
 	Print #MakefileStream, "$(OBJ_DEBUG_DIR)$(PATH_SEP)%$(FILE_SUFFIX).o: $(OBJ_DEBUG_DIR)$(PATH_SEP)%$(FILE_SUFFIX).asm"
 	Print #MakefileStream, vbTab & "$(AS) $(ASFLAGS) -o $@ $<"
 	Print #MakefileStream,
@@ -1177,6 +1172,7 @@ Private Sub WriteCRule( _
 	Print #MakefileStream, "$(OBJ_RELEASE_DIR)$(PATH_SEP)%$(FILE_SUFFIX).asm: $(OBJ_RELEASE_DIR)$(PATH_SEP)%$(FILE_SUFFIX).c"
 	Print #MakefileStream, vbTab & "$(CC) $(EXTRA_CFLAGS) $(CFLAGS) -o $@ $<"
 	Print #MakefileStream,
+
 	Print #MakefileStream, "$(OBJ_DEBUG_DIR)$(PATH_SEP)%$(FILE_SUFFIX).asm: $(OBJ_DEBUG_DIR)$(PATH_SEP)%$(FILE_SUFFIX).c"
 	Print #MakefileStream, vbTab & "$(CC) $(EXTRA_CFLAGS) $(CFLAGS) -o $@ $<"
 	Print #MakefileStream,
@@ -1190,6 +1186,7 @@ Private Sub WriteResourceRule( _
 	Print #MakefileStream, "$(OBJ_RELEASE_DIR)$(PATH_SEP)%$(FILE_SUFFIX).obj: src$(PATH_SEP)%.RC"
 	Print #MakefileStream, vbTab & "$(GORC) $(GORCFLAGS) /fo $@ $<"
 	Print #MakefileStream,
+
 	Print #MakefileStream, "$(OBJ_DEBUG_DIR)$(PATH_SEP)%$(FILE_SUFFIX).obj: src$(PATH_SEP)%.RC"
 	Print #MakefileStream, vbTab & "$(GORC) $(GORCFLAGS) /fo $@ $<"
 	Print #MakefileStream,
@@ -1207,25 +1204,29 @@ Private Sub WriteBasRule( _
 
 	Dim AnyCFile As String = ReplaceOSPathSeparatorToMovePathSeparator(SourceFolderWithPathSep) & "$*.c"
 
-	Print #MakefileStream, "$(OBJ_RELEASE_DIR)$(PATH_SEP)%$(FILE_SUFFIX).c: " & AnyBasFile
-	Print #MakefileStream, vbTab & "$(FBC) $(FBCFLAGS) $<"
+	Scope
+		Print #MakefileStream, "$(OBJ_RELEASE_DIR)$(PATH_SEP)%$(FILE_SUFFIX).c: " & AnyBasFile
+		Print #MakefileStream, vbTab & "$(FBC) $(FBCFLAGS) $<"
 
-	If p->FixEmittedCode = FIX_EMITTED_CODE Then
-		Print #MakefileStream, vbTab & "$(SCRIPT_COMMAND) /release " & AnyCFile
-	End If
+		If p->FixEmittedCode = FIX_EMITTED_CODE Then
+			Print #MakefileStream, vbTab & "$(SCRIPT_COMMAND) /release " & AnyCFile
+		End If
 
-	Print #MakefileStream, vbTab & "$(MOVE_COMMAND) " & AnyCFile & " $(OBJ_RELEASE_DIR_MOVE)$(MOVE_PATH_SEP)$*$(FILE_SUFFIX).c"
-	Print #MakefileStream,
+		Print #MakefileStream, vbTab & "$(MOVE_COMMAND) " & AnyCFile & " $(OBJ_RELEASE_DIR_MOVE)$(MOVE_PATH_SEP)$*$(FILE_SUFFIX).c"
+		Print #MakefileStream,
+	End Scope
 
-	Print #MakefileStream, "$(OBJ_DEBUG_DIR)$(PATH_SEP)%$(FILE_SUFFIX).c: " & AnyBasFile
-	Print #MakefileStream, vbTab & "$(FBC) $(FBCFLAGS) $<"
+	Scope
+		Print #MakefileStream, "$(OBJ_DEBUG_DIR)$(PATH_SEP)%$(FILE_SUFFIX).c: " & AnyBasFile
+		Print #MakefileStream, vbTab & "$(FBC) $(FBCFLAGS) $<"
 
-	If p->FixEmittedCode = FIX_EMITTED_CODE Then
-		Print #MakefileStream, vbTab & "$(SCRIPT_COMMAND) /debug " & AnyCFile
-	End If
+		If p->FixEmittedCode = FIX_EMITTED_CODE Then
+			Print #MakefileStream, vbTab & "$(SCRIPT_COMMAND) /debug " & AnyCFile
+		End If
 
-	Print #MakefileStream, vbTab & "$(MOVE_COMMAND) " & AnyCFile & " $(OBJ_DEBUG_DIR_MOVE)$(MOVE_PATH_SEP)$*$(FILE_SUFFIX).c"
-	Print #MakefileStream,
+		Print #MakefileStream, vbTab & "$(MOVE_COMMAND) " & AnyCFile & " $(OBJ_DEBUG_DIR_MOVE)$(MOVE_PATH_SEP)$*$(FILE_SUFFIX).c"
+		Print #MakefileStream,
+	End Scope
 
 End Sub
 
@@ -1637,8 +1638,9 @@ WriteDebugTarget(MakefileNumber)
 WriteCleanTarget(MakefileNumber)
 WriteCreateDirsTarget(MakefileNumber)
 
+' bas -> c -> asm -> o -> exe
+' rc -> obj -> exe
 WriteReleaseRule(MakefileNumber)
-WriteDebugRule(MakefileNumber)
 
 WriteAsmRule(MakefileNumber)
 WriteCRule(MakefileNumber)
