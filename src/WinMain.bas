@@ -130,7 +130,8 @@ Private Function InputDataDialogProc( _
 
 End Function
 
-Private Function EnableVisualStyles()As HRESULT
+Private Function EnableVisualStyles( _
+	)As HRESULT
 
 	Dim icc As INITCOMMONCONTROLSEX = Any
 	icc.dwSize = SizeOf(INITCOMMONCONTROLSEX)
@@ -179,10 +180,19 @@ Private Function CreateMainWindow( _
 
 End Function
 
-Private Function MessageLoop( _
-		ByVal hWin As HWND, _
-		ByVal hEvent As HANDLE _
+Private Function AlertableMessageLoop( _
+		ByVal hWin As HWND _
 	)As Integer
+
+	Dim hEvent As HANDLE = CreateEvent( _
+		NULL, _
+		TRUE, _
+		FALSE, _
+		NULL _
+	)
+	If hEvent = NULL Then
+		Return 1
+	End If
 
 	Do
 		Const EventVectorLength = 1
@@ -227,6 +237,7 @@ Private Function MessageLoop( _
 			End If
 
 			If wMsg.message = WM_QUIT Then
+				CloseHandle(hEvent)
 				Return wMsg.wParam
 			Else
 				Dim resDialogMessage As BOOL = IsDialogMessage( _
@@ -240,6 +251,8 @@ Private Function MessageLoop( _
 			End If
 		Loop
 	Loop
+
+	CloseHandle(hEvent)
 
 	Return 0
 
@@ -263,32 +276,19 @@ Private Function tWinMain( _
 	param.hInst = hInst
 
 	Scope
-		Dim hEvent As HANDLE = CreateEvent( _
-			NULL, _
-			TRUE, _
-			FALSE, _
-			NULL _
-		)
-		If hEvent = NULL Then
-			Return 1
-		End If
-
 		Dim hWin As HWND = CreateMainWindow( _
 			hInst, _
 			@param _
 		)
 		If hWin = NULL Then
-			CloseHandle(hEvent)
 			Return 1
 		End If
 
-		Dim resMessageLoop As Integer = MessageLoop( _
-			hWin, _
-			hEvent _
-		)
+		param.hWin = hWin
+
+		Dim resMessageLoop As Integer = AlertableMessageLoop(hWin)
 
 		DestroyWindow(hWin)
-		CloseHandle(hEvent)
 
 		Return resMessageLoop
 	End Scope

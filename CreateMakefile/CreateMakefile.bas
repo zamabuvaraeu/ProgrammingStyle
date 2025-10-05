@@ -927,16 +927,7 @@ Private Sub WriteLinkerFlags( _
 		Case Else
 			Print #MakefileStream, "ifeq ($(PROCESSOR_ARCHITECTURE),AMD64)"
 
-			' WinMainCRTStartup or mainCRTStartup
-			' Print #MakefileStream, "ifeq ($(USE_RUNTIME),FALSE)"
-			' Print #MakefileStream, "LDFLAGS+=-Wl,-e,EntryPoint"
-			' Print #MakefileStream, "endif"
-
 			Print #MakefileStream, "else"
-
-			' Print #MakefileStream, "ifeq ($(USE_RUNTIME),FALSE)"
-			' Print #MakefileStream, "LDFLAGS+=-Wl,-e,_EntryPoint@0"
-			' Print #MakefileStream, "endif"
 
 			Select Case p->AddressAware
 
@@ -963,7 +954,6 @@ Private Sub WriteLinkerFlags( _
 			End Select
 
 			Print #MakefileStream, "LDFLAGS+=-Wl,--no-seh -Wl,--nxcompat"
-			' Print #MakefileStream, "LDFLAGS+=-Wl,--disable-dynamicbase"
 
 			Print #MakefileStream, "LDFLAGS+=-pipe -nostdlib"
 
