@@ -1,5 +1,3 @@
-#include once "crt.bi"
-
 #ifndef MAX_PATH
 #define MAX_PATH (260)
 #endif
@@ -465,6 +463,31 @@ Private Function WriteSetenvWin32( _
 	Print #oStream, "rem Add compiler directory to PATH"
 	Print #oStream, "set FBC_DIR=" & p->CompilerPath
 	Print #oStream, "set PATH=%FBC_DIR%\%BinFolder%;%PATH%"
+	Print #oStream, "rem Without quotes:"
+	Print #oStream, "set LIB_DIR=%FBC_DIR%\%LibFolder%"
+	Print #oStream, "set INC_DIR=%FBC_DIR%\inc"
+	Print #oStream,
+
+	Print #oStream, "rem Toolchain"
+	Print #oStream, "set FBC=""%FBC_DIR%\" & p->FbcCompilerName & """"
+	Print #oStream, "set CC=""%FBC_DIR%\%BinFolder%\gcc.exe"""
+	Print #oStream, "set AS=""%FBC_DIR%\%BinFolder%\as.exe"""
+	Print #oStream, "set AR=""%FBC_DIR%\%BinFolder%\ar.exe"""
+	Print #oStream, "set GORC=""%FBC_DIR%\%BinFolder%\GoRC.exe"""
+	Print #oStream, "set LD=""%FBC_DIR%\%BinFolder%\ld.exe"""
+	Print #oStream, "set DLL_TOOL=""%FBC_DIR%\%BinFolder%\dlltool.exe"""
+	Print #oStream,
+
+	Print #oStream, "set PATH_SEP=/"
+	Print #oStream, "set MOVE_PATH_SEP=\\"
+	Print #oStream, "set MOVE_COMMAND=cmd.exe /c move /y"
+	Print #oStream, "set DELETE_COMMAND=cmd.exe /c del /f /q"
+	Print #oStream, "set MKDIR_COMMAND=cmd.exe /c mkdir"
+	If p->FixEmittedCode = FIX_EMITTED_CODE Then
+		Print #oStream, "set CPREPROCESSOR_COMMAND=cscript.exe //nologo fix-emitted-code.vbs"
+	Else
+		Print #oStream, "set CPREPROCESSOR_COMMAND=cmd.exe /c echo cscript.exe //nologo fix-emitted-code.vbs"
+	End If
 	Print #oStream,
 
 	Print #oStream, "rem Source code directory"
@@ -507,29 +530,6 @@ Private Function WriteSetenvWin32( _
 		Print #oStream, "set FILE_SUFFIX="
 	End If
 
-	Print #oStream,
-
-	Print #oStream, "rem Toolchain"
-	Print #oStream, "set FBC=""%FBC_DIR%\" & p->FbcCompilerName & """"
-	Print #oStream, "set CC=""%FBC_DIR%\%BinFolder%\gcc.exe"""
-	Print #oStream, "set AS=""%FBC_DIR%\%BinFolder%\as.exe"""
-	Print #oStream, "set AR=""%FBC_DIR%\%BinFolder%\ar.exe"""
-	Print #oStream, "set GORC=""%FBC_DIR%\%BinFolder%\GoRC.exe"""
-	Print #oStream, "set LD=""%FBC_DIR%\%BinFolder%\ld.exe"""
-	Print #oStream, "set DLL_TOOL=""%FBC_DIR%\%BinFolder%\dlltool.exe"""
-	Print #oStream,
-
-	Print #oStream, "rem Without quotes:"
-	Print #oStream, "set LIB_DIR=%FBC_DIR%\%LibFolder%"
-	Print #oStream, "set INC_DIR=%FBC_DIR%\inc"
-	Print #oStream,
-
-	Print #oStream, "set PATH_SEP=/"
-	Print #oStream, "set MOVE_PATH_SEP=\\"
-	Print #oStream, "set MOVE_COMMAND=cmd.exe /c move /y"
-	Print #oStream, "set DELETE_COMMAND=cmd.exe /c del /f /q"
-	Print #oStream, "set MKDIR_COMMAND=cmd.exe /c mkdir"
-	Print #oStream, "set SCRIPT_COMMAND=cscript.exe //nologo fix-emitted-code.vbs"
 	Print #oStream,
 
 	Select Case p->Emitter
@@ -680,7 +680,7 @@ Private Sub WriteOutputFilename( _
 
 End Sub
 
-Private Sub WriteUtilsPath( _
+Private Sub WriteUtilsPathWin32( _
 		ByVal MakefileStream As Long _
 	)
 
@@ -690,7 +690,7 @@ Private Sub WriteUtilsPath( _
 	Print #MakefileStream, "MOVE_COMMAND ?= cmd.exe /c move /y"
 	Print #MakefileStream, "DELETE_COMMAND ?= cmd.exe /c del /f /q"
 	Print #MakefileStream, "MKDIR_COMMAND ?= cmd.exe /c mkdir"
-	Print #MakefileStream, "SCRIPT_COMMAND ?= cscript.exe //nologo fix-emitted-code.vbs"
+	Print #MakefileStream, "CPREPROCESSOR_COMMAND ?= cmd.exe /c echo cscript.exe //nologo fix-emitted-code.vbs"
 	Print #MakefileStream,
 
 End Sub
@@ -928,19 +928,15 @@ Private Sub WriteLinkerFlags( _
 			Print #MakefileStream, "ifeq ($(PROCESSOR_ARCHITECTURE),AMD64)"
 
 			' WinMainCRTStartup or mainCRTStartup
-			Print #MakefileStream, "ifeq ($(USE_RUNTIME),FALSE)"
-			Print #MakefileStream, "LDFLAGS+=-Wl,-e,EntryPoint"
-			Print #MakefileStream, "endif"
-
-			' MakefileStream.WriteLine "LDFLAGS+=-m i386pep"
+			' Print #MakefileStream, "ifeq ($(USE_RUNTIME),FALSE)"
+			' Print #MakefileStream, "LDFLAGS+=-Wl,-e,EntryPoint"
+			' Print #MakefileStream, "endif"
 
 			Print #MakefileStream, "else"
 
-			Print #MakefileStream, "ifeq ($(USE_RUNTIME),FALSE)"
-			Print #MakefileStream, "LDFLAGS+=-Wl,-e,_EntryPoint@0"
-			Print #MakefileStream, "endif"
-
-			' MakefileStream.WriteLine "LDFLAGS+=-m i386pe"
+			' Print #MakefileStream, "ifeq ($(USE_RUNTIME),FALSE)"
+			' Print #MakefileStream, "LDFLAGS+=-Wl,-e,_EntryPoint@0"
+			' Print #MakefileStream, "endif"
 
 			Select Case p->AddressAware
 
@@ -1228,9 +1224,7 @@ Private Sub WriteBasRule( _
 		Print #MakefileStream, "$(OBJ_RELEASE_DIR)$(PATH_SEP)%$(FILE_SUFFIX).c: " & AnyBasFile
 		Print #MakefileStream, vbTab & "$(FBC) $(FBCFLAGS) $<"
 
-		If p->FixEmittedCode = FIX_EMITTED_CODE Then
-			Print #MakefileStream, vbTab & "$(SCRIPT_COMMAND) /release " & AnyCFile
-		End If
+		Print #MakefileStream, vbTab & "$(CPREPROCESSOR_COMMAND) /release " & AnyCFile
 
 		Print #MakefileStream, vbTab & "$(MOVE_COMMAND) " & AnyCFile & " $(OBJ_RELEASE_DIR_MOVE)$(MOVE_PATH_SEP)$*$(FILE_SUFFIX).c"
 		Print #MakefileStream,
@@ -1240,9 +1234,7 @@ Private Sub WriteBasRule( _
 		Print #MakefileStream, "$(OBJ_DEBUG_DIR)$(PATH_SEP)%$(FILE_SUFFIX).c: " & AnyBasFile
 		Print #MakefileStream, vbTab & "$(FBC) $(FBCFLAGS) $<"
 
-		If p->FixEmittedCode = FIX_EMITTED_CODE Then
-			Print #MakefileStream, vbTab & "$(SCRIPT_COMMAND) /debug " & AnyCFile
-		End If
+		Print #MakefileStream, vbTab & "$(CPREPROCESSOR_COMMAND) /debug " & AnyCFile
 
 		Print #MakefileStream, vbTab & "$(MOVE_COMMAND) " & AnyCFile & " $(OBJ_DEBUG_DIR_MOVE)$(MOVE_PATH_SEP)$*$(FILE_SUFFIX).c"
 		Print #MakefileStream,
@@ -1643,7 +1635,7 @@ WriteTargets(MakefileNumber)
 WriteCompilerToolChain(MakefileNumber)
 WriteProcessorArch(MakefileNumber)
 WriteOutputFilename(MakefileNumber, @Params)
-WriteUtilsPath(MakefileNumber)
+WriteUtilsPathWin32(MakefileNumber)
 WriteArchSpecifiedPath(MakefileNumber)
 
 WriteFbcFlags(MakefileNumber, @Params)
