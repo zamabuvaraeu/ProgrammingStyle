@@ -577,7 +577,7 @@ Private Function WriteSetenvWin32( _
 			Print #oStream, "rem Only for Clang AMD64"
 			Print #oStream, "rem set TARGET_TRIPLET=x86_64-w64-pc-windows-msvc"
 			Print #oStream,
-			Print #oStream, "rem Link Time Optimization"
+			Print #oStream, "rem Link Time Optimization for release target"
 			Print #oStream, "rem set FLTO=-flto"
 
 		Case CODE_EMITTER_WASM32, CODE_EMITTER_WASM64

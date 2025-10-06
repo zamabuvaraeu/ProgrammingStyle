@@ -4,7 +4,7 @@
 
 ## Достоинства и недостатки
 
-Можно забыть про командные файлы компиляции.
+Можно забыть про составление вручную командных файлов компиляции.
 
 ### Недостатки
 
@@ -20,10 +20,10 @@
 
 Генератор требует, чтобы проект был организован определённым образом.
 
-Проект:
+### Структура проекта
 
 ```
-MyProject:
+MyProject
 	bin\          — каталог для исполняемых файлов
 		Debug\    — отладочная версия
 			x64\  — для 64 бит
@@ -42,12 +42,16 @@ MyProject:
 		main.bas  — все файлы исходного кода
 		main.bi
 
-	CreateMakefile.exe — Генератор makefile
+	CreateMakefile.exe   — Генератор makefile
 
-	fix-emitted-code.vbs — сценарий для исправления промежуточного си‐кода
+	Makefile             — сгенерированный файл
 
-	Makefile           — сгенерированный файл
+	setenv.cmd           — настройки переменных среды
+
+	fix-emitted-code.vbs — сценарий для исправления промежуточного си‐кода (неообязательно)
 ```
+
+К счастью, каталоги `bin` и `obj` вручную создавать не нужно, для этого есть команда `createdirs`.
 
 ## Параметры генератора Makefile
 
@@ -281,5 +285,5 @@ CreateMakefile.exe -makefile Makefile -src src -fbc-path "C:\Program Files (x86)
 ### WebAssembly
 
 ```
-CreateMakefile.exe /out:add /fix:true /emitter:wasm32 /exetype:wasm32
+CreateMakefile.exe -out HelloWorld -fix true -emitter wasm32 -exetype wasm32
 ```
