@@ -61,4 +61,14 @@ Public Function mainCRTStartup Alias "mainCRTStartup"()As Integer
 
 End Function
 
+Public Function WinMainCRTStartup Alias "WinMainCRTStartup"()As Integer
+
+	Dim RetCode As Long = main(0, 0)
+
+	fb_End(RetCode)
+
+	Return RetCode
+
+End Function
+
 #endif
