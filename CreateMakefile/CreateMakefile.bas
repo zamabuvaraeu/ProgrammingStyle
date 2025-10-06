@@ -431,6 +431,35 @@ Private Function WriteSetenvLinux( _
 
 End Function
 
+Private Function GetExtensionOutputFile( _
+		ByVal p As Parameter Ptr _
+	)As String
+
+	Dim Extension As String
+
+	Select Case p->ExeType
+
+		Case OUTPUT_FILETYPE_EXE
+			Extension = ".exe"
+
+		Case OUTPUT_FILETYPE_DLL
+			Extension = ".dll"
+
+		Case OUTPUT_FILETYPE_LIBRARY
+			Extension = ".a"
+
+		Case OUTPUT_FILETYPE_WASM32
+			Extension = ".wasm"
+
+		Case Else ' OUTPUT_FILETYPE_WASM64
+			Extension = ".wasm"
+
+	End Select
+
+	Return Extension
+
+End Function
+
 Private Function WriteSetenvWin32( _
 		ByVal p As Parameter Ptr _
 	) As Integer
@@ -509,7 +538,6 @@ Private Function WriteSetenvWin32( _
 		Print #oStream, "rem set WINVER=" & p->MinimalOSVersion
 		Print #oStream, "rem set _WIN32_WINNT=" & p->MinimalOSVersion
 	End If
-	Print #oStream,
 
 	Print #oStream, "rem Use unicode in WinAPI"
 	If p->Unicode = DEFINE_UNICODE Then
@@ -517,19 +545,20 @@ Private Function WriteSetenvWin32( _
 	Else
 		Print #oStream, "set USE_UNICODE=FALSE"
 	End If
+	Print #oStream,
 
 	Print #oStream, "rem Set variable FILE_SUFFIX to make the executable name different"
 	Print #oStream, "rem for different toolchains, libraries, and compilation flags"
 	Print #oStream, "set GCC_VER=" & GCC_VER
 	Print #oStream, "set FBC_VER=" & FBC_VER
-	Print #oStream,
 
 	If p->UseFileSuffix Then
-		Print #oStream, "set FILE_SUFFIX=%GCC_VER%%FBC_VER%%RUNTIME%"
+		Print #oStream, "set FILE_SUFFIX=%GCC_VER%%FBC_VER%%RUNTIME%%WINVER%"
 	Else
-		Print #oStream, "set FILE_SUFFIX="
+		Print #oStream, "rem set FILE_SUFFIX=%GCC_VER%%FBC_VER%%RUNTIME%%WINVER%"
 	End If
-
+	Dim Extension As String = GetExtensionOutputFile(p)
+	Print #oStream, "OUTPUT_FILE_NAME=" & p->OutputFilename & "%FILE_SUFFIX%" & Extension
 	Print #oStream,
 
 	Select Case p->Emitter
@@ -642,28 +671,7 @@ Private Sub WriteOutputFilename( _
 		ByVal p As Parameter Ptr _
 	)
 
-	Dim Extension As String
-	Select Case p->ExeType
-
-		Case OUTPUT_FILETYPE_EXE
-			Extension = ".exe"
-
-		Case OUTPUT_FILETYPE_DLL
-			Extension = ".dll"
-
-		Case OUTPUT_FILETYPE_LIBRARY
-			Extension = ".a"
-
-		Case OUTPUT_FILETYPE_WASM32
-			Extension = ".wasm"
-
-		Case Else ' OUTPUT_FILETYPE_WASM64
-			Extension = ".wasm"
-
-	End Select
-
-	' TODO Add UNICODE and _UNICODE to file suffix
-	' TODO Add WINVER and _WIN32_WINNT to file suffix
+	Dim Extension As String = GetExtensionOutputFile(p)
 
 	Print #MakefileStream, "USE_RUNTIME ?= TRUE"
 	Print #MakefileStream, "FBC_VER ?= " & FBC_VER
@@ -675,7 +683,7 @@ Private Sub WriteOutputFilename( _
 	Print #MakefileStream, "RUNTIME = _WRT"
 	Print #MakefileStream, "endif"
 
-	Print #MakefileStream, "OUTPUT_FILE_NAME=" & p->OutputFilename & "$(FILE_SUFFIX)" & Extension
+	Print #MakefileStream, "OUTPUT_FILE_NAME ?= " & p->OutputFilename & "$(FILE_SUFFIX)" & Extension
 	Print #MakefileStream,
 
 End Sub
