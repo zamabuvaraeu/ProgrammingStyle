@@ -51,16 +51,7 @@ Public Sub fb_End Alias "fb_End"( _
 	#endif
 End Sub
 
-Public Function mainCRTStartup Alias "mainCRTStartup"()As Integer
-
-	Dim RetCode As Long = main(0, 0)
-
-	fb_End(RetCode)
-
-	Return RetCode
-
-End Function
-
+#ifdef __FB_GUI__
 Public Function WinMainCRTStartup Alias "WinMainCRTStartup"()As Integer
 
 	Dim RetCode As Long = main(0, 0)
@@ -70,5 +61,16 @@ Public Function WinMainCRTStartup Alias "WinMainCRTStartup"()As Integer
 	Return RetCode
 
 End Function
+#else
+Public Function mainCRTStartup Alias "mainCRTStartup"()As Integer
+
+	Dim RetCode As Long = main(0, 0)
+
+	fb_End(RetCode)
+
+	Return RetCode
+
+End Function
+#endif
 
 #endif
