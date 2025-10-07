@@ -43,7 +43,7 @@ Private Sub EnableDialogItem( _
 
 End Sub
 
-Private Sub IDOK_OnClick( _
+Private Sub IDOK_Click( _
 		ByVal this As InputDialogParam Ptr, _
 		ByVal hWin As HWND _
 	)
@@ -51,7 +51,7 @@ Private Sub IDOK_OnClick( _
 
 End Sub
 
-Private Sub ModelessIDCANCEL_OnClick( _
+Private Sub ModelessIDCANCEL_Click( _
 		ByVal this As InputDialogParam Ptr, _
 		ByVal hWin As HWND _
 	)
@@ -60,7 +60,7 @@ Private Sub ModelessIDCANCEL_OnClick( _
 
 End Sub
 
-Private Sub ModalIDCANCEL_OnClick( _
+Private Sub ModalIDCANCEL_Click( _
 		ByVal this As InputDialogParam Ptr, _
 		ByVal hWin As HWND _
 	)
@@ -69,21 +69,21 @@ Private Sub ModalIDCANCEL_OnClick( _
 
 End Sub
 
-Private Sub DialogMain_OnLoad( _
+Private Sub DialogMain_Load( _
 		ByVal this As InputDialogParam Ptr, _
 		ByVal hWin As HWND _
 	)
 
 End Sub
 
-Private Sub DialogMain_OnUnload( _
+Private Sub DialogMain_Unload( _
 		ByVal this As InputDialogParam Ptr, _
 		ByVal hWin As HWND _
 	)
 
 End Sub
 
-Private Sub DialogMain_OnClosing( _
+Private Sub DialogMain_Closing( _
 		ByVal this As InputDialogParam Ptr, _
 		ByVal hWin As HWND _
 	)
@@ -104,7 +104,7 @@ Private Function ModelessDialogProc( _
 	If uMsg = WM_INITDIALOG Then
 		pContext = Cast(InputDialogParam Ptr, lParam)
 		SetWindowLongPtr(hWin, GWLP_USERDATA, Cast(LONG_PTR, pContext))
-		DialogMain_OnLoad(pContext, hWin)
+		DialogMain_Load(pContext, hWin)
 		Return TRUE
 	End If
 
@@ -116,18 +116,18 @@ Private Function ModelessDialogProc( _
 			Select Case LOWORD(wParam)
 
 				Case IDOK
-					IDOK_OnClick(pContext, hWin)
+					IDOK_Click(pContext, hWin)
 
 				Case IDCANCEL
-					ModelessIDCANCEL_OnClick(pContext, hWin)
+					ModelessIDCANCEL_Click(pContext, hWin)
 
 			End Select
 
 		Case WM_CLOSE
-			DialogMain_OnClosing(pContext, hWin)
+			DialogMain_Closing(pContext, hWin)
 
 		Case WM_DESTROY
-			DialogMain_OnUnload(pContext, hWin)
+			DialogMain_Unload(pContext, hWin)
 			PostQuitMessage(0)
 
 		Case Else
@@ -151,7 +151,7 @@ Private Function ModalDialogProc( _
 	If uMsg = WM_INITDIALOG Then
 		pContext = Cast(InputDialogParam Ptr, lParam)
 		SetWindowLongPtr(hWin, GWLP_USERDATA, Cast(LONG_PTR, pContext))
-		DialogMain_OnLoad(pContext, hWin)
+		DialogMain_Load(pContext, hWin)
 		Return TRUE
 	End If
 
@@ -163,10 +163,10 @@ Private Function ModalDialogProc( _
 			Select Case LOWORD(wParam)
 
 				Case IDOK
-					IDOK_OnClick(pContext, hWin)
+					IDOK_Click(pContext, hWin)
 
 				Case IDCANCEL
-					ModalIDCANCEL_OnClick(pContext, hWin)
+					ModalIDCANCEL_Click(pContext, hWin)
 
 			End Select
 
@@ -174,7 +174,7 @@ Private Function ModalDialogProc( _
 			EndDialog(hWin, 0)
 
 		Case WM_DESTROY
-			DialogMain_OnUnload(pContext, hWin)
+			DialogMain_Unload(pContext, hWin)
 
 		Case Else
 			Return FALSE

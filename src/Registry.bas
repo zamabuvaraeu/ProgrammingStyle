@@ -2,7 +2,7 @@
 
 Const RegistrySection = __TEXT("Software\BatchedFiles\HttpRestClient")
 
-Public Function LoadSettings( _
+Private Function LoadSettings( _
 		ByVal pVec As SettingsVector Ptr _
 	)As HRESULT
 
@@ -62,7 +62,7 @@ Public Function LoadSettings( _
 
 End Function
 
-Public Function SaveSettings( _
+Private Function SaveSettings( _
 		ByVal pVec As SettingsVector Ptr _
 	)As HRESULT
 
