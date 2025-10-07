@@ -51,12 +51,21 @@ Private Sub IDOK_OnClick( _
 
 End Sub
 
-Private Sub IDCANCEL_OnClick( _
+Private Sub ModelessIDCANCEL_OnClick( _
 		ByVal this As InputDialogParam Ptr, _
 		ByVal hWin As HWND _
 	)
 
 	PostQuitMessage(0)
+
+End Sub
+
+Private Sub ModalIDCANCEL_OnClick( _
+		ByVal this As InputDialogParam Ptr, _
+		ByVal hWin As HWND _
+	)
+
+	EndDialog(hWin, 0)
 
 End Sub
 
@@ -110,7 +119,7 @@ Private Function ModelessDialogProc( _
 					IDOK_OnClick(pContext, hWin)
 
 				Case IDCANCEL
-					IDCANCEL_OnClick(pContext, hWin)
+					ModelessIDCANCEL_OnClick(pContext, hWin)
 
 			End Select
 
@@ -157,7 +166,7 @@ Private Function ModalDialogProc( _
 					IDOK_OnClick(pContext, hWin)
 
 				Case IDCANCEL
-					IDCANCEL_OnClick(pContext, hWin)
+					ModalIDCANCEL_OnClick(pContext, hWin)
 
 			End Select
 
@@ -338,22 +347,31 @@ Private Function tWinMain( _
 	Dim param As InputDialogParam = Any
 	param.hInst = hInst
 
+	' Scope
+	' 	Dim hWin As HWND = CreateMainWindow( _
+	' 		hInst, _
+	' 		@param _
+	' 	)
+	' 	If hWin = NULL Then
+	' 		Return 1
+	' 	End If
+
+	' 	param.hWin = hWin
+
+	' 	Dim resMessageLoop As Integer = AlertableMessageLoop(hWin)
+
+	' 	DestroyWindow(hWin)
+
+	' 	Return resMessageLoop
+	' End Scope
+
 	Scope
-		Dim hWin As HWND = CreateMainWindow( _
+		CreateModalWindow( _
 			hInst, _
 			@param _
 		)
-		If hWin = NULL Then
-			Return 1
-		End If
 
-		param.hWin = hWin
-
-		Dim resMessageLoop As Integer = AlertableMessageLoop(hWin)
-
-		DestroyWindow(hWin)
-
-		Return resMessageLoop
+		Return 0
 	End Scope
 
 End Function
