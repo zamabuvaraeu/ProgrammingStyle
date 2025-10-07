@@ -83,7 +83,7 @@ Private Sub DialogMain_OnClosing( _
 
 End Sub
 
-Private Function InputDataDialogProc( _
+Private Function ModelessDialogProc( _
 		ByVal hWin As HWND, _
 		ByVal uMsg As UINT, _
 		ByVal wParam As WPARAM, _
@@ -120,6 +120,52 @@ Private Function InputDataDialogProc( _
 		Case WM_DESTROY
 			DialogMain_OnUnload(pContext, hWin)
 			PostQuitMessage(0)
+
+		Case Else
+			Return FALSE
+
+	End Select
+
+	Return TRUE
+
+End Function
+
+Private Function ModalDialogProc( _
+		ByVal hWin As HWND, _
+		ByVal uMsg As UINT, _
+		ByVal wParam As WPARAM, _
+		ByVal lParam As LPARAM _
+	)As INT_PTR
+
+	Dim pContext As InputDialogParam Ptr = Any
+
+	If uMsg = WM_INITDIALOG Then
+		pContext = Cast(InputDialogParam Ptr, lParam)
+		SetWindowLongPtr(hWin, GWLP_USERDATA, Cast(LONG_PTR, pContext))
+		DialogMain_OnLoad(pContext, hWin)
+		Return TRUE
+	End If
+
+	pContext = Cast(Any Ptr, GetWindowLongPtr(hWin, GWLP_USERDATA))
+
+	Select Case uMsg
+
+		Case WM_COMMAND
+			Select Case LOWORD(wParam)
+
+				Case IDOK
+					IDOK_OnClick(pContext, hWin)
+
+				Case IDCANCEL
+					IDCANCEL_OnClick(pContext, hWin)
+
+			End Select
+
+		Case WM_CLOSE
+			EndDialog(hWin, 0)
+
+		Case WM_DESTROY
+			DialogMain_OnUnload(pContext, hWin)
 
 		Case Else
 			Return FALSE
@@ -172,11 +218,28 @@ Private Function CreateMainWindow( _
 		hInst, _
 		MAKEINTRESOURCE(IDD_DLG_TASKS), _
 		NULL, _
-		@InputDataDialogProc, _
+		@ModelessDialogProc, _
 		Cast(LPARAM, param) _
 	)
 
 	Return hWin
+
+End Function
+
+Private Function CreateModalWindow( _
+		Byval hInst As HINSTANCE, _
+		ByVal param As InputDialogParam Ptr _
+	)As INT_PTR
+
+	Dim res As INT_PTR = DialogBoxParam( _
+		hInst, _
+		MAKEINTRESOURCE(IDD_DLG_TASKS), _
+		NULL, _
+		@ModalDialogProc, _
+		Cast(LPARAM, param) _
+	)
+
+	Return res
 
 End Function
 
@@ -300,6 +363,7 @@ Dim hPrevInstance As HINSTANCE = NULL
 
 ' The program does not process command line parameters
 Dim Arguments As LPTSTR = NULL
+
 Dim RetCode As Integer = tWinMain( _
 	hInst, _
 	hPrevInstance, _
