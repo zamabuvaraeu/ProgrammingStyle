@@ -604,14 +604,18 @@ Private Function WriteSetenvWin32( _
 	End If
 	Print #oStream, "set OBJ_CRT_START=" & crtLib & " ""%LIB_DIR%\crtbegin.o"" ""%LIB_DIR%\fbrt0.o"""
 
-	Dim OsLibs As String = "set LIBS_OS=-ladvapi32 -lcomctl32 -lcomdlg32 -lcrypt32 -lgdi32 -lgdiplus -lkernel32 -lmswsock -lole32 -loleaut32 -lshell32 -lshlwapi -lwsock32 -lws2_32 -luser32 -luuid -lmsvcrt"
+	Print #oStream, "set LIBS_WIN95=-ladvapi32 -lcomctl32 -lcomdlg32 -lcrypt32 -lgdi32 -lkernel32 -lole32 -loleaut32 -lshell32 -lshlwapi -lwsock32 -luser32"
+	Print #oStream, "set LIBS_WINNT=-lgdiplus -lws2_32 -lmswsock"
+	Print #oStream, "set LIBS_GUID=-luuid"
+	Print #oStream, "set LIBS_CRT=-lmsvcrt"
+	Print #oStream, "set LIBS_ANY="
 	If p->ThreadingMode = DEFINE_MULTITHREADING_RUNTIME Then
-		OsLibs &= " -lfbmt"
+		Print #oStream, "set LIBS_FB=-lfbmt"
 	Else
-		OsLibs &= " -lfb"
+		Print #oStream, "set LIBS_FB=-lfb"
 	End If
-	Print #oStream, OsLibs
-	Print #oStream, "set LIBS_DEBUG=" & crtDebug
+	Print #oStream, "set LIBS_OS=%LIBS_WIN95% %LIBS_WINNT% %LIBS_GUID% %LIBS_CRT% %LIBS_FB% %LIBS_ANY%"
+	Print #oStream, "set LIBS_GCC=" & crtDebug
 	Print #oStream, "set OBJ_CRT_END=""%LIB_DIR%\crtend.o"""
 	Print #oStream,
 
@@ -996,10 +1000,9 @@ Private Sub WriteLinkerLibraryes( _
 			' do Nothing
 
 		Case Else
+			Print #MakefileStream, "ifeq ($(USE_RUNTIME),TRUE)"
 			Scope
 				' mainCRTStartup libraries
-
-				Print #MakefileStream, "ifeq ($(USE_RUNTIME),TRUE)"
 
 				Print #MakefileStream, "ifeq ($(OBJ_CRT_START),)"
 
@@ -1014,13 +1017,14 @@ Private Sub WriteLinkerLibraryes( _
 				Print #MakefileStream, "LDLIBSBEGIN+=$(OBJ_CRT_START)"
 				Print #MakefileStream, "endif"
 
-				Print #MakefileStream, "endif"
 			End Scope
+			Print #MakefileStream, "endif"
 
 			Print #MakefileStream,
 
+			Print #MakefileStream, "LDLIBS+=-Wl,--start-group"
 			Scope
-				Print #MakefileStream, "LDLIBS+=-Wl,--start-group"
+				' OS libraries
 
 				Print #MakefileStream, "ifeq ($(LIBS_OS),)"
 
@@ -1033,53 +1037,52 @@ Private Sub WriteLinkerLibraryes( _
 				Print #MakefileStream, "LDLIBS+=-lmsvcrt"
 
 				Print #MakefileStream, "ifeq ($(USE_RUNTIME),TRUE)"
+				Scope
+					Select Case p->ThreadingMode
 
-				' For Multithreading
-				Select Case p->ThreadingMode
+						Case DEFINE_SINGLETHREADING_RUNTIME
+							Print #MakefileStream, "LDLIBS+=-lfb"
 
-					Case DEFINE_SINGLETHREADING_RUNTIME
-						Print #MakefileStream, "LDLIBS+=-lfb"
+						Case DEFINE_MULTITHREADING_RUNTIME
+							Print #MakefileStream, "LDLIBS+=-lfbmt"
 
-					Case DEFINE_MULTITHREADING_RUNTIME
-						Print #MakefileStream, "LDLIBS+=-lfbmt"
+					End Select
 
-				End Select
-
-				Print #MakefileStream, "LDLIBS+=-lgcc -lmingw32 -lmingwex -lmoldname -lgcc_eh"
+					Print #MakefileStream, "LDLIBS+=-lgcc -lmingw32 -lmingwex -lmoldname -lgcc_eh"
+				End Scope
 				Print #MakefileStream, "endif"
 
 				Print #MakefileStream, "else"
 				Print #MakefileStream, "LDLIBS+=$(LIBS_OS)"
 				Print #MakefileStream, "endif"
-
-				Print #MakefileStream, "LDLIBS+=-Wl,--end-group"
 			End Scope
+			Print #MakefileStream, "LDLIBS+=-Wl,--end-group"
 
 			Print #MakefileStream,
 
+			Print #MakefileStream, "ifeq ($(LIBS_GCC),)"
 			Scope
 				' Debug libraries
-				Print #MakefileStream, "ifeq ($(LIBS_DEBUG),)"
 				' For profile
 				' Print #MakefileStream, "LDLIBS_DEBUG+=-lgmon"
 
 				Print #MakefileStream, "LDLIBS_DEBUG+=-lgcc -lmingw32 -lmingwex -lmoldname -lgcc_eh"
 				Print #MakefileStream, "else"
-				Print #MakefileStream, "LDLIBS_DEBUG+=$(LIBS_DEBUG)"
-				Print #MakefileStream, "endif"
+				Print #MakefileStream, "LDLIBS_DEBUG+=$(LIBS_GCC)"
 			End Scope
+			Print #MakefileStream, "endif"
 
 			Print #MakefileStream,
 
+			Print #MakefileStream, "ifeq ($(USE_RUNTIME),TRUE)"
 			Scope
-				Print #MakefileStream, "ifeq ($(USE_RUNTIME),TRUE)"
 				Print #MakefileStream, "ifeq ($(OBJ_CRT_END),)"
 				Print #MakefileStream, "LDLIBSEND+=""$(LIB_DIR)\crtend.o"""
 				Print #MakefileStream, "else"
 				Print #MakefileStream, "LDLIBSEND+=$(OBJ_CRT_END)"
 				Print #MakefileStream, "endif"
-				Print #MakefileStream, "endif"
 			End Scope
+			Print #MakefileStream, "endif"
 
 	End Select
 
