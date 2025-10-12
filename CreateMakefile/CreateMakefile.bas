@@ -607,14 +607,14 @@ Private Function WriteSetenvWin32( _
 	Print #oStream, "set LIBS_WIN95=-ladvapi32 -lcomctl32 -lcomdlg32 -lcrypt32 -lgdi32 -lkernel32 -lole32 -loleaut32 -lshell32 -lshlwapi -lwsock32 -luser32"
 	Print #oStream, "set LIBS_WINNT=-lgdiplus -lws2_32 -lmswsock"
 	Print #oStream, "set LIBS_GUID=-luuid"
-	Print #oStream, "set LIBS_CRT=-lmsvcrt"
+	Print #oStream, "set LIBS_MSVCRT=-lmsvcrt"
 	Print #oStream, "set LIBS_ANY="
 	If p->ThreadingMode = DEFINE_MULTITHREADING_RUNTIME Then
 		Print #oStream, "set LIBS_FB=-lfbmt"
 	Else
 		Print #oStream, "set LIBS_FB=-lfb"
 	End If
-	Print #oStream, "set LIBS_OS=%LIBS_WIN95% %LIBS_WINNT% %LIBS_GUID% %LIBS_CRT% %LIBS_FB% %LIBS_ANY%"
+	Print #oStream, "set LIBS_OS=%LIBS_WIN95% %LIBS_WINNT% %LIBS_GUID% %LIBS_MSVCRT% %LIBS_FB% %LIBS_ANY%"
 	Print #oStream, "set LIBS_GCC=" & crtDebug
 	Print #oStream, "set OBJ_CRT_END=""%LIB_DIR%\crtend.o"""
 	Print #oStream,
@@ -1517,28 +1517,22 @@ Private Function GetIncludesFromResFile( _
 	' TODO Get real dependencies from resource file
 	Dim ResourceIncludes As String = Filepath
 
-	' Dim filespec As String = BuildPath(p->SourceFolder, "*.*")
+	Dim ExtensionList(0 To ...) As String = {"*.bmp", "*.ico", "*.dib", "*.cur", "*.rh", "*.xml"}
 
-	Scope
-		Dim FileNameWithParentDir As String = BuildPath(p->SourceFolder, "Resources.RH")
-		If FileExists(FileNameWithParentDir) Then
-			ResourceIncludes = ResourceIncludes & vbCrLf & FileNameWithParentDir
-		End If
-	End Scope
+	For i As Integer = LBound(ExtensionList) To UBound(ExtensionList)
+		Dim filespec As String = BuildPath(p->SourceFolder, ExtensionList(i))
 
-	Scope
-		Dim FileNameWithParentDir As String = BuildPath(p->SourceFolder, "manifest.xml")
-		If FileExists(FileNameWithParentDir) Then
-			ResourceIncludes = ResourceIncludes & vbCrLf & FileNameWithParentDir
-		End If
-	End Scope
+		Dim filename As String = Dir(filespec)
 
-	Scope
-		Dim FileNameWithParentDir As String = BuildPath(p->SourceFolder, "app.ico")
-		If FileExists(FileNameWithParentDir) Then
-			ResourceIncludes = ResourceIncludes & vbCrLf & FileNameWithParentDir
+		If Len(filename) Then
+			Dim ext As String = GetExtensionName(filename)
+			Dim FullFileName As String = BuildPath(p->SourceFolder, filename)
+
+			If FileExists(FullFileName) Then
+				ResourceIncludes = ResourceIncludes & vbCrLf & FullFileName
+			End If
 		End If
-	End Scope
+	Next
 
 	Return ResourceIncludes
 
