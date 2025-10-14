@@ -2,7 +2,7 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
-			"label": "Create Makefile",
+			"label": "Run CreateMakefile Windows",
 			"type": "process",
 			"command": "C:\\Programming\\FreeBASIC Projects\\ProgrammingStyle\\CreateMakefile.exe",
 			"args": [
@@ -25,7 +25,7 @@
 				"-multithreading", "false",
 				"-usefilesuffix", "true",
 				"-pedantic", "true",
-				"-create-environment-file", "false",
+				"-create-environment-file", "true",
 				"-winver", "1280",
 			],
 			"problemMatcher": [],
