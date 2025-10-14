@@ -1587,18 +1587,27 @@ Private Sub WriteIncludeFile( _
 		ByVal p As Parameter Ptr _
 	)
 
-	Dim filespec As String = BuildPath(p->SourceFolder, "*.*")
+	ReDim FilesVector(0) As String
 
-	Dim filename As String = Dir(filespec)
+	Scope
+		Dim filespec As String = BuildPath(p->SourceFolder, "*.*")
+		Dim filename As String = Dir(filespec)
 
-	Do While Len(filename)
+		Do While Len(filename)
+			Dim u As Integer = UBound(FilesVector)
+			ReDim Preserve FilesVector(u + 1)
+			FilesVector(u) = filename
+			filename = Dir()
+		Loop
+	End Scope
 
-		Dim ext As String = GetExtensionName(filename)
-		Dim FullFileName As String = BuildPath(p->SourceFolder, filename)
-		CreateDependencies(MakefileStream, FullFileName, ext, p)
-
-		filename = Dir()
-	Loop
+	For i As Integer = LBound(FilesVector) To UBound(FilesVector)
+		If Len(FilesVector(i)) Then
+			Dim ext As String = GetExtensionName(FilesVector(i))
+			Dim FullFileName As String = BuildPath(p->SourceFolder, FilesVector(i))
+			CreateDependencies(MakefileStream, FullFileName, ext, p)
+		End If
+	Next
 
 	Print #MakefileStream,
 
