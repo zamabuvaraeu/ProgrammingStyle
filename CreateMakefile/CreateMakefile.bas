@@ -965,6 +965,10 @@ Private Sub WriteLinkerFlags( _
 
 			Print #MakefileStream, "LDFLAGS+=-Wl,--no-seh -Wl,--nxcompat"
 
+			Print #MakefileStream, "ifeq ($(USE_RUNTIME),TRUE)"
+			Print #MakefileStream, "LDFLAGS+=-Wl,--stack 2097152,2097152"
+			Print #MakefileStream, "endif"
+
 			Print #MakefileStream, "LDFLAGS+=-pipe -nostdlib"
 
 			Print #MakefileStream, "LDFLAGS+=-L ."
