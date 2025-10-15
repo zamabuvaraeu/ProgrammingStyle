@@ -852,8 +852,6 @@ Private Sub WriteGccFlags( _
 
 	If p->Pedantic Then
 		Print #MakefileStream, "CFLAGS+=-Wall -Werror -Wextra -pedantic"
-	Else
-		Print #MakefileStream, "CFLAGS+=-Wall -Werror -Wextra"
 	End If
 
 	Print #MakefileStream, "CFLAGS+=-Wno-unused-label -Wno-unused-function"
