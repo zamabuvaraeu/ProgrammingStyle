@@ -31,7 +31,10 @@ Public Sub fb_End Alias "fb_End"( _
 	)
 
 	#ifdef __FB_WIN32__
-		ExitProcess(RetCode)
+		#ifdef WITHOUT_EXITPROCESS
+		#else
+			ExitProcess(RetCode)
+		#endif
 	#endif
 
 	#ifdef __FB_LINUX__
