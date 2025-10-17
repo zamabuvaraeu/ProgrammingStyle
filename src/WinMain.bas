@@ -237,12 +237,13 @@ End Function
 
 Private Function CreateModalWindow( _
 		Byval hInst As HINSTANCE, _
+		ByVal DialogId As Integer, _
 		ByVal param As InputDialogParam Ptr _
 	)As INT_PTR
 
 	Dim res As INT_PTR = DialogBoxParam( _
 		hInst, _
-		MAKEINTRESOURCE(IDD_DLG_TASKS), _
+		MAKEINTRESOURCE(DialogId), _
 		NULL, _
 		@ModalDialogProc, _
 		Cast(LPARAM, param) _
@@ -368,6 +369,7 @@ Private Function tWinMain( _
 	Scope
 		CreateModalWindow( _
 			hInst, _
+			IDD_DLG_TASKS, _
 			@param _
 		)
 
@@ -375,10 +377,6 @@ Private Function tWinMain( _
 	End Scope
 
 End Function
-
-Type IntegerVector
-	vec(265) As Integer
-End Type
 
 Dim hInst As HMODULE = GetModuleHandle(NULL)
 Dim hPrevInstance As HINSTANCE = NULL
@@ -394,8 +392,3 @@ Dim RetCode As Long = tWinMain( _
 )
 
 End(RetCode)
-
-Dim Vector As IntegerVector = Any
-For i As Integer = LBound(Vector.vec) To UBound(Vector.vec)
-	Vector.vec(i) = i
-Next
