@@ -8,7 +8,7 @@ Declare Function WinMain Alias "WinMain"( _
 	ByVal hPrevInstance As HINSTANCE, _
 	ByVal lpCmdLine As LPSTR, _
 	ByVal iCmdShow As Long _
-)As Integer
+)As Long
 
 #ifndef UNICODE
 Declare Function tWinMain Alias "WinMain"( _
@@ -16,7 +16,7 @@ Declare Function tWinMain Alias "WinMain"( _
 	ByVal hPrevInstance As HINSTANCE, _
 	ByVal lpCmdLine As LPSTR, _
 	ByVal iCmdShow As Long _
-)As Integer
+)As Long
 #endif
 
 Declare Function wWinMain Alias "wWinMain"( _
@@ -24,7 +24,7 @@ Declare Function wWinMain Alias "wWinMain"( _
 	ByVal hPrevInstance As HINSTANCE, _
 	ByVal lpCmdLine As LPWSTR, _
 	ByVal iCmdShow As Long _
-)As Integer
+)As Long
 
 #ifdef UNICODE
 Declare Function tWinMain Alias "wWinMain"( _
@@ -32,7 +32,7 @@ Declare Function tWinMain Alias "wWinMain"( _
 	ByVal hPrevInstance As HINSTANCE, _
 	ByVal lpCmdLine As LPWSTR, _
 	ByVal iCmdShow As Long _
-)As Integer
+)As Long
 #endif
 
 #endif

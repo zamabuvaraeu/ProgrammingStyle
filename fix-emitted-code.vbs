@@ -51,24 +51,6 @@ Function CommentLine(strLine)
 
 End Function
 
-Function CheckInsideMain(strLine, InsideMain)
-
-	If InsideMain Then
-		CheckInsideMain = True
-	Else
-		CheckInsideMain = False
-
-		If strLine = "int32 main( int32 __FB_ARGC__, char** __FB_ARGV__ )" Then
-			CheckInsideMain = True
-		End If
-
-		If strLine = "int32 main( int32 __FB_ARGC__$0, char** __FB_ARGV__$0 )" Then
-			CheckInsideMain = True
-		End If
-	End If
-
-End Function
-
 Function FixWinApiDeclaration(strLine)
 
 	' Add "const" keyword to parameters
@@ -133,6 +115,24 @@ Function RemoveStaticAssert(strLine)
 
 End Function
 
+Function CheckInsideMain(strLine, InsideMain)
+
+	If InsideMain Then
+		CheckInsideMain = True
+	Else
+		CheckInsideMain = False
+
+		If strLine = "int32 main( int32 __FB_ARGC__, char** __FB_ARGV__ )" Then
+			CheckInsideMain = True
+		End If
+
+		If strLine = "int32 main( int32 __FB_ARGC__$0, char** __FB_ARGV__$0 )" Then
+			CheckInsideMain = True
+		End If
+	End If
+
+End Function
+
 Function ReplaceFbEnd(strLine, InsideMain)
 
 	ReplaceFbEnd = strLine
@@ -140,18 +140,10 @@ Function ReplaceFbEnd(strLine, InsideMain)
 	If InsideMain = True Then
 
 		If UCase(strLine) = vbTab & "FB_END( RETCODE$0 );" Then
-			ReplaceFbEnd = vbTab & "return RETCODE$0; /* " & strLine & " */"
-		End If
-
-		If UCase(strLine) = vbTab & "fb_End( RETCODE );" Then
-			ReplaceFbEnd = vbTab & "return RetCode; /* " & strLine & " */"
-		End If
-
-		If UCase(strLine) = vbTab & "FB_END( (INT32)RETCODE$0 );" Then
 			ReplaceFbEnd = vbTab & "return (int32)RETCODE$0; /* " & strLine & " */"
 		End If
 
-		If UCase(strLine) = vbTab & "fb_End( (INT32)RETCODE );" Then
+		If UCase(strLine) = vbTab & "fb_End( RETCODE );" Then
 			ReplaceFbEnd = vbTab & "return (int32)RetCode; /* " & strLine & " */"
 		End If
 

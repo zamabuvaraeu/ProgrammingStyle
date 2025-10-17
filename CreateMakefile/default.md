@@ -4,11 +4,16 @@
 
 ## Достоинства и недостатки
 
-Можно забыть про составление вручную командных файлов компиляции.
+Не добавляет библиотеки в список. Библиотеки придётся добавлять руками.
+
+### Что умеет
+
+Без рантайма
+Без си‐рантайма
 
 ### Недостатки
 
-Требует перегенерации сценария при изменении в файлах исходного кода.
+Не умеет строить зависимости от файла ресурсов.
 
 ### Почему утилита make
 
@@ -18,9 +23,13 @@
 
 ## Подготовления
 
-Генератор требует, чтобы проект был организован определённым образом.
+### Утилита make
+
+Необходимо где‐то достать утилиту `make`. Например, для Windows в одной из (сборок mingw от Brecht Sanders)[https://github.com/brechtsanders/winlibs_mingw/releases]. В этой сборке для операционной системы Windows утилита называется `mingw32-make`.
 
 ### Структура проекта
+
+Генератор требует, чтобы проект был организован определённым образом:
 
 ```
 MyProject
@@ -51,7 +60,15 @@ MyProject
 	fix-emitted-code.vbs — сценарий для исправления промежуточного си‐кода (неообязательно)
 ```
 
-К счастью, каталоги `bin` и `obj` вручную создавать не нужно, для этого есть команда `createdirs`.
+К счастью, каталоги `bin` и `obj` вручную создавать не нужно, их можно создать командой `createdirs`.
+
+### Компиляция генератора
+
+Собрать генератор можно такой командой:
+
+```
+fbc64.exe -m CreateMakefile -x CreateMakefile.exe CreateMakefile.bas
+```
 
 ## Параметры генератора Makefile
 
@@ -146,7 +163,7 @@ MyProject
 
 Добавляет сценарий исправления сгенерированного промежуточного кода.
 
-Компилятор фрибейсика генерирует промежуточный код для GCC и использует расширения GCC. Некоторые конструкции не будут работать для другого компилятора, например шланга.
+Пояснение: компилятор фрибейсика генерирует промежуточный код для GCC и использует расширения GCC. Некоторые конструкции не будут работать для другого компилятора, например, для шланга.
 
 По умолчанию `false`.
 
@@ -217,7 +234,7 @@ MyProject
 
 ### create-environment-file
 
-Создавать ли файл настроек среды выполнения для утилиты make.
+Включает генерацию файла настроек среды выполнения для утилиты `make`.
 
 По умолчанию `true`.
 
@@ -244,12 +261,9 @@ USE_RUNTIME ?=TRUE или FALSE
 FBC_VER ?= _FBC1100
 GCC_VER ?= _GCC0930
 
-### PROCESSOR_ARCHITECTURE
-
-AMD64 или x86
-
 ### Модель процессора
 
+PROCESSOR_ARCHITECTURE=AMD64 или x86
 TARGET_TRIPLET ?=
 MARCH ?= native
 
@@ -279,7 +293,7 @@ CreateMakefile.exe -out HelloWorld -subsystem console -unicode true -addressawar
 ### Все параметры
 
 ```
-CreateMakefile.exe -makefile Makefile -src src -fbc-path "C:\Program Files (x86)\FreeBASIC-1.10.0-winlibs-gcc-9.3.0" -fbc fbc64.exe -out HelloWorld -module WinMain -exetype exe -subsystem console -emitter gcc -fix true -unicode true -wrt true -addressaware true -multithreading false -usefilesuffix true -pedantic true -winver 1281
+CreateMakefile.exe -makefile Makefile -src src -fbc-path "C:\Program Files (x86)\FreeBASIC-1.10.0-winlibs-gcc-9.3.0" -fbc fbc64.exe -out HelloWorld -module WinMain -exetype exe -subsystem console -emitter gcc -fix true -unicode true -wrt true -addressaware true -multithreading false -usefilesuffix true -pedantic true -winver 1281 -create-environment-file true
 ```
 
 ### WebAssembly

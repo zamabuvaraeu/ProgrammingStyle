@@ -44,6 +44,7 @@
 				"-gen", "gcc",
 				"-O", "0",
 				"-g",
+				"-v",
 				"CreateMakefile\\CreateMakefile.bas",
 			],
 			"problemMatcher": [],

@@ -335,7 +335,7 @@ Private Function tWinMain( _
 		ByVal hPrevInstance As HINSTANCE, _
 		ByVal lpCmdLine As LPTSTR, _
 		ByVal iCmdShow As Long _
-	)As Integer
+	)As Long
 
 	Scope
 		Dim hrVisualStyles As Integer = EnableVisualStyles()
@@ -376,13 +376,17 @@ Private Function tWinMain( _
 
 End Function
 
+Type IntegerVector
+	vec(265) As Integer
+End Type
+
 Dim hInst As HMODULE = GetModuleHandle(NULL)
 Dim hPrevInstance As HINSTANCE = NULL
 
 ' The program does not process command line parameters
 Dim Arguments As LPTSTR = NULL
 
-Dim RetCode As Integer = tWinMain( _
+Dim RetCode As Long = tWinMain( _
 	hInst, _
 	hPrevInstance, _
 	Arguments, _
@@ -390,3 +394,8 @@ Dim RetCode As Integer = tWinMain( _
 )
 
 End(RetCode)
+
+Dim Vector As IntegerVector = Any
+For i As Integer = LBound(Vector.vec) To UBound(Vector.vec)
+	Vector.vec(i) = i
+Next
