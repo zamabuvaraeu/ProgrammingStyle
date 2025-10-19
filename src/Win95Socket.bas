@@ -507,7 +507,7 @@ Public Function Win95SocketBeginConnect( _
 	If LocalAddress Then
 		Dim PortNumber As Integer = StringToIntegerW(LocalPort)
 		Dim HostA As TextBufferA = Any
-		Dim resWide As Long = WideCharToMultiByte( _
+		WideCharToMultiByte( _
 			CP_ACP, _
 			0, _
 			LocalAddress, _
@@ -553,7 +553,7 @@ Public Function Win95SocketBeginConnect( _
 	Scope
 		Dim PortNumber As Integer = StringToIntegerW(RemotePort)
 		Dim HostA As TextBufferA = Any
-		Dim resWide As Long = WideCharToMultiByte( _
+		WideCharToMultiByte( _
 			CP_ACP, _
 			0, _
 			RemoteAddress, _
