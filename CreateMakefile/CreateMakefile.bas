@@ -56,20 +56,20 @@ Enum UseSettingsEnvironment
 End Enum
 
 Const WINVER_DEFAULT = 0
-Const WINVER_XP = 0
+Const WINVER_XP = 1281
 
 Const vbTab = !"\t"
 Const vbCrLf = !"\r\n"
 
 #ifdef __FB_LINUX__
 #define WriteSetenv WriteSetenvLinux
-Const PathSeparator = "/"
+Const PATH_SEPARATOR = "/"
 Const MakefileParametersFile = "setenv.sh"
 Const DefaultCompilerFolder = "/usr/bin"
 Const DefaultCompilerName = "fbc"
 #else
 #define WriteSetenv WriteSetenvWin32
-Const PathSeparator = "\"
+Const PATH_SEPARATOR = "\"
 Const MakefileParametersFile = "setenv.cmd"
 Const DefaultCompilerFolder = "C:\Program Files (x86)\FreeBASIC-1.10.1-winlibs-gcc-9.3.0"
 Const DefaultCompilerName = "fbc64.exe"
@@ -157,11 +157,11 @@ Private Function AppendPathSeparator( _
 
 	var LastChar = Mid(strLine, Length, 1)
 
-	If LastChar = PathSeparator Then
+	If LastChar = PATH_SEPARATOR Then
 		Return strLine
 	End If
 
-	Return strLine & PathSeparator
+	Return strLine & PATH_SEPARATOR
 
 End Function
 
@@ -178,7 +178,7 @@ Private Function BuildPath( _
 
 	Dim FirstChar As String = Mid(File, 1, 1)
 
-	If FirstChar = PathSeparator Then
+	If FirstChar = PATH_SEPARATOR Then
 		Return DirWithPathSeparator & Mid(File, 2)
 	End If
 
@@ -230,7 +230,11 @@ Private Function ReplaceOSPathSeparatorToMakePathSeparator( _
 
 	' Replace "\" to "$(PATH_SEP)"
 
-	Dim strLine1 As String = Replace(strLine, PathSeparator, MakefilePathSeparator)
+	Dim strLine1 As String = Replace( _
+		strLine, _
+		PATH_SEPARATOR, _
+		MakefilePathSeparator _
+	)
 
 	Return strLine1
 
@@ -242,7 +246,11 @@ Private Function ReplaceOSPathSeparatorToMovePathSeparator( _
 
 	' Replace "\" to "$(MOVE_PATH_SEP)"
 
-	Dim strLine1 As String = Replace(strLine, PathSeparator, MakefileMovePathSeparator)
+	Dim strLine1 As String = Replace( _
+		strLine, _
+		PATH_SEPARATOR, _
+		MakefileMovePathSeparator _
+	)
 
 	Return strLine1
 
@@ -631,13 +639,20 @@ Private Function WriteSetenvWin32( _
 
 End Function
 
-Private Sub WriteTargets( _
+Private Sub WriteHeader( _
 		ByVal MakefileStream As Long _
 	)
 
 	Print #MakefileStream, ".PHONY: all debug release clean createdirs"
 	Print #MakefileStream,
 	Print #MakefileStream, "all: release debug"
+	Print #MakefileStream,
+	Print #MakefileStream, "# Legends:"
+	Print #MakefileStream, "# $@ - target name"
+	Print #MakefileStream, "# $^ - set of dependent files"
+	Print #MakefileStream, "# $< - name of first dependency"
+	Print #MakefileStream, "# % - pattern"
+	Print #MakefileStream, "# $* - variable pattern"
 	Print #MakefileStream,
 
 End Sub
@@ -991,7 +1006,7 @@ Private Sub WriteLinkerFlags( _
 
 End Sub
 
-Private Sub WriteLinkerLibraryes( _
+Private Sub WriteLinkerLibraries( _
 		ByVal MakefileStream As Long, _
 		ByVal p As Parameter Ptr _
 	)
@@ -1092,33 +1107,12 @@ Private Sub WriteLinkerLibraryes( _
 
 End Sub
 
-Private Sub WriteLegend( _
-		ByVal MakefileStream As Long _
-	)
-
-	Print #MakefileStream, "# Legends:"
-	Print #MakefileStream, "# $@ - target name"
-	Print #MakefileStream, "# $^ - set of dependent files"
-	Print #MakefileStream, "# $< - name of first dependency"
-	Print #MakefileStream, "# % - pattern"
-	Print #MakefileStream, "# $* - variable pattern"
-	Print #MakefileStream,
-
-End Sub
-
-Private Sub WriteReleaseTarget( _
+Private Sub WriteApplicationTargets( _
 		ByVal MakefileStream As Long _
 	)
 
 	Print #MakefileStream, "release: $(BIN_RELEASE_DIR)$(PATH_SEP)$(OUTPUT_FILE_NAME)"
 	Print #MakefileStream,
-
-End Sub
-
-Private Sub WriteDebugTarget( _
-		ByVal MakefileStream As Long _
-	)
-
 	Print #MakefileStream, "debug: $(BIN_DEBUG_DIR)$(PATH_SEP)$(OUTPUT_FILE_NAME)"
 	Print #MakefileStream,
 
@@ -1156,14 +1150,13 @@ Private Sub WriteCreateDirsTarget( _
 
 End Sub
 
-Private Sub WriteReleaseRule( _
+Private Sub WriteApplicationRules( _
 		ByVal MakefileStream As Long _
 	)
 
 	Print #MakefileStream, "$(BIN_RELEASE_DIR)$(PATH_SEP)$(OUTPUT_FILE_NAME): $(OBJECTFILES_RELEASE)"
 	Print #MakefileStream, vbTab & "$(CC) $(LDFLAGS) $(LDLIBSBEGIN) $^ $(LDLIBS) $(LDLIBSEND) -o $@"
 	Print #MakefileStream,
-
 	Print #MakefileStream, "$(BIN_DEBUG_DIR)$(PATH_SEP)$(OUTPUT_FILE_NAME): $(OBJECTFILES_DEBUG)"
 	Print #MakefileStream, vbTab & "$(CC) $(LDFLAGS) $(LDLIBSBEGIN) $^ $(LDLIBS) $(LDLIBSEND) -o $@"
 	Print #MakefileStream,
@@ -1519,7 +1512,14 @@ Private Function GetIncludesFromResFile( _
 	' TODO Get real dependencies from resource file
 	Dim ResourceIncludes As String = Filepath
 
-	Dim ExtensionList(0 To ...) As String = {"*.bmp", "*.ico", "*.dib", "*.cur", "*.rh", "*.xml"}
+	Dim ExtensionList(0 To ...) As String = { _
+		"*.bmp", _
+		"*.ico", _
+		"*.dib", _
+		"*.cur", _
+		"*.rh", _
+		"*.xml" _
+	}
 
 	For i As Integer = LBound(ExtensionList) To UBound(ExtensionList)
 		Dim filespec As String = BuildPath(p->SourceFolder, ExtensionList(i))
@@ -1553,11 +1553,19 @@ Private Sub CreateDependencies( _
 	Select Case UCase(FileExtension)
 
 		Case "RC"
-			SplitRecursive(LinesArray(), GetIncludesFromResFile(oFile, p), vbCrLf)
+			SplitRecursive( _
+				LinesArray(), _
+				GetIncludesFromResFile(oFile, p), _
+				vbCrLf _
+			)
 			LinesArrayCreated = True
 
 		Case "BAS"
-			SplitRecursive(LinesArray(), GetIncludesFromBasFile(oFile, p), vbCrLf)
+			SplitRecursive( _
+				LinesArray(), _
+				GetIncludesFromBasFile(oFile, p), _
+				vbCrLf _
+			)
 			LinesArrayCreated = True
 
 		Case Else
@@ -1584,7 +1592,7 @@ Private Sub CreateDependencies( _
 
 End Sub
 
-Private Sub WriteIncludeFile( _
+Private Sub WriteDependencies( _
 		ByVal MakefileStream As Long, _
 		ByVal p As Parameter Ptr _
 	)
@@ -1637,7 +1645,8 @@ If resOpen Then
 	End(3)
 End If
 
-WriteTargets(MakefileNumber)
+WriteHeader(MakefileNumber)
+
 WriteCompilerToolChain(MakefileNumber)
 WriteProcessorArch(MakefileNumber)
 WriteOutputFilename(MakefileNumber, @Params)
@@ -1649,20 +1658,17 @@ WriteGccFlags(MakefileNumber, @Params)
 WriteAsmFlags(MakefileNumber)
 WriteGorcFlags(MakefileNumber)
 WriteLinkerFlags(MakefileNumber, @Params)
+WriteLinkerLibraries(MakefileNumber, @Params)
 
-WriteLinkerLibraryes(MakefileNumber, @Params)
+WriteDependencies(MakefileNumber, @Params)
 
-WriteIncludeFile(MakefileNumber, @Params)
-
-WriteReleaseTarget(MakefileNumber)
-WriteDebugTarget(MakefileNumber)
+WriteApplicationTargets(MakefileNumber)
 WriteCleanTarget(MakefileNumber)
 WriteCreateDirsTarget(MakefileNumber)
 
-' bas -> c -> asm -> o -> exe
+' bas -> c -> asm -> o + obj -> exe
 ' rc -> obj -> exe
-WriteReleaseRule(MakefileNumber)
-
+WriteApplicationRules(MakefileNumber)
 WriteAsmRule(MakefileNumber)
 WriteCRule(MakefileNumber)
 WriteBasRule(MakefileNumber, @Params)
