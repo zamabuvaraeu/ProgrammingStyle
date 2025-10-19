@@ -92,6 +92,57 @@ Private Sub DialogMain_Closing( _
 
 End Sub
 
+Private Function MainWindowWndProc( _
+		ByVal hWin As HWND, _
+		ByVal wMsg As UINT, _
+		ByVal wParam As WPARAM, _
+		ByVal lParam As LPARAM _
+	) As LRESULT
+
+	Dim pContext As InputDialogParam Ptr = Any
+
+	If wMsg = WM_CREATE Then
+		Dim pStruct As CREATESTRUCT Ptr = CPtr(CREATESTRUCT Ptr, lParam)
+		pContext = pStruct->lpCreateParams
+		SetWindowLongPtr(hWin, GWLP_USERDATA, Cast(LONG_PTR, pContext))
+		DialogMain_Load(pContext, hWin)
+		Return 0
+	End If
+
+	pContext = Cast(Any Ptr, GetWindowLongPtr(hWin, GWLP_USERDATA))
+
+	Select Case wMsg
+
+		Case WM_COMMAND
+			Select Case LOWORD(wParam)
+
+				Case IDOK
+					IDOK_Click(pContext, hWin)
+
+				Case IDCANCEL
+					ModelessIDCANCEL_Click(pContext, hWin)
+
+				Case Else
+					Return DefWindowProc(hWin, wMsg, wParam, lParam)
+
+			End Select
+
+		Case WM_CLOSE
+			DialogMain_Closing(pContext, hWin)
+
+		Case WM_DESTROY
+			DialogMain_Unload(pContext, hWin)
+			PostQuitMessage(0)
+
+		Case Else
+			Return DefWindowProc(hWin, wMsg, wParam, lParam)
+
+	End Select
+
+	Return 0
+
+End Function
+
 Private Function ModelessDialogProc( _
 		ByVal hWin As HWND, _
 		ByVal uMsg As UINT, _
@@ -120,6 +171,9 @@ Private Function ModelessDialogProc( _
 
 				Case IDCANCEL
 					ModelessIDCANCEL_Click(pContext, hWin)
+
+				Case Else
+					Return FALSE
 
 			End Select
 
@@ -167,6 +221,9 @@ Private Function ModalDialogProc( _
 
 				Case IDCANCEL
 					ModalIDCANCEL_Click(pContext, hWin)
+
+				Case Else
+					Return FALSE
 
 			End Select
 
