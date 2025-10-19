@@ -1,0 +1,85 @@
+/* Layout */
+
+#define DIALOG_PADDING 7
+
+// Approximately a square dialog, slightly elongated vertically
+#define DIALOG_WIDTH_1 252
+#define DIALOG_HEIGHT_1 218
+
+// smaller
+#define DIALOG_WIDTH_2 227
+#define DIALOG_HEIGHT_2 215
+
+// A small dialog stretched horizontally
+#define DIALOG_WIDTH_3 212
+#define DIALOG_HEIGHT_3 188
+
+#define STATIC_EDIT_BETWEENSPACE 3
+#define STATIC_LISTBOX_BETWEENSPACE 3
+#define RELATED_CONTROL_BETWEENSPACE 4
+#define UNRELATED_CONTROL_BETWEENSPACE 7
+
+#define GROUPBOX_PADDING_LEFT 6
+#define GROUPBOX_PADDING_TOP 11
+#define GROUPBOX_PADDING_RIGHT 6
+#define GROUPBOX_PADDING_BOTTOM 7
+#define GROUPBOX_CONTROL_BETWEENSPACE 4
+
+#define BUTTONS_HORIZONTALARRANGED_BETWEENSPACE 4
+#define BUTTONS_VERTICALARRANGED_BETWEENSPACE 4
+
+#define BUTTON_WIDTH_EN 50
+#define BUTTON_WIDTH 62
+#define BUTTON_HEIGHT 14
+#define BUTTON_WIDTH_H2 25
+#define BUTTON_WIDTH_RU 66
+
+#define RADIO_WIDTH 
+#define RADIO_HEIGHT 10
+
+// width of longest item
+#define CHECKBOX_WIDTH 
+#define CHECKBOX_HEIGHT 10
+
+// width of longest item + 30%
+#define COMBOBOX_WIDTH 
+// add N to height for Win95
+#define COMBOBOX_HEIGHT 14
+
+// width of longest item + 30%
+#define LISTBOX_WIDTH 
+// integral number of items (3 items minimum)
+#define LISTBOX_HEIGHT 
+
+// columns widths that avoid truncated data
+#define LISTVIEW_WIDTH 
+// an integral number of items
+#define LISTVIEW_HEIGHT 
+
+//127 or 237
+#define PROGRESSBAR_WIDTH_SMALL 127
+#define PROGRESSBAR_WIDTH_BIG 237
+#define PROGRESSBAR_HEIGHT 8
+#define PROGRESSBAR_WIDTH_SMALL_H2 63
+#define PROGRESSBAR_WIDTH_BIG_H2 103
+
+// width of longest item
+#define STATIC_WIDTH_EN  46
+#define STATIC_WIDTH  50
+#define STATIC_HEIGHT 8
+#define STATIC_MARGIN 2
+
+// width of longest or expected input + 30%
+#define TEXTBOX_WIDTH 120
+#define TEXTBOX_HEIGHT 14
+#define TEXTBOX_EACH_ADDITIONAL_LINE 10
+
+// width of longest item + 30%
+#define TREEVIEW_WIDTH
+// integral number of items (5 items minimum)
+#define TREEVIEW_HEIGHT
+
+// width of longest valid data + 30%
+#define DROPDOWNLIST_WIDTH
+#define DROPDOWNLIST_HEIGHT 14
+
