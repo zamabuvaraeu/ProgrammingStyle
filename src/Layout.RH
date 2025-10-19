@@ -1,6 +1,10 @@
 /* Layout */
 
-#define DIALOG_PADDING 7
+// Если вы посмотрите на размеры диалоговых окон в Windows 95 или более ранней,
+// то вы обнаружите, что все они имеют ширину, кратную 32 DLU.
+// Поскольку 4 горизонтальных DLU равны в среднем ширине одного символа,
+// то вы должны делать ваши диалоги шириной кратной 32,
+// чтобы итоговый размер диалога был бы кратен 8 пикселям.
 
 // Approximately a square dialog, slightly elongated vertically
 #define DIALOG_WIDTH_1 252
@@ -13,6 +17,8 @@
 // A small dialog stretched horizontally
 #define DIALOG_WIDTH_3 212
 #define DIALOG_HEIGHT_3 188
+
+#define DIALOG_PADDING 7
 
 #define STATIC_EDIT_BETWEENSPACE 3
 #define STATIC_LISTBOX_BETWEENSPACE 3
@@ -34,27 +40,27 @@
 #define BUTTON_WIDTH_H2 25
 #define BUTTON_WIDTH_RU 66
 
-#define RADIO_WIDTH 
+#define RADIO_WIDTH
 #define RADIO_HEIGHT 10
 
 // width of longest item
-#define CHECKBOX_WIDTH 
+#define CHECKBOX_WIDTH
 #define CHECKBOX_HEIGHT 10
 
 // width of longest item + 30%
-#define COMBOBOX_WIDTH 
+#define COMBOBOX_WIDTH
 // add N to height for Win95
 #define COMBOBOX_HEIGHT 14
 
 // width of longest item + 30%
-#define LISTBOX_WIDTH 
+#define LISTBOX_WIDTH
 // integral number of items (3 items minimum)
-#define LISTBOX_HEIGHT 
+#define LISTBOX_HEIGHT
 
 // columns widths that avoid truncated data
-#define LISTVIEW_WIDTH 
+#define LISTVIEW_WIDTH
 // an integral number of items
-#define LISTVIEW_HEIGHT 
+#define LISTVIEW_HEIGHT
 
 //127 or 237
 #define PROGRESSBAR_WIDTH_SMALL 127
@@ -82,4 +88,3 @@
 // width of longest valid data + 30%
 #define DROPDOWNLIST_WIDTH
 #define DROPDOWNLIST_HEIGHT 14
-
