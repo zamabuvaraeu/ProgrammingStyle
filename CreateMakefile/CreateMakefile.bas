@@ -1008,7 +1008,7 @@ Private Sub WriteLinkerLibraryes( _
 
 				Print #MakefileStream, "ifeq ($(OBJ_CRT_START),)"
 
-				' For profile
+				' TODO For profile
 				' Print #MakefileStream, "LDLIBSBEGIN+=gcrt2.o"
 
 				Print #MakefileStream, "LDLIBSBEGIN+=""$(LIB_DIR)\crt2.o"""
@@ -1065,7 +1065,7 @@ Private Sub WriteLinkerLibraryes( _
 			Print #MakefileStream, "ifeq ($(LIBS_GCC),)"
 			Scope
 				' Debug libraries
-				' For profile
+				' TODO For profile
 				' Print #MakefileStream, "LDLIBS_DEBUG+=-lgmon"
 
 				Print #MakefileStream, "LDLIBS_DEBUG+=-lgcc -lmingw32 -lmingwex -lmoldname -lgcc_eh"
