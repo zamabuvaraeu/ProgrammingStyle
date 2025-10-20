@@ -4,28 +4,43 @@
 
 ## Достоинства и недостатки
 
-Не добавляет библиотеки в список. Библиотеки придётся добавлять руками.
+### Достоинства
 
-### Что умеет
+Типичная компиляция проекта состоит из команды:
 
-Без рантайма
-Без си‐рантайма
+```
+fbc *.bas
+```
+
+Это работает, однако это не оптимально. Когда мы изменим хотя бы одну строку кода в файле, то такая команда пересоберёт все файлы. Даже если эти файлы не изменились. Это занимает время, нагружает процессор и изнашивает диск. Кроме того, команда не позволит выполнить хорошую оптимизацию или собрать проект для других операционных систем (например, Windows 95 или драйвер).
+
+С другой стороны, у нас есть утилита `make`, которая пересобирает только изменившиеся файлы. И мы можем приспособить её для своих нужд. Однако писать вручную конфигурационные файлы `Makefile` для утилиты — неудобно.
+
+Поэтому появился этот генератор, генератор автоматизирует этот процесс. Генератор сам ничего не собирает, генератор только создаёт `Makefile`.
 
 ### Недостатки
 
-Не умеет строить зависимости от файла ресурсов.
+Не умеет строить зависимости от файла ресурсов. Недостаток компенсируется тем, что известные типы файлов, такие как значки, картинки и манифесты, автоматически добавляются к зависимостям файла ресурсов.
 
-### Почему утилита make
+Не добавляет библиотеки в список линковщика. Библиотеки придётся добавлять руками.
 
-В простых проектах утилита `make` не даёт преимуществ по сравнению ручной компиляцией, но она проявит себя, когда программы станут более сложными. Когда исходный код вырастает до нескольких файлов, гораздо проще позволить утилите координировать сборку.
-
-Предположим, наш проект состоит из сотни файлов. Когда мы изменяем одну строку кода в файле, то команда `fbc *.bas` перекомпилирует все файлы. Это занимает время, нагружает процессор и изнашивает диск. Утилита `make` пересобирает только изменившиеся файлы. Кроме того, мы не можем положить отладочную и окончательную версию по разным каталогам.
+Проект должен компилироваться. Если есть ошибки в проекте, генератор создаст неправильный `Makefile`.
 
 ## Подготовления
+
+Нам необходимо достать утилиту `make`, собрать генератор и подготовить каталоги проекта.
 
 ### Утилита make
 
 Необходимо где‐то достать утилиту `make`. Например, для Windows в одной из (сборок mingw от Brecht Sanders)[https://github.com/brechtsanders/winlibs_mingw/releases]. В этой сборке для операционной системы Windows утилита называется `mingw32-make`.
+
+### Сборка генератора
+
+Собрать генератор можно такой командой:
+
+```
+fbc64.exe -m CreateMakefile -x CreateMakefile.exe CreateMakefile.bas
+```
 
 ### Структура проекта
 
@@ -33,13 +48,17 @@
 
 ```
 MyProject
+
 	bin\          — каталог для исполняемых файлов
+
 		Debug\    — отладочная версия
 			x64\  — для 64 бит
 			x86\  — для 32 бит
+
 		Release   — окончательная версия
 			x64\
 			x86\
+
 	obj\          — каталог для объектных файлов
 		Debug\
 			x64\
@@ -47,6 +66,7 @@ MyProject
 		Release
 			x64\
 			x86\
+
 	src\          — каталог для файлов исходного кода
 		main.bas  — все файлы исходного кода
 		main.bi
@@ -62,12 +82,51 @@ MyProject
 
 К счастью, каталоги `bin` и `obj` вручную создавать не нужно, их можно создать командой `createdirs`.
 
-### Компиляция генератора
+### Определение зависимостей
 
-Собрать генератор можно такой командой:
+Генератор строит зависимости для каждого `*.bas` файла в каталоге проекта. Зависимостями считаются любые включаемые файлы. Если файл ссылается на стандартные заголовочники в директории компилятора, то они пропускаются.
+
+Любые изменения зависимостей (добавили или удалили заголовочники) требуют обновления `Makefile` и перезапуска генератора.
+
+## Примеры
+
+### Запуск
+
+Нажимаем Пуск → Выполнить, запускаем консоль и заходим в каталог проекта:
 
 ```
-fbc64.exe -m CreateMakefile -x CreateMakefile.exe CreateMakefile.bas
+cmd
+cd c:\FreeBASIC Projects\My Cool Project
+```
+
+Далее запускаем генератор одним из описанных в будущем способов. В каталоге проекта появятся два файла: `Makefile` и `setenv.cmd`. `Makefile` нужен для утилиты `make`, в файле `setenv.cmd` лежат настройки переменных среды.
+
+### GUI Программа
+
+Оконная программа с поддержкой юникода, библиотеками времени выполнения и адресного пространства больше 2 гигабайт:
+
+```
+"c:\FreeBASIC Projects\CreateMakefile.exe" -out HelloWorld -subsystem windows -unicode true -addressaware true -fbc-path "C:\Program Files (x86)\FreeBASIC-1.10.0-winlibs-gcc-9.3.0" -fbc fbc64.exe
+```
+
+### Консольная программа
+
+Консольная программа с поддержкой юникода и адресного пространства больше 2 гигабайт:
+
+```
+"c:\FreeBASIC Projects\CreateMakefile.exe" -out HelloWorld -subsystem console -unicode true -addressaware true -fbc-path "C:\Program Files (x86)\FreeBASIC-1.10.0-winlibs-gcc-9.3.0" -fbc fbc64.exe
+```
+
+### WebAssembly
+
+```
+"c:\FreeBASIC Projects\CreateMakefile.exe" -out HelloWorld -fix true -emitter wasm32 -exetype wasm32 -fbc-path "C:\Program Files (x86)\FreeBASIC-1.10.0-winlibs-gcc-9.3.0" -fbc fbc64.exe
+```
+
+### Все параметры
+
+```
+"c:\FreeBASIC Projects\CreateMakefile.exe" -makefile Makefile -src src -fbc-path "C:\Program Files (x86)\FreeBASIC-1.10.0-winlibs-gcc-9.3.0" -fbc fbc64.exe -out HelloWorld -module WinMain -exetype exe -subsystem console -emitter gcc -fix true -unicode true -wrt true -addressaware true -multithreading false -usefilesuffix true -pedantic true -winver 1281 -create-environment-file true
 ```
 
 ## Параметры генератора Makefile
@@ -240,64 +299,145 @@ fbc64.exe -m CreateMakefile -x CreateMakefile.exe CreateMakefile.bas
 
 ## Параметры для утилиты make
 
-Переменные среды, которые нужны для запуска.
-
-### Цепочки инструментов
-
-FBC ?= fbc.exe
-CC ?= gcc.exe
-AS ?= as.exe
-AR ?= ar.exe
-GORC ?= GoRC.exe
-LD ?= ld.exe
-DLL_TOOL ?= dlltool.exe
-LIB_DIR ?=
-INC_DIR ?=
-LD_SCRIPT ?=
-FLTO ?=
-
-
-USE_RUNTIME ?=TRUE или FALSE
-FBC_VER ?= _FBC1100
-GCC_VER ?= _GCC0930
+Генератор создаёт файл `setenv.cmd` с переменными среды, которые нужны для запуска. Заглянем в него и отредактируем как нам надо. Самое главное — это пути к цепочке инструментов и библиотеки.
 
 ### Модель процессора
 
-PROCESSOR_ARCHITECTURE=AMD64 или x86
-TARGET_TRIPLET ?=
-MARCH ?= native
-
-### Версия ОС
-
-WINVER ?=
-_WIN32_WINNT ?=
-
-## Примеры
-
-### GUI Программа
-
-Оконная программа с поддержкой юникода, библиотеками времени выполнения и адресного пространства больше 2 гигабайт:
+Здесь устанавливаются каталоги Bin и Lib для 32‐битной и 64‐битной версий:
 
 ```
-CreateMakefile.exe -out HelloWorld -subsystem windows -unicode true -addressaware true
+if %PROCESSOR_ARCHITECTURE% == AMD64 (
+set BinFolder=bin\win64
+set LibFolder=lib\win64
+set FBC_FILENAME=fbc64.exe
+) else (
+set BinFolder=bin\win32
+set LibFolder=lib\win32
+set FBC_FILENAME=fbc32.exe
+)
 ```
 
-### Консольная программа
-
-Консольная программа с поддержкой юникода и адресного пространства больше 2 гигабайт:
+### Путь к каталогу GCC
 
 ```
-CreateMakefile.exe -out HelloWorld -subsystem console -unicode true -addressaware true
+rem Add mingw64 directory to PATH
+set MINGW_W64_DIR=C:\Program Files\mingw64
+set PATH=%MINGW_W64_DIR%\bin;%PATH%
 ```
 
-### Все параметры
+### Пути к компилятору и заголовочным файлам
 
 ```
-CreateMakefile.exe -makefile Makefile -src src -fbc-path "C:\Program Files (x86)\FreeBASIC-1.10.0-winlibs-gcc-9.3.0" -fbc fbc64.exe -out HelloWorld -module WinMain -exetype exe -subsystem console -emitter gcc -fix true -unicode true -wrt true -addressaware true -multithreading false -usefilesuffix true -pedantic true -winver 1281 -create-environment-file true
+rem Add compiler directory to PATH
+set FBC_DIR=C:\Program Files (x86)\FreeBASIC-1.10.1-winlibs-gcc-9.3.0
+set PATH=%FBC_DIR%\%BinFolder%;%PATH%
+rem Without quotes:
+set LIB_DIR=%FBC_DIR%\%LibFolder%
+set INC_DIR=%FBC_DIR%\inc
 ```
 
-### WebAssembly
+### Цепочки инструментов
 
 ```
-CreateMakefile.exe -out HelloWorld -fix true -emitter wasm32 -exetype wasm32
+rem Toolchain
+set FBC="%FBC_DIR%\fbc64"
+set CC="%FBC_DIR%\%BinFolder%\gcc.exe"
+set AS="%FBC_DIR%\%BinFolder%\as.exe"
+set AR="%FBC_DIR%\%BinFolder%\ar.exe"
+set GORC="%FBC_DIR%\%BinFolder%\GoRC.exe"
+set LD="%FBC_DIR%\%BinFolder%\ld.exe"
+set DLL_TOOL="%FBC_DIR%\%BinFolder%\dlltool.exe"
+```
+
+### Вспомогательные переменные
+
+```
+set PATH_SEP=/
+set MOVE_PATH_SEP=\\
+set MOVE_COMMAND=cmd.exe /c move /y
+set DELETE_COMMAND=cmd.exe /c del /f /q
+set MKDIR_COMMAND=cmd.exe /c mkdir
+set CPREPROCESSOR_COMMAND=cscript.exe //nologo fix-emitted-code.vbs
+```
+
+### Путь к каталогу исходных кодов
+
+```
+rem Source code directory
+set SRC_DIR=src
+```
+
+### Использование рантайма
+
+```
+rem Set to TRUE for use runtime libraries
+set USE_RUNTIME=FALSE
+```
+
+### Юникод и версия операционной системы
+
+```
+rem WinAPI version
+set WINVER=1280
+set _WIN32_WINNT=1280
+rem Use unicode in WinAPI
+set USE_UNICODE=TRUE
+```
+
+### Суффикс файла
+
+```
+rem Set variable FILE_SUFFIX to make the executable name different
+rem for different toolchains, libraries, and compilation flags
+set GCC_VER=_GCC0930
+set FBC_VER=_FBC1101
+set FILE_SUFFIX=%GCC_VER%%FBC_VER%%RUNTIME%%WINVER%
+OUTPUT_FILE_NAME=windows%FILE_SUFFIX%.exe
+```
+
+### Сценарий компоновщика
+
+```
+rem Linker script only for GCC x86, GCC x64 and Clang x86
+rem Without quotes:
+set LD_SCRIPT=%LIB_DIR%\fbextra.x
+```
+
+### Модель процессора
+
+```
+rem Set processor architecture
+set MARCH=native
+```
+
+Для шланга:
+
+```
+rem Only for Clang x86
+rem set TARGET_TRIPLET=i686-pc-windows-gnu
+rem Only for Clang AMD64
+rem set TARGET_TRIPLET=x86_64-w64-pc-windows-msvc
+```
+
+### Межмодульная оптимизация
+
+```
+rem Link Time Optimization for release target
+rem set FLTO=-flto
+```
+
+### Подключаемые библиотеки
+
+```
+rem Libraries list
+set OBJ_CRT_START="%LIB_DIR%\crt2.o" "%LIB_DIR%\crtbegin.o" "%LIB_DIR%\fbrt0.o"
+set LIBS_WIN95=-ladvapi32 -lcomctl32 -lcomdlg32 -lcrypt32 -lgdi32 -lkernel32 -lole32 -loleaut32 -lshell32 -lshlwapi -lwsock32 -luser32
+set LIBS_WINNT=-lgdiplus -lws2_32 -lmswsock
+set LIBS_GUID=-luuid
+set LIBS_MSVCRT=-lmsvcrt
+set LIBS_ANY=
+set LIBS_FB=-lfb
+set LIBS_OS=%LIBS_WIN95% %LIBS_WINNT% %LIBS_GUID% %LIBS_MSVCRT% %LIBS_FB% %LIBS_ANY%
+set LIBS_GCC=-lgcc -lmingw32 -lmingwex -lmoldname -lgcc_eh
+set OBJ_CRT_END="%LIB_DIR%\crtend.o"
 ```
