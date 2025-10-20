@@ -482,6 +482,7 @@ Private Function WriteSetenvWin32( _
 	Print #oStream,
 
 	' PROCESSOR_ARCHITECTURE = AMD64 или x86
+	Print #oStream, "rem Get current arch and set BIN and LIB folder"
 	Print #oStream, "if %PROCESSOR_ARCHITECTURE% == AMD64 ("
 	Print #oStream, "set BinFolder=bin\win64"
 	Print #oStream, "set LibFolder=lib\win64"
@@ -568,6 +569,13 @@ Private Function WriteSetenvWin32( _
 	Dim Extension As String = GetExtensionOutputFile(p)
 	Print #oStream, "set OUTPUT_FILE_NAME=" & p->OutputFilename & "%FILE_SUFFIX%" & Extension
 	Print #oStream,
+
+	Print #oStream, "rem Add any flags to compiler"
+	Print #oStream, "rem set FBCFLAGS="
+	Print #oStream, "rem set CFLAGS="
+	Print #oStream, "rem set ASFLAGS="
+	Print #oStream, "rem set GORCFLAGS="
+	Print #oStream, "rem set LDFLAGS="
 
 	Select Case p->Emitter
 
