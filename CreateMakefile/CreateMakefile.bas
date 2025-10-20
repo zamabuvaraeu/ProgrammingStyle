@@ -576,6 +576,7 @@ Private Function WriteSetenvWin32( _
 	Print #oStream, "rem set ASFLAGS="
 	Print #oStream, "rem set GORCFLAGS="
 	Print #oStream, "rem set LDFLAGS="
+	Print #oStream,
 
 	Select Case p->Emitter
 
