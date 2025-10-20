@@ -8,15 +8,15 @@
 
 Типичная компиляция проекта состоит из команды:
 
-```
+```bat
 fbc *.bas
 ```
 
-Это работает, однако это не оптимально. Когда мы изменим хотя бы одну строку кода в файле, то такая команда пересоберёт все файлы. Даже если эти файлы не изменились. Это занимает время, нагружает процессор и изнашивает диск. Кроме того, команда не позволит выполнить хорошую оптимизацию или собрать проект для других операционных систем (например, Windows 95 или драйвер).
+Это работает, однако это не оптимально. Когда мы изменим хотя бы одну строку кода в файле, то такая команда пересоберёт все файлы. Даже если эти файлы не изменились. Это занимает время, нагружает процессор и изнашивает диск. Кроме того, команда не позволит выполнить хорошую оптимизацию или собрать проект для других операционных систем (например, Windows 95 или драйвер). А если нужно собрать отладочную версию — придётся опять пересобирать проект.
 
 С другой стороны, у нас есть утилита `make`, которая пересобирает только изменившиеся файлы. И мы можем приспособить её для своих нужд. Однако писать вручную конфигурационные файлы `Makefile` для утилиты — неудобно.
 
-Поэтому появился этот генератор, генератор автоматизирует этот процесс. Генератор сам ничего не собирает, генератор только создаёт `Makefile`.
+Поэтому появился этот генератор для автоматизации процесса. Генератор сам ничего не собирает, генератор только создаёт `Makefile`.
 
 ### Недостатки
 
@@ -94,8 +94,7 @@ MyProject
 
 Нажимаем Пуск → Выполнить, запускаем консоль и заходим в каталог проекта:
 
-```
-cmd
+```bat
 cd c:\FreeBASIC Projects\My Cool Project
 ```
 
@@ -105,7 +104,7 @@ cd c:\FreeBASIC Projects\My Cool Project
 
 Оконная программа с поддержкой юникода, библиотеками времени выполнения и адресного пространства больше 2 гигабайт:
 
-```
+```bat
 "c:\FreeBASIC Projects\CreateMakefile.exe" -out HelloWorld -subsystem windows -unicode true -addressaware true -fbc-path "C:\Program Files (x86)\FreeBASIC-1.10.0-winlibs-gcc-9.3.0" -fbc fbc64.exe
 ```
 
@@ -113,19 +112,19 @@ cd c:\FreeBASIC Projects\My Cool Project
 
 Консольная программа с поддержкой юникода и адресного пространства больше 2 гигабайт:
 
-```
+```bat
 "c:\FreeBASIC Projects\CreateMakefile.exe" -out HelloWorld -subsystem console -unicode true -addressaware true -fbc-path "C:\Program Files (x86)\FreeBASIC-1.10.0-winlibs-gcc-9.3.0" -fbc fbc64.exe
 ```
 
 ### WebAssembly
 
-```
+```bat
 "c:\FreeBASIC Projects\CreateMakefile.exe" -out HelloWorld -fix true -emitter wasm32 -exetype wasm32 -fbc-path "C:\Program Files (x86)\FreeBASIC-1.10.0-winlibs-gcc-9.3.0" -fbc fbc64.exe
 ```
 
 ### Все параметры
 
-```
+```bat
 "c:\FreeBASIC Projects\CreateMakefile.exe" -makefile Makefile -src src -fbc-path "C:\Program Files (x86)\FreeBASIC-1.10.0-winlibs-gcc-9.3.0" -fbc fbc64.exe -out HelloWorld -module WinMain -exetype exe -subsystem console -emitter gcc -fix true -unicode true -wrt true -addressaware true -multithreading false -usefilesuffix true -pedantic true -winver 1281 -create-environment-file true
 ```
 
@@ -303,9 +302,9 @@ cd c:\FreeBASIC Projects\My Cool Project
 
 ### Модель процессора
 
-Здесь устанавливаются каталоги Bin и Lib для 32‐битной и 64‐битной версий:
+Здесь устанавливаются каталоги Bin, Lib и имя файла компилятора для 32‐битной и 64‐битной версий:
 
-```
+```bat
 if %PROCESSOR_ARCHITECTURE% == AMD64 (
 set BinFolder=bin\win64
 set LibFolder=lib\win64
@@ -317,9 +316,11 @@ set FBC_FILENAME=fbc32.exe
 )
 ```
 
-### Путь к каталогу GCC
+### Путь к каталогу mingw64
 
-```
+Добавляем каталог mingw64 в путь переменных среды. Без кавычек.
+
+```bat
 rem Add mingw64 directory to PATH
 set MINGW_W64_DIR=C:\Program Files\mingw64
 set PATH=%MINGW_W64_DIR%\bin;%PATH%
@@ -327,7 +328,9 @@ set PATH=%MINGW_W64_DIR%\bin;%PATH%
 
 ### Пути к компилятору и заголовочным файлам
 
-```
+Путь к компилятору, указываем без кавычек.
+
+```bat
 rem Add compiler directory to PATH
 set FBC_DIR=C:\Program Files (x86)\FreeBASIC-1.10.1-winlibs-gcc-9.3.0
 set PATH=%FBC_DIR%\%BinFolder%;%PATH%
@@ -338,7 +341,9 @@ set INC_DIR=%FBC_DIR%\inc
 
 ### Цепочки инструментов
 
-```
+По умолчанию пути к файлам цепочки инструментов настроены на каталог компилятора.
+
+```bat
 rem Toolchain
 set FBC="%FBC_DIR%\fbc64"
 set CC="%FBC_DIR%\%BinFolder%\gcc.exe"
@@ -351,32 +356,40 @@ set DLL_TOOL="%FBC_DIR%\%BinFolder%\dlltool.exe"
 
 ### Вспомогательные переменные
 
-```
+Разделители путей и команды, которые используются утилитой `make` для сборки проекта.
+
+```bat
 set PATH_SEP=/
 set MOVE_PATH_SEP=\\
 set MOVE_COMMAND=cmd.exe /c move /y
 set DELETE_COMMAND=cmd.exe /c del /f /q
 set MKDIR_COMMAND=cmd.exe /c mkdir
-set CPREPROCESSOR_COMMAND=cscript.exe //nologo fix-emitted-code.vbs
+set CPREPROCESSOR_COMMAND=cmd.exe /c echo cscript.exe //nologo fix-emitted-code.vbs
 ```
 
 ### Путь к каталогу исходных кодов
 
-```
+Если исходные коды лежат в другом месте, это нужно указать.
+
+```bat
 rem Source code directory
 set SRC_DIR=src
 ```
 
 ### Использование рантайма
 
-```
+Когда проект не будет использовать библиотеки времени выполнения, устанавливаем в `FALSE`.
+
+```bat
 rem Set to TRUE for use runtime libraries
 set USE_RUNTIME=FALSE
 ```
 
 ### Юникод и версия операционной системы
 
-```
+Указываем минимально поддерживаемую версию ОС и юникод.
+
+```bat
 rem WinAPI version
 set WINVER=1280
 set _WIN32_WINNT=1280
@@ -384,20 +397,34 @@ rem Use unicode in WinAPI
 set USE_UNICODE=TRUE
 ```
 
+### Флаги компилятора и цепочки инструментов
+
+Добавляем особые флаги к компилятору и цепочке инструментов.
+
+```bat
+set FBCFLAGS=
+set CFLAGS=
+set ASFLAGS=
+set GORCFLAGS=
+set LDFLAGS=
+```
+
 ### Суффикс файла
 
-```
-rem Set variable FILE_SUFFIX to make the executable name different
-rem for different toolchains, libraries, and compilation flags
+Если мы компилируем файл с разными флагами компиляции или компиляторами, можно добавить специальные суффиксы к имени файла, чтобы имена файлов различались.
+
+```bat
 set GCC_VER=_GCC0930
 set FBC_VER=_FBC1101
 set FILE_SUFFIX=%GCC_VER%%FBC_VER%%RUNTIME%%WINVER%
-OUTPUT_FILE_NAME=windows%FILE_SUFFIX%.exe
+set OUTPUT_FILE_NAME=HelloWorld%FILE_SUFFIX%.exe
 ```
 
 ### Сценарий компоновщика
 
-```
+Указываем без кавычек.
+
+```bat
 rem Linker script only for GCC x86, GCC x64 and Clang x86
 rem Without quotes:
 set LD_SCRIPT=%LIB_DIR%\fbextra.x
@@ -405,14 +432,16 @@ set LD_SCRIPT=%LIB_DIR%\fbextra.x
 
 ### Модель процессора
 
-```
+Можно указать конкретную модель процессора.
+
+```bat
 rem Set processor architecture
 set MARCH=native
 ```
 
 Для шланга:
 
-```
+```bat
 rem Only for Clang x86
 rem set TARGET_TRIPLET=i686-pc-windows-gnu
 rem Only for Clang AMD64
@@ -421,14 +450,31 @@ rem set TARGET_TRIPLET=x86_64-w64-pc-windows-msvc
 
 ### Межмодульная оптимизация
 
-```
+Указываем `-flto` для межмодульной оптимизации.
+
+```bat
 rem Link Time Optimization for release target
 rem set FLTO=-flto
 ```
 
 ### Подключаемые библиотеки
 
-```
+Нам необходимо добавить библиотеки в список или убрать лишние.
+
+| Переменная | Описание                          |
+|-----|-----------------------------------|
+| OBJ_CRT_START | Стартовые библиотеки языка Си |
+| LIBS_WIN95 | Библиотеки для Win95 |
+| LIBS_WINNT | Библиотеки для Windows NT |
+| LIBS_GUID | Библиотека с GUID |
+| LIBS_MSVCRT | Динамическая библиотека языка Си |
+| LIBS_ANY | Любые дополнительные библиотеки |
+| LIBS_FB | Библиотеки языка FreeBASIC |
+| OBJ_CRT_END | Заключительные библиотеки языка Си |
+| LIBS_GCC | Библиотеки компилятора языка Си и отладчика |
+| LIBS_OS | Комбинация всех библиотеки операционной системы |
+
+```bat
 rem Libraries list
 set OBJ_CRT_START="%LIB_DIR%\crt2.o" "%LIB_DIR%\crtbegin.o" "%LIB_DIR%\fbrt0.o"
 set LIBS_WIN95=-ladvapi32 -lcomctl32 -lcomdlg32 -lcrypt32 -lgdi32 -lkernel32 -lole32 -loleaut32 -lshell32 -lshlwapi -lwsock32 -luser32
