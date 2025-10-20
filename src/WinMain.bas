@@ -88,7 +88,16 @@ Private Sub DialogMain_Closing( _
 		ByVal hWin As HWND _
 	)
 
-	DestroyWindow(hWin)
+	Dim resQuit As UINT = MessageBox( _
+		hWin, _
+		__TEXT("Really quit?"), _
+		__TEXT("My application"), _
+		MB_OKCANCEL _
+	)
+
+	If resQuit = IDOK Then
+		DestroyWindow(hWin)
+	End If
 
 End Sub
 
@@ -128,6 +137,7 @@ Private Function MainWindowWndProc( _
 			End Select
 
 		Case WM_CLOSE
+			' Use it for question about closing window
 			DialogMain_Closing(pContext, hWin)
 
 		Case WM_DESTROY
@@ -178,6 +188,7 @@ Private Function ModelessDialogProc( _
 			End Select
 
 		Case WM_CLOSE
+			' Use it for question about closing window
 			DialogMain_Closing(pContext, hWin)
 
 		Case WM_DESTROY
