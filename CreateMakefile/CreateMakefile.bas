@@ -566,7 +566,7 @@ Private Function WriteSetenvWin32( _
 		Print #oStream, "rem set FILE_SUFFIX=%GCC_VER%%FBC_VER%%RUNTIME%%WINVER%"
 	End If
 	Dim Extension As String = GetExtensionOutputFile(p)
-	Print #oStream, "OUTPUT_FILE_NAME=" & p->OutputFilename & "%FILE_SUFFIX%" & Extension
+	Print #oStream, "set OUTPUT_FILE_NAME=" & p->OutputFilename & "%FILE_SUFFIX%" & Extension
 	Print #oStream,
 
 	Select Case p->Emitter
