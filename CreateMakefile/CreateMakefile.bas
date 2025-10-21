@@ -620,6 +620,7 @@ Private Function WriteSetenvWin32( _
 	Print #oStream, "set LIBS_WINNT=-lgdiplus -lws2_32 -lmswsock"
 	Print #oStream, "set LIBS_GUID=-luuid"
 	Print #oStream, "set LIBS_MSVCRT=-lmsvcrt"
+	Print #oStream, "rem Add any libraries sach as -lfbgfx"
 	Print #oStream, "set LIBS_ANY="
 	If p->ThreadingMode = DEFINE_MULTITHREADING_RUNTIME Then
 		Print #oStream, "set LIBS_FB=-lfbmt"
