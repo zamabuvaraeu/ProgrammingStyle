@@ -56,7 +56,8 @@ Private Sub ModelessIDCANCEL_Click( _
 		ByVal hWin As HWND _
 	)
 
-	PostQuitMessage(0)
+	Const ExitCode = 0
+	PostQuitMessage(ExitCode)
 
 End Sub
 
@@ -65,7 +66,8 @@ Private Sub ModalIDCANCEL_Click( _
 		ByVal hWin As HWND _
 	)
 
-	EndDialog(hWin, 0)
+	Const ExitCode = 0
+	EndDialog(hWin, ExitCode)
 
 End Sub
 
@@ -88,7 +90,7 @@ Private Sub DialogMain_Closing( _
 		ByVal hWin As HWND _
 	)
 
-	Dim resQuit As UINT = MessageBox( _
+	Dim resQuit As Long = MessageBox( _
 		hWin, _
 		__TEXT("Really quit?"), _
 		__TEXT("My application"), _
@@ -142,7 +144,8 @@ Private Function MainWindowWndProc( _
 
 		Case WM_DESTROY
 			DialogMain_Unload(pContext, hWin)
-			PostQuitMessage(0)
+			Const ExitCode = 0
+			PostQuitMessage(ExitCode)
 
 		Case Else
 			Return DefWindowProc(hWin, wMsg, wParam, lParam)
@@ -193,7 +196,8 @@ Private Function ModelessDialogProc( _
 
 		Case WM_DESTROY
 			DialogMain_Unload(pContext, hWin)
-			PostQuitMessage(0)
+			Const ExitCode = 0
+			PostQuitMessage(ExitCode)
 
 		Case Else
 			Return FALSE
@@ -239,7 +243,8 @@ Private Function ModalDialogProc( _
 			End Select
 
 		Case WM_CLOSE
-			EndDialog(hWin, 0)
+			Const ExitCode = 0
+			EndDialog(hWin, ExitCode)
 
 		Case WM_DESTROY
 			DialogMain_Unload(pContext, hWin)
@@ -307,7 +312,7 @@ Private Function CreateModalWindow( _
 		Byval hInst As HINSTANCE, _
 		ByVal DialogId As Integer, _
 		ByVal param As InputDialogParam Ptr _
-	)As INT_PTR
+	)As Integer
 
 	Dim res As INT_PTR = DialogBoxParam( _
 		hInst, _
@@ -317,7 +322,7 @@ Private Function CreateModalWindow( _
 		Cast(LPARAM, param) _
 	)
 
-	Return res
+	Return CInt(res)
 
 End Function
 
@@ -349,6 +354,7 @@ Private Function AlertableMessageLoop( _
 
 			Case WAIT_OBJECT_0
 				' The event became a signal, exit from loop
+				CloseHandle(hEvent)
 				Return 0
 
 			Case WAIT_OBJECT_0 + 1
@@ -360,6 +366,7 @@ Private Function AlertableMessageLoop( _
 				' we continue to wait
 
 			Case Else ' WAIT_ABANDONED, WAIT_TIMEOUT, WAIT_FAILED
+				CloseHandle(hEvent)
 				Return 1
 
 		End Select
@@ -393,8 +400,6 @@ Private Function AlertableMessageLoop( _
 		Loop
 	Loop
 
-	CloseHandle(hEvent)
-
 	Return 0
 
 End Function
@@ -416,7 +421,7 @@ Private Function tWinMain( _
 	Dim param As InputDialogParam = Any
 	param.hInst = hInst
 
-	' Scope
+	Scope
 	' 	Dim hWin As HWND = CreateMainWindow( _
 	' 		hInst, _
 	' 		@param _
@@ -429,19 +434,17 @@ Private Function tWinMain( _
 
 	' 	Dim resMessageLoop As Integer = AlertableMessageLoop(hWin)
 
-	' 	DestroyWindow(hWin)
-
-	' 	Return resMessageLoop
-	' End Scope
+	' 	Return CLng(resMessageLoop)
+	End Scope
 
 	Scope
-		CreateModalWindow( _
+		Dim res As Integer = CreateModalWindow( _
 			hInst, _
 			IDD_DLG_TASKS, _
 			@param _
 		)
 
-		Return 0
+		Return CLng(res)
 	End Scope
 
 End Function
