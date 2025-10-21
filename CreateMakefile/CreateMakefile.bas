@@ -55,7 +55,7 @@ Enum UseSettingsEnvironment
 	DO_NOT_USE_SETTINGS_ENVIRONMENT
 End Enum
 
-Const WINVER_DEFAULT = 0
+Const WINVER_DEFAULT = 1024
 Const WINVER_XP = 1281
 
 Const vbTab = !"\t"
@@ -277,7 +277,7 @@ Private Function ParseCommandLine( _
 	p->ThreadingMode = DEFINE_SINGLETHREADING_RUNTIME
 	p->UseEnvironmentFile = SETTINGS_ENVIRONMENT_ALWAYS
 	' Windows NT 4.0 и Windows 95
-	p->MinimalOSVersion = 1024
+	p->MinimalOSVersion = WINVER_DEFAULT
 	p->UseFileSuffix = False
 	p->Pedantic = False
 
@@ -540,13 +540,8 @@ Private Function WriteSetenvWin32( _
 	End If
 
 	Print #oStream, "rem WinAPI version"
-	If p->MinimalOSVersion Then
-		Print #oStream, "set WINVER=" & p->MinimalOSVersion
-		Print #oStream, "set _WIN32_WINNT=" & p->MinimalOSVersion
-	Else
-		Print #oStream, "rem set WINVER=" & p->MinimalOSVersion
-		Print #oStream, "rem set _WIN32_WINNT=" & p->MinimalOSVersion
-	End If
+	Print #oStream, "set WINVER=" & p->MinimalOSVersion
+	Print #oStream, "set _WIN32_WINNT=" & p->MinimalOSVersion
 
 	Print #oStream, "rem Use unicode in WinAPI"
 	If p->Unicode = DEFINE_UNICODE Then
@@ -804,6 +799,7 @@ Private Sub WriteFbcFlags( _
 	Print #MakefileStream, "FBCFLAGS+=-d _UNICODE"
 	Print #MakefileStream, "endif"
 
+	' TODO Enable or disable WINVER macro
 	Print #MakefileStream, "FBCFLAGS+=-d WINVER=$(WINVER)"
 	Print #MakefileStream, "FBCFLAGS+=-d _WIN32_WINNT=$(_WIN32_WINNT)"
 
