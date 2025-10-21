@@ -581,7 +581,7 @@ Private Function WriteSetenvWin32( _
 			Print #oStream, "set LD_SCRIPT=%LIB_DIR%\fbextra.x"
 			Print #oStream,
 			Print #oStream, "rem Set processor architecture"
-			Print #oStream, "set MARCH=native"
+			Print #oStream, "set MARCH=i686"
 			Print #oStream,
 			Print #oStream, "rem Only for Clang x86"
 			Print #oStream, "rem set TARGET_TRIPLET=i686-pc-windows-gnu"
@@ -684,7 +684,7 @@ Private Sub WriteProcessorArch( _
 	)
 
 	Print #MakefileStream, "TARGET_TRIPLET ?="
-	Print #MakefileStream, "MARCH ?= native"
+	Print #MakefileStream, "MARCH ?= i686"
 	Print #MakefileStream,
 
 End Sub
