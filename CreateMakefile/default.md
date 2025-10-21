@@ -294,23 +294,23 @@ mingw32-make all
 
 Задаёт версию Windows: константы `WINVER` и `_WIN32_WINNT`. В десятичном формате. Допустимые значения:
 
-| Именованная константа | 16‐ричный | Десятичный | Описание |
-|-----------------------|-----------|------------|----------|
-| _WIN32_WINNT_NT4      | 0x0400    | 1024       | Windows NT 4.0 и Windows 95 |
-| _WIN32_WINNT_WIN2K    | 0x0500    | 1280       | Windows 2000 |
-| _WIN32_WINNT_WINXP    | 0x0501    | 1281       | Windows XP |
-| _WIN32_WINNT_WS03     | 0x0502    | 1282       | Windows Server 2003 |
-| _WIN32_WINNT_WIN6     | 0x0600    | 1536       | Windows Vista |
-| _WIN32_WINNT_VISTA    | 0x0600    | 1536       | Windows Vista |
-| _WIN32_WINNT_WS08     | 0x0600    | 1536       | Windows Server 2008 |
-| _WIN32_WINNT_LONGHORN | 0x0600    | 1536       | Windows Vista |
-| _WIN32_WINNT_WIN7     | 0x0601    | 1537       | Windows 7 |
-| _WIN32_WINNT_WIN8     | 0x0602    | 1538       | Windows 8 |
-| _WIN32_WINNT_WINBLUE  | 0x0603    | 1539       | Windows 8.1 |
-| _WIN32_WINNT_WINTHRESHOLD | 0x0A00 | 2560      | Windows 10 |
-| _WIN32_WINNT_WIN10    | 0x0A00    | 2560       | Windows 10 |
+| Десятичный | 16‐ричный | Именованная константа     | Описание |
+|------------|-----------|---------------------------|----------|
+| 1024       | 0x0400    | _WIN32_WINNT_NT4          | Windows NT 4.0 и Windows 95 |
+| 1280       | 0x0500    | _WIN32_WINNT_WIN2K        | Windows 2000 |
+| 1281       | 0x0501    | _WIN32_WINNT_WINXP        | Windows XP |
+| 1282       | 0x0502    | _WIN32_WINNT_WS03         | Windows Server 2003 |
+| 1536       | 0x0600    | _WIN32_WINNT_WIN6         | Windows Vista |
+| 1536       | 0x0600    | _WIN32_WINNT_VISTA        | Windows Vista |
+| 1536       | 0x0600    | _WIN32_WINNT_WS08         | Windows Server 2008 |
+| 1536       | 0x0600    | _WIN32_WINNT_LONGHORN     | Windows Vista |
+| 1537       | 0x0601    | _WIN32_WINNT_WIN7         | Windows 7 |
+| 1538       | 0x0602    | _WIN32_WINNT_WIN8         | Windows 8 |
+| 1539       | 0x0603    | _WIN32_WINNT_WINBLUE      | Windows 8.1 |
+| 2560       | 0x0A00    | _WIN32_WINNT_WINTHRESHOLD | Windows 10 |
+| 2560       | 0x0A00    | _WIN32_WINNT_WIN10        | Windows 10 |
 
-По умолчанию `1024` (Windows NT 4.0).
+По умолчанию `1281` (Windows XP).
 
 ### create-environment-file
 

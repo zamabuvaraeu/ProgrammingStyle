@@ -55,8 +55,8 @@ Enum UseSettingsEnvironment
 	DO_NOT_USE_SETTINGS_ENVIRONMENT
 End Enum
 
-Const WINVER_DEFAULT = 1024
 Const WINVER_XP = 1281
+Const WINVER_DEFAULT = WINVER_XP
 
 Const vbTab = !"\t"
 Const vbCrLf = !"\r\n"
