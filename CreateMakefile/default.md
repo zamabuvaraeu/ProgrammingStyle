@@ -39,7 +39,7 @@ fbc *.bas
 Собрать генератор можно такой командой:
 
 ```
-fbc64.exe -m CreateMakefile -x CreateMakefile.exe CreateMakefile.bas
+fbc64.exe CreateMakefile.bas
 ```
 
 ### Структура проекта
