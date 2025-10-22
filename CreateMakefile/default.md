@@ -47,7 +47,7 @@ fbc64.exe CreateMakefile.bas
 Генератор требует, чтобы проект был организован определённым образом:
 
 ```
-MyProject
+My Cool Project
 
 	bin\          — каталог для исполняемых файлов
 
@@ -88,7 +88,7 @@ MyProject
 
 Любые изменения зависимостей (добавили или удалили заголовочники) требуют обновления `Makefile` и перезапуска генератора.
 
-## Примеры
+## Краткое руководство
 
 ### Запуск
 
@@ -120,25 +120,25 @@ mingw32-make all
 
 ### Цели сборки
 
-| Тип | Описание                          |
-|-----|-----------------------------------|
-| debug | Собирает отладочную версию |
-| release | Собирает окончательную версию |
-| all | Собирает обе версии |
-| clean | Очищает каталоги от промежуточных и объектных файлов |
+| Тип        | Описание                          |
+|------------|-----------------------------------|
+| debug      | Собирает отладочную версию |
+| release    | Собирает окончательную версию |
+| all        | Собирает обе версии |
+| clean      | Очищает каталоги от промежуточных и объектных файлов |
 | createdirs | Создаёт каталоги `obj` и `bin` с подкаталогами |
 
 ### GUI Программа
 
-Оконная программа с поддержкой юникода, библиотеками времени выполнения и адресного пространства больше 2 гигабайт:
+Создадим `Makefile` для оконной программы:
 
 ```bat
-"c:\FreeBASIC Projects\CreateMakefile.exe" -out HelloWorld -subsystem windows -unicode true -addressaware true -fbc-path "C:\Program Files (x86)\FreeBASIC-1.10.0-winlibs-gcc-9.3.0" -fbc fbc64.exe
+"c:\FreeBASIC Projects\CreateMakefile.exe" -out HelloWorld -subsystem windows -fbc-path "C:\Program Files (x86)\FreeBASIC-1.10.0-winlibs-gcc-9.3.0" -fbc fbc64.exe
 ```
 
 ### Консольная программа
 
-Консольная программа с поддержкой юникода и адресного пространства больше 2 гигабайт:
+Создадим `Makefile` для консольной программы с поддержкой юникода и адресного пространства больше 2 гигабайт:
 
 ```bat
 "c:\FreeBASIC Projects\CreateMakefile.exe" -out HelloWorld -subsystem console -unicode true -addressaware true -fbc-path "C:\Program Files (x86)\FreeBASIC-1.10.0-winlibs-gcc-9.3.0" -fbc fbc64.exe
