@@ -1453,6 +1453,22 @@ Private Sub RemoveDefaultIncludes( _
 
 End Sub
 
+Private Function FileExists( _
+		ByVal Filepath As String _
+	) As Boolean
+
+	var Filenumber = Freefile()
+	var resOpen = Open(Filepath, For Input, As Filenumber)
+	If resOpen Then
+		Return False
+	End If
+
+	Close(Filenumber)
+
+	Return True
+
+End Function
+
 Private Function GetIncludesFromBasFile( _
 		ByVal Filepath As String, _
 		ByVal p As Parameter Ptr _
@@ -1460,7 +1476,16 @@ Private Function GetIncludesFromBasFile( _
 
 	Dim FbcParam As String = CreateCompilerParams(p)
 
-	Dim CompilerFullName As String = BuildPath(p->CompilerPath, p->FbcCompilerName)
+	Dim CompilerFullName As String = BuildPath( _
+		p->CompilerPath, _
+		p->FbcCompilerName _
+	)
+
+	Dim bExists As Boolean = FileExists(CompilerFullName)
+	If bExists = False Then
+		Print "FreeBASIC not exists in path " & CompilerFullName
+		End(1)
+	End If
 
 	' TODO Find a way to use parameters with spaces
 
@@ -1491,22 +1516,6 @@ Private Function GetIncludesFromBasFile( _
 	' End If
 
 	Return Lines
-
-End Function
-
-Private Function FileExists( _
-		ByVal Filepath As String _
-	) As Boolean
-
-	var Filenumber = Freefile()
-	var resOpen = Open(Filepath, For Input, As Filenumber)
-	If resOpen Then
-		Return False
-	End If
-
-	Close(Filenumber)
-
-	Return True
 
 End Function
 
