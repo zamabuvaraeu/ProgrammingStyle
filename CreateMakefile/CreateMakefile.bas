@@ -55,6 +55,12 @@ Enum UseSettingsEnvironment
 	DO_NOT_USE_SETTINGS_ENVIRONMENT
 End Enum
 
+Enum ParseResult
+	PARSE_FAIL
+	PARSE_SUCCESS
+	PARSE_HELP
+End Enum
+
 Const WINVER_XP = 1281
 Const WINVER_DEFAULT = WINVER_XP
 
@@ -258,7 +264,7 @@ End Function
 
 Private Function ParseCommandLine( _
 		ByVal p As Parameter Ptr _
-	) As Integer
+	) As ParseResult
 
 	p->MakefileFileName = "Makefile"
 	p->SourceFolder = "src"
@@ -419,7 +425,7 @@ Private Function ParseCommandLine( _
 		sKey = Command(i)
 	Loop
 
-	Return 0
+	Return PARSE_SUCCESS
 
 End Function
 
@@ -1640,11 +1646,24 @@ Private Sub WriteDependencies( _
 End Sub
 
 Dim Params As Parameter = Any
-var resParse = ParseCommandLine(@Params)
-If resParse Then
-	Print "Can not parse command line"
-	End(1)
-End If
+
+Scope
+	var resParse = ParseCommandLine(@Params)
+
+	Select Case resParse
+
+		Case PARSE_FAIL
+			Print "Can not parse command line"
+			End(1)
+
+		Case PARSE_SUCCESS
+
+		Case PARSE_HELP
+			' We must print help and exit
+			End(0)
+
+	End Select
+End Scope
 
 If Params.UseEnvironmentFile = SETTINGS_ENVIRONMENT_ALWAYS Then
 	var resSetenv = WriteSetenv(@Params)
