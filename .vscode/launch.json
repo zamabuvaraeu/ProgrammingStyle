@@ -49,7 +49,7 @@
 				"-src", "src",
 				"-fbc-path", "C:\\Program Files (x86)\\FreeBASIC-1.10.1-winlibs-gcc-9.3.0",
 				/* "-i", "include path", */
-				"-fbc", "fbc64",
+				"-fbc", "fbc64.exe",
 				"-out", "windows",
 				/* Main module filename */
 				"-module", "WinMain",
