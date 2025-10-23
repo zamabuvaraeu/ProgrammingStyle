@@ -143,7 +143,7 @@ Function ReplaceFbEnd(strLine, InsideMain)
 			ReplaceFbEnd = vbTab & "return RETCODE$0; /* " & strLine & " */"
 		End If
 
-		If UCase(strLine) = vbTab & "fb_End( RETCODE );" Then
+		If UCase(strLine) = vbTab & "FB_END( RETCODE );" Then
 			ReplaceFbEnd = vbTab & "return RetCode; /* " & strLine & " */"
 		End If
 
@@ -151,7 +151,7 @@ Function ReplaceFbEnd(strLine, InsideMain)
 			ReplaceFbEnd = vbTab & "return (int32)RETCODE$0; /* " & strLine & " */"
 		End If
 
-		If UCase(strLine) = vbTab & "fb_End( (INT32)RETCODE );" Then
+		If UCase(strLine) = vbTab & "FB_END( (INT32)RETCODE );" Then
 			ReplaceFbEnd = vbTab & "return (int32)RetCode; /* " & strLine & " */"
 		End If
 
