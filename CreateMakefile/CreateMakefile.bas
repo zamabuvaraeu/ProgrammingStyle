@@ -575,30 +575,24 @@ Private Function WriteSetenvWin32( _
 	Print #oStream, "rem set LDFLAGS="
 	Print #oStream,
 
-	Select Case p->Emitter
+	Print #oStream, "rem Linker script only for GCC x86, GCC x64 and Clang x86"
+	Print #oStream, "rem Without quotes:"
+	Print #oStream, "set LD_SCRIPT=%LIB_DIR%\fbextra.x"
+	Print #oStream,
+	Print #oStream, "rem Set processor architecture"
+	Print #oStream, "set MARCH=i686"
+	Print #oStream,
+	Print #oStream, "rem Only for Clang x86"
+	Print #oStream, "rem set TARGET_TRIPLET=i686-pc-windows-gnu"
+	Print #oStream,
+	Print #oStream, "rem Only for Clang AMD64"
+	Print #oStream, "rem set TARGET_TRIPLET=x86_64-w64-pc-windows-msvc"
+	Print #oStream,
+	Print #oStream, "rem Link Time Optimization for release target"
+	Print #oStream, "rem set FLTO=-flto"
 
-		Case CODE_EMITTER_GCC, CODE_EMITTER_GAS, CODE_EMITTER_GAS64, CODE_EMITTER_LLVM
-			Print #oStream, "rem Linker script only for GCC x86, GCC x64 and Clang x86"
-			Print #oStream, "rem Without quotes:"
-			Print #oStream, "set LD_SCRIPT=%LIB_DIR%\fbextra.x"
-			Print #oStream,
-			Print #oStream, "rem Set processor architecture"
-			Print #oStream, "set MARCH=i686"
-			Print #oStream,
-			Print #oStream, "rem Only for Clang x86"
-			Print #oStream, "rem set TARGET_TRIPLET=i686-pc-windows-gnu"
-			Print #oStream,
-			Print #oStream, "rem Only for Clang AMD64"
-			Print #oStream, "rem set TARGET_TRIPLET=x86_64-w64-pc-windows-msvc"
-			Print #oStream,
-			Print #oStream, "rem Link Time Optimization for release target"
-			Print #oStream, "rem set FLTO=-flto"
-
-		Case CODE_EMITTER_WASM32, CODE_EMITTER_WASM64
-			Print #oStream, "rem Only for wasm"
-			Print #oStream, "set TARGET_TRIPLET=wasm32"
-
-	End Select
+	Print #oStream, "rem Only for wasm"
+	Print #oStream, "set TARGET_TRIPLET=wasm32"
 
 	Print #oStream,
 
