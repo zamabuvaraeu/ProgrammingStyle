@@ -500,10 +500,6 @@ Private Function WriteSetenvWin32( _
 	Print #oStream, ")"
 	Print #oStream,
 
-	Print #oStream, "rem Add mingw64 directory to PATH"
-	Print #oStream, "set MINGW_W64_DIR=C:\Program Files\mingw64"
-	Print #oStream, "set PATH=%MINGW_W64_DIR%\bin;%PATH%"
-	Print #oStream,
 	Print #oStream, "rem Add compiler directory to PATH"
 	Print #oStream, "set FBC_DIR=" & p->CompilerPath
 	Print #oStream, "set PATH=%FBC_DIR%\%BinFolder%;%PATH%"

@@ -8,5 +8,6 @@ src/*.c
 CreateMakefile.cmd
 CreateMakefile.exe
 setenv.cmd
+setenv2.cmd
 setenv.sh
 Makefile

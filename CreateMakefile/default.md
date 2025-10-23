@@ -344,16 +344,6 @@ set FBC_FILENAME=fbc32.exe
 )
 ```
 
-### Путь к каталогу mingw64
-
-Добавляем каталог mingw64 в путь переменных среды. Без кавычек.
-
-```bat
-rem Add mingw64 directory to PATH
-set MINGW_W64_DIR=C:\Program Files\mingw64
-set PATH=%MINGW_W64_DIR%\bin;%PATH%
-```
-
 ### Пути к компилятору и заголовочным файлам
 
 Путь к компилятору, указываем без кавычек.
