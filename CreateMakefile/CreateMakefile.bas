@@ -71,14 +71,10 @@ Const vbCrLf = !"\r\n"
 #define WriteSetenv WriteSetenvLinux
 Const PATH_SEPARATOR = "/"
 Const MakefileParametersFile = "setenv.sh"
-Const DefaultCompilerFolder = "/usr/bin"
-Const DefaultCompilerName = "fbc"
 #else
 #define WriteSetenv WriteSetenvWin32
 Const PATH_SEPARATOR = "\"
 Const MakefileParametersFile = "setenv.cmd"
-Const DefaultCompilerFolder = "C:\Program Files (x86)\FreeBASIC-1.10.1-winlibs-gcc-9.3.0"
-Const DefaultCompilerName = "fbc64.exe"
 #endif
 
 ' Makefile variables
@@ -268,9 +264,9 @@ Private Function ParseCommandLine( _
 
 	p->MakefileFileName = "Makefile"
 	p->SourceFolder = "src"
-	p->CompilerPath = DefaultCompilerFolder
+	p->CompilerPath = ""
 	p->IncludePath = BuildPath(DefaultCompilerFolder, "inc")
-	p->FbcCompilerName = DefaultCompilerName
+	p->FbcCompilerName = ""
 	p->OutputFileName = "a"
 	p->MainModuleName = "a"
 	p->ExeType = OUTPUT_FILETYPE_EXE
@@ -424,6 +420,16 @@ Private Function ParseCommandLine( _
 		i += 1
 		sKey = Command(i)
 	Loop
+
+	If Len(p->CompilerPath) = 0 Then
+		Print "Path to compiler is not specified"
+		Return PARSE_FAIL
+	End If
+
+	If Len(p->FbcCompilerName) = 0 Then
+		Print "Compiler name is not specified"
+		Return PARSE_FAIL
+	End If
 
 	Return PARSE_SUCCESS
 
@@ -729,7 +735,7 @@ Private Sub WriteUtilsPathWin32( _
 	Print #MakefileStream, "MOVE_COMMAND ?= cmd.exe /c move /y"
 	Print #MakefileStream, "DELETE_COMMAND ?= cmd.exe /c del /f /q"
 	Print #MakefileStream, "MKDIR_COMMAND ?= cmd.exe /c mkdir"
-	Print #MakefileStream, "CPREPROCESSOR_COMMAND ?= cmd.exe /c echo cscript.exe //nologo fix-emitted-code.vbs"
+	Print #MakefileStream, "CPREPROCESSOR_COMMAND ?= cmd.exe /c echo no need to fix code"
 	Print #MakefileStream,
 
 End Sub
