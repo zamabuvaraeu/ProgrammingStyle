@@ -1023,9 +1023,9 @@ Private Sub WriteLinkerLibraries( _
 			' do Nothing
 
 		Case Else
-			Print #MakefileStream, "ifeq ($(USE_RUNTIME),TRUE)"
+			' mainCRTStartup libraries
 			Scope
-				' mainCRTStartup libraries
+				Print #MakefileStream, "ifeq ($(USE_RUNTIME),TRUE)"
 
 				Print #MakefileStream, "ifeq ($(OBJ_CRT_START),)"
 
@@ -1049,15 +1049,15 @@ Private Sub WriteLinkerLibraries( _
 				Print #MakefileStream, "else"
 				Print #MakefileStream, "endif"
 
+				Print #MakefileStream, "endif"
 			End Scope
-			Print #MakefileStream, "endif"
 
 			Print #MakefileStream,
 
 			Print #MakefileStream, "LDLIBS+=-Wl,--start-group"
-			Scope
-				' OS libraries
 
+			' OS libraries
+			Scope
 				Print #MakefileStream, "ifeq ($(LIBS_OS),)"
 
 				' Windows API libraries
@@ -1065,49 +1065,50 @@ Private Sub WriteLinkerLibraries( _
 				Print #MakefileStream, "LDLIBS+=-lgdi32 -lgdiplus -lkernel32 -lmswsock"
 				Print #MakefileStream, "LDLIBS+=-lole32 -loleaut32 -lshell32 -lshlwapi"
 				Print #MakefileStream, "LDLIBS+=-lwsock32 -lws2_32 -luser32 -luuid"
-				' C Runtime
 				Print #MakefileStream, "LDLIBS+=-lmsvcrt"
-
-				Print #MakefileStream, "ifeq ($(USE_RUNTIME),TRUE)"
-				Scope
-					Select Case p->ThreadingMode
-
-						Case DEFINE_SINGLETHREADING_RUNTIME
-							Print #MakefileStream, "LDLIBS+=-lfb"
-
-						Case DEFINE_MULTITHREADING_RUNTIME
-							Print #MakefileStream, "LDLIBS+=-lfbmt"
-
-					End Select
-
-					Print #MakefileStream, "LDLIBS+=-lgcc -lmingw32 -lmingwex -lmoldname -lgcc_eh"
-				End Scope
-				Print #MakefileStream, "endif"
-
 				Print #MakefileStream, "else"
 				Print #MakefileStream, "LDLIBS+=$(LIBS_OS)"
 				Print #MakefileStream, "endif"
 			End Scope
+
+			' Runtime libraries
+			Scope
+				Print #MakefileStream, "ifeq ($(USE_RUNTIME),TRUE)"
+				Select Case p->ThreadingMode
+
+					Case DEFINE_SINGLETHREADING_RUNTIME
+						Print #MakefileStream, "LDLIBS+=-lfb"
+
+					Case DEFINE_MULTITHREADING_RUNTIME
+						Print #MakefileStream, "LDLIBS+=-lfbmt"
+
+				End Select
+
+				Print #MakefileStream, "LDLIBS+=-lgcc -lmingw32 -lmingwex -lmoldname -lgcc_eh"
+				Print #MakefileStream, "endif"
+			End Scope
+
 			Print #MakefileStream, "LDLIBS+=-Wl,--end-group"
 
 			Print #MakefileStream,
 
-			Print #MakefileStream, "ifeq ($(LIBS_GCC),)"
+			' Debug libraries
 			Scope
-				' Debug libraries
+				Print #MakefileStream, "ifeq ($(LIBS_GCC),)"
 				' TODO For profile
 				' Print #MakefileStream, "LDLIBS_DEBUG+=-lgmon"
 
 				Print #MakefileStream, "LDLIBS_DEBUG+=-lgcc -lmingw32 -lmingwex -lmoldname -lgcc_eh"
 				Print #MakefileStream, "else"
 				Print #MakefileStream, "LDLIBS_DEBUG+=$(LIBS_GCC)"
+				Print #MakefileStream, "endif"
 			End Scope
-			Print #MakefileStream, "endif"
 
 			Print #MakefileStream,
 
-			Print #MakefileStream, "ifeq ($(USE_RUNTIME),TRUE)"
+			' Crtend libraries
 			Scope
+				Print #MakefileStream, "ifeq ($(USE_RUNTIME),TRUE)"
 				Print #MakefileStream, "ifeq ($(OBJ_CRT_END),)"
 				Print #MakefileStream, "LDLIBSEND+=""$(LIB_DIR)\crtend.o"""
 				Print #MakefileStream, "else"
@@ -1118,8 +1119,8 @@ Private Sub WriteLinkerLibraries( _
 				Print #MakefileStream, "LDLIBSEND+=""$(LIB_DIR)\crtend.o"""
 				Print #MakefileStream, "else"
 				Print #MakefileStream, "endif"
+				Print #MakefileStream, "endif"
 			End Scope
-			Print #MakefileStream, "endif"
 
 	End Select
 
