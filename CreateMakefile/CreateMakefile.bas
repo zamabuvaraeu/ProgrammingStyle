@@ -493,10 +493,12 @@ Private Function WriteSetenvWin32( _
 	Print #oStream, "set BinFolder=bin\win64"
 	Print #oStream, "set LibFolder=lib\win64"
 	Print #oStream, "set FBC_FILENAME=fbc64.exe"
+	Print #oStream, "set MARCH=x86-64"
 	Print #oStream, ") else ("
 	Print #oStream, "set BinFolder=bin\win32"
 	Print #oStream, "set LibFolder=lib\win32"
 	Print #oStream, "set FBC_FILENAME=fbc32.exe"
+	Print #oStream, "set MARCH=i686"
 	Print #oStream, ")"
 	Print #oStream,
 
@@ -581,9 +583,6 @@ Private Function WriteSetenvWin32( _
 	Print #oStream, "rem Linker script only for GCC x86, GCC x64 and Clang x86"
 	Print #oStream, "rem Without quotes:"
 	Print #oStream, "set LD_SCRIPT=%LIB_DIR%\fbextra.x"
-	Print #oStream,
-	Print #oStream, "rem Set processor architecture"
-	Print #oStream, "set MARCH=i686"
 	Print #oStream,
 	Print #oStream, "rem Only for Clang x86"
 	Print #oStream, "rem set TARGET_TRIPLET=i686-pc-windows-gnu"
