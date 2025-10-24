@@ -265,7 +265,7 @@ Private Function ParseCommandLine( _
 	p->MakefileFileName = "Makefile"
 	p->SourceFolder = "src"
 	p->CompilerPath = ""
-	p->IncludePath = BuildPath(DefaultCompilerFolder, "inc")
+	p->IncludePath = ""
 	p->FbcCompilerName = ""
 	p->OutputFileName = "a"
 	p->MainModuleName = "a"
@@ -429,6 +429,10 @@ Private Function ParseCommandLine( _
 	If Len(p->FbcCompilerName) = 0 Then
 		Print "Compiler name is not specified"
 		Return PARSE_FAIL
+	End If
+
+	If Len(p->IncludePath) = 0 Then
+		BuildPath(p->CompilerPath, "inc")
 	End If
 
 	Return PARSE_SUCCESS
