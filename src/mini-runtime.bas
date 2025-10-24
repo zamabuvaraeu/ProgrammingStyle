@@ -36,9 +36,13 @@ Public Sub fb_End Alias "fb_End"( _
 
 	#ifdef __FB_LINUX__
 		#ifdef __FB_64BIT__
+			' asm("xorq %rdi, %rdi");  // код выхода 0
+			' asm("movq $60, %rax"); // номер системного вызова 60 - exit
+			' asm("syscall"); // выход
+
 			Asm
+				mov rdi, [RetCode] /' код возврата    '/
 				mov rax, 60        /' 60 - номер системного вызова exit '/
-				mov rdi, [RetCode] /' произвольный код возврата - 22    '/
 				syscall            /' выполняем системный вызов exit    '/
 			End Asm
 		#else
