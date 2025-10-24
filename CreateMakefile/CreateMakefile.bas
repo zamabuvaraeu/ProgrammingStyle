@@ -534,12 +534,15 @@ Private Function WriteSetenvWin32( _
 	Print #oStream, "set SRC_DIR=" & p->SourceFolder
 	Print #oStream,
 
-	Print #oStream, "rem Set to TRUE for use runtime libraries"
+	Print #oStream, "rem Set TRUE to use runtime libraries"
 	If p->UseRuntimeLibrary = DEFINE_WITHOUT_RUNTIME Then
 		Print #oStream, "set USE_RUNTIME=FALSE"
 	Else
 		Print #oStream, "set USE_RUNTIME=TRUE"
 	End If
+
+	Print #oStream, "rem Set FALSE to disable c-runtime libraries"
+	Print #oStream, "rem set USE_CRUNTIME=TRUE"
 
 	Print #oStream, "rem WinAPI version"
 	Print #oStream, "set WINVER=" & p->MinimalOSVersion
@@ -695,6 +698,7 @@ Private Sub WriteOutputFilename( _
 	Dim Extension As String = GetExtensionOutputFile(p)
 
 	Print #MakefileStream, "USE_RUNTIME ?= TRUE"
+	Print #MakefileStream, "USE_CRUNTIME ?= TRUE"
 	Print #MakefileStream, "FBC_VER ?= " & FBC_VER
 	Print #MakefileStream, "GCC_VER ?= " & GCC_VER
 
@@ -1037,6 +1041,15 @@ Private Sub WriteLinkerLibraries( _
 				Print #MakefileStream, "LDLIBSBEGIN+=$(OBJ_CRT_START)"
 				Print #MakefileStream, "endif"
 
+				Print #MakefileStream, "else"
+
+				Print #MakefileStream, "ifeq ($(USE_CRUNTIME),TRUE)"
+				Print #MakefileStream, "LDLIBSBEGIN+=""$(LIB_DIR)\crt2.o"""
+				Print #MakefileStream, "LDLIBSBEGIN+=""$(LIB_DIR)\crtbegin.o"""
+				Print #MakefileStream, "LDLIBSBEGIN+=""$(LIB_DIR)\fbrt0.o"""
+				Print #MakefileStream, "else"
+				Print #MakefileStream, "endif"
+
 			End Scope
 			Print #MakefileStream, "endif"
 
@@ -1100,6 +1113,11 @@ Private Sub WriteLinkerLibraries( _
 				Print #MakefileStream, "LDLIBSEND+=""$(LIB_DIR)\crtend.o"""
 				Print #MakefileStream, "else"
 				Print #MakefileStream, "LDLIBSEND+=$(OBJ_CRT_END)"
+				Print #MakefileStream, "endif"
+				Print #MakefileStream, "else"
+				Print #MakefileStream, "ifeq ($(USE_CRUNTIME),TRUE)"
+				Print #MakefileStream, "LDLIBSEND+=""$(LIB_DIR)\crtend.o"""
+				Print #MakefileStream, "else"
 				Print #MakefileStream, "endif"
 			End Scope
 			Print #MakefileStream, "endif"
