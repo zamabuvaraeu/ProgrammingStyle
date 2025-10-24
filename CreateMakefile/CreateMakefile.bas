@@ -106,6 +106,7 @@ Type Parameter
 	MinimalOSVersion As Integer
 	UseFileSuffix As Boolean
 	Pedantic As Boolean
+	CreateDirs As Boolean
 End Type
 
 Private Sub SplitRecursive( _
@@ -281,6 +282,7 @@ Private Function ParseCommandLine( _
 	p->MinimalOSVersion = WINVER_DEFAULT
 	p->UseFileSuffix = False
 	p->Pedantic = False
+	p->CreateDirs = False
 
 	Dim i As Integer = 1
 	Dim sKey As String = Command(i)
@@ -413,6 +415,11 @@ Private Function ParseCommandLine( _
 
 			Case "-winver"
 				p->MinimalOSVersion = CInt(sValue)
+
+			Case "-createdirs"
+				If sValue = "true" Then
+					p->CreateDirs = True
+				End If
 
 		End Select
 
@@ -1871,6 +1878,16 @@ Private Sub PrintAllParameters( _
 		Print "Pedantic", sPedantic
 	End Scope
 
+	Scope
+		Dim sCreateDirs As String
+		If p->CreateDirs Then
+			sCreateDirs = "true"
+		Else
+			sCreateDirs = "false"
+		End If
+		Print "Create bin obj directories", sCreateDirs
+	End Scope
+
 	Print ""
 
 End Sub
@@ -1899,6 +1916,27 @@ Scope
 
 	End Select
 End Scope
+
+If pParams->CreateDirs Then
+	Print "Create bin obj directories..."
+	MkDir("bin")
+	MkDir("bin" & PATH_SEPARATOR & "Debug")
+	MkDir("bin" & PATH_SEPARATOR & "Debug" & PATH_SEPARATOR  & "x64")
+	MkDir("bin" & PATH_SEPARATOR & "Debug" & PATH_SEPARATOR  & "x86")
+
+	MkDir("bin" & PATH_SEPARATOR & "Release")
+	MkDir("bin" & PATH_SEPARATOR & "Release" & PATH_SEPARATOR  & "x64")
+	MkDir("bin" & PATH_SEPARATOR & "Release" & PATH_SEPARATOR  & "x86")
+
+	MkDir("obj")
+	MkDir("obj" & PATH_SEPARATOR & "Debug")
+	MkDir("obj" & PATH_SEPARATOR & "Debug" & PATH_SEPARATOR  & "x64")
+	MkDir("obj" & PATH_SEPARATOR & "Debug" & PATH_SEPARATOR  & "x86")
+
+	MkDir("obj" & PATH_SEPARATOR & "Release")
+	MkDir("obj" & PATH_SEPARATOR & "Release" & PATH_SEPARATOR  & "x64")
+	MkDir("obj" & PATH_SEPARATOR & "Release" & PATH_SEPARATOR  & "x86")
+End If
 
 If pParams->UseEnvironmentFile = SETTINGS_ENVIRONMENT_ALWAYS Then
 	Print "Create environment file..."

@@ -153,7 +153,7 @@ mingw32-make all
 ### Все параметры
 
 ```bat
-"c:\FreeBASIC Projects\CreateMakefile.exe" -makefile Makefile -src src -fbc-path "C:\Program Files (x86)\FreeBASIC-1.10.0-winlibs-gcc-9.3.0" -fbc fbc64.exe -out HelloWorld -module WinMain -exetype exe -subsystem console -emitter gcc -fix false -unicode true -wrt false -addressaware true -multithreading false -usefilesuffix true -pedantic true -winver 1281 -create-environment-file true
+"c:\FreeBASIC Projects\CreateMakefile.exe" -makefile Makefile -src src -fbc-path "C:\Program Files (x86)\FreeBASIC-1.10.0-winlibs-gcc-9.3.0" -fbc fbc64.exe -out HelloWorld -module WinMain -exetype exe -subsystem console -emitter gcc -fix false -unicode true -wrt false -addressaware true -multithreading false -usefilesuffix true -pedantic true -winver 1281 -create-environment-file true -createdirs false
 ```
 
 ## Параметры генератора Makefile
@@ -323,6 +323,12 @@ mingw32-make all
 Включает генерацию файла настроек среды выполнения для утилиты `make`.
 
 По умолчанию `true`.
+
+### createdirs
+
+Создаёт подкаталоги `bin` и `obj`.
+
+По умолчанию `false`.
 
 ## Параметры для утилиты make
 
