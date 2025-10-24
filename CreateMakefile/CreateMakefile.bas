@@ -91,13 +91,13 @@ Const FBC_VER = "_FBC1101"
 Const GCC_VER = "_GCC0930"
 
 Type Parameter
-	MakefileFileName As ZString * MAX_PATH
-	SourceFolder As ZString * MAX_PATH
-	CompilerPath As ZString * MAX_PATH
-	IncludePath As ZString * MAX_PATH
-	FbcCompilerName As ZString * MAX_PATH
-	OutputFileName As ZString * MAX_PATH
-	MainModuleName As ZString * MAX_PATH
+	MakefileFileName As ZString * (MAX_PATH + 1)
+	SourceFolder As ZString * (MAX_PATH + 1)
+	CompilerPath As ZString * (MAX_PATH + 1)
+	IncludePath As ZString * (MAX_PATH + 1)
+	FbcCompilerName As ZString * (MAX_PATH + 1)
+	OutputFileName As ZString * (MAX_PATH + 1)
+	MainModuleName As ZString * (MAX_PATH + 1)
 	ExeType As ExecutableType
 	FileSubsystem As Subsystem
 	Emitter As CodeEmitter
@@ -1621,24 +1621,27 @@ Private Sub CreateDependencies( _
 
 End Sub
 
+Private Sub GetFiles( _
+		FilesVector() As String, _
+		ByVal filespec As String _
+	)
+
+	Dim filename As String = Dir(filespec)
+
+	Do While Len(filename)
+		Dim u As Integer = UBound(FilesVector)
+		ReDim Preserve FilesVector(u + 1)
+		FilesVector(u) = filename
+		filename = Dir()
+	Loop
+
+End Sub
+
 Private Sub WriteDependencies( _
+		FilesVector() As String, _
 		ByVal MakefileStream As Long, _
 		ByVal p As Parameter Ptr _
 	)
-
-	ReDim FilesVector(0) As String
-
-	Scope
-		Dim filespec As String = BuildPath(p->SourceFolder, "*.*")
-		Dim filename As String = Dir(filespec)
-
-		Do While Len(filename)
-			Dim u As Integer = UBound(FilesVector)
-			ReDim Preserve FilesVector(u + 1)
-			FilesVector(u) = filename
-			filename = Dir()
-		Loop
-	End Scope
 
 	For i As Integer = LBound(FilesVector) To UBound(FilesVector)
 		If Len(FilesVector(i)) Then
@@ -1652,10 +1655,170 @@ Private Sub WriteDependencies( _
 
 End Sub
 
-Dim Params As Parameter = Any
+Private Sub PrintAllParameters( _
+			ByVal p As Parameter Ptr _
+	)
+
+	Print "Makefile generator version 1.1"
+	Print "Source folder", p->SourceFolder
+	Dim FbcName As String = BuildPath(p->CompilerPath, p->FbcCompilerName)
+	Print "Compiler name", FbcName
+	Print "Makefile name", p->MakefileFileName
+	Print "Include path", p->IncludePath
+	Print "Output file name", p->OutputFileName
+	Print "Main module name", p->MainModuleName
+
+	Scope
+		Dim sExeType As String
+		Select Case p->ExeType
+			Case OUTPUT_FILETYPE_EXE
+				sExeType = "exe"
+			Case OUTPUT_FILETYPE_DLL
+				sExeType = "dll"
+			Case OUTPUT_FILETYPE_LIBRARY
+				sExeType = "static library"
+			Case OUTPUT_FILETYPE_WASM32
+				sExeType = "wasm32"
+			Case OUTPUT_FILETYPE_WASM64
+				sExeType = "wasm64"
+		End Select
+		Print "Exe type", sExeType
+	End Scope
+
+	Scope
+		Dim sSys As String
+		Select Case p->FileSubsystem
+			Case SUBSYSTEM_CONSOLE
+				sSys = "Console"
+			Case SUBSYSTEM_WINDOW
+				sSys = "Windows"
+			Case SUBSYSTEM_NATIVE
+				sSys = "Native"
+		End Select
+		Print "File subsystem", sSys
+	End Scope
+
+	Scope
+		Dim sEmitter As String
+		Select Case p->Emitter
+			Case CODE_EMITTER_GCC
+				sEmitter = "gcc"
+			Case CODE_EMITTER_GAS
+				sEmitter = "gas"
+			Case CODE_EMITTER_GAS64
+				sEmitter = "gas64"
+			Case CODE_EMITTER_LLVM
+				sEmitter = "llvm"
+			Case CODE_EMITTER_WASM32
+				sEmitter = "wasm"
+			Case CODE_EMITTER_WASM64
+				sEmitter = "wasm64"
+		End Select
+		Print "Code emitter", sEmitter
+	End Scope
+
+	Scope
+		Dim sFix As String
+		Select Case p->FixEmittedCode
+			Case NOT_FIX_EMITTED_CODE
+				sFix = "false"
+			Case FIX_EMITTED_CODE
+				sFix = "true"
+		End Select
+		Print "Fix emitted code", sFix
+	End Scope
+
+	Scope
+		Dim sUnicode As String
+		Select Case p->Unicode
+			Case DEFINE_ANSI
+				sUnicode = "false"
+			Case DEFINE_UNICODE
+				sUnicode = "true"
+		End Select
+		Print "Unicode", sUnicode
+	End Scope
+
+	Scope
+		Dim sRuntime As String
+		Select Case p->UseRuntimeLibrary
+			Case DEFINE_RUNTIME
+				sRuntime = "true"
+			Case DEFINE_WITHOUT_RUNTIME
+				sRuntime = "false"
+		End Select
+		Print "Use runtime libraries", sRuntime
+	End Scope
+
+	Scope
+		Dim sAware As String
+		Select Case p->AddressAware
+			Case ProcessAddressSpace.LARGE_ADDRESS_UNAWARE
+				sAware = "unaware"
+			Case ProcessAddressSpace.LARGE_ADDRESS_AWARE
+				sAware = "aware"
+		End Select
+		Print "Address aware", sAware
+	End Scope
+
+	Scope
+		Dim sMode As String
+		Select Case p->ThreadingMode
+			Case DEFINE_SINGLETHREADING_RUNTIME
+				sMode = "single threading"
+			Case DEFINE_MULTITHREADING_RUNTIME
+				sMode = "multithreading"
+		End Select
+		Print "Threading mode", sMode
+	End Scope
+
+	Scope
+		Dim sEnviron As String
+		Select Case p->UseEnvironmentFile
+			Case SETTINGS_ENVIRONMENT_ALWAYS
+				sEnviron = "true"
+			Case DO_NOT_USE_SETTINGS_ENVIRONMENT
+				sEnviron = "false"
+		End Select
+		Print "Create environment file", sEnviron
+	End Scope
+
+	Scope
+		Print "Minimal OS version", p->MinimalOSVersion
+	End Scope
+
+	Scope
+		Dim sSuffix As String
+		If p->UseFileSuffix Then
+			sSuffix = "true"
+		Else
+			sSuffix = "false"
+		End If
+		Print "Use file suffix", sSuffix
+	End Scope
+
+	Scope
+		Dim sPedantic As String
+		If p->Pedantic Then
+			sPedantic = "true"
+		Else
+			sPedantic = "false"
+		End If
+		Print "Pedantic", sPedantic
+	End Scope
+
+	Print ""
+
+End Sub
+
+Dim pParams As Parameter Ptr = Allocate(SizeOf(Parameter))
+If pParams = 0 Then
+	Print "Out of memory"
+	End(1)
+End If
 
 Scope
-	var resParse = ParseCommandLine(@Params)
+	var resParse = ParseCommandLine(pParams)
 
 	Select Case resParse
 
@@ -1664,6 +1827,7 @@ Scope
 			End(1)
 
 		Case PARSE_SUCCESS
+			PrintAllParameters(pParams)
 
 		Case PARSE_HELP
 			' We must print help and exit
@@ -1672,16 +1836,29 @@ Scope
 	End Select
 End Scope
 
-If Params.UseEnvironmentFile = SETTINGS_ENVIRONMENT_ALWAYS Then
-	var resSetenv = WriteSetenv(@Params)
+If pParams->UseEnvironmentFile = SETTINGS_ENVIRONMENT_ALWAYS Then
+	Print "Create environment file..."
+	var resSetenv = WriteSetenv(pParams)
 	If resSetenv Then
 		Print "Can not create environment file"
 		End(2)
 	End If
 End If
 
+ReDim FilesVector(0) As String
+Scope
+	Print "Find source files in folder", pParams->SourceFolder
+	Dim filespec As String = BuildPath(pParams->SourceFolder, "*.*")
+	GetFiles(FilesVector(), filespec)
+
+	For i As Integer = LBound(FilesVector) To UBound(FilesVector)
+		Print FilesVector(i)
+	Next
+End Scope
+
+Print "Create Makefile..."
 var MakefileNumber = Freefile()
-var resOpen = Open(Params.MakefileFileName, For Output, As MakefileNumber)
+var resOpen = Open(pParams->MakefileFileName, For Output, As MakefileNumber)
 If resOpen Then
 	Print "Can not create Makefile file"
 	End(3)
@@ -1691,18 +1868,19 @@ WriteHeader(MakefileNumber)
 
 WriteCompilerToolChain(MakefileNumber)
 WriteProcessorArch(MakefileNumber)
-WriteOutputFilename(MakefileNumber, @Params)
+WriteOutputFilename(MakefileNumber, pParams)
 WriteUtilsPathWin32(MakefileNumber)
 WriteArchSpecifiedPath(MakefileNumber)
 
-WriteFbcFlags(MakefileNumber, @Params)
-WriteGccFlags(MakefileNumber, @Params)
+WriteFbcFlags(MakefileNumber, pParams)
+WriteGccFlags(MakefileNumber, pParams)
 WriteAsmFlags(MakefileNumber)
 WriteGorcFlags(MakefileNumber)
-WriteLinkerFlags(MakefileNumber, @Params)
-WriteLinkerLibraries(MakefileNumber, @Params)
+WriteLinkerFlags(MakefileNumber, pParams)
+WriteLinkerLibraries(MakefileNumber, pParams)
 
-WriteDependencies(MakefileNumber, @Params)
+Print "Get Dependencies..."
+WriteDependencies(FilesVector(), MakefileNumber, pParams)
 
 WriteApplicationTargets(MakefileNumber)
 WriteCleanTarget(MakefileNumber)
@@ -1713,7 +1891,10 @@ WriteCreateDirsTarget(MakefileNumber)
 WriteApplicationRules(MakefileNumber)
 WriteAsmRule(MakefileNumber)
 WriteCRule(MakefileNumber)
-WriteBasRule(MakefileNumber, @Params)
+WriteBasRule(MakefileNumber, pParams)
 WriteResourceRule(MakefileNumber)
 
 Close(MakefileNumber)
+Deallocate(pParams)
+
+Print "Done"
