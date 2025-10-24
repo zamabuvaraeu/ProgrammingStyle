@@ -543,6 +543,12 @@ Private Function WriteSetenvWin32( _
 		Print #oStream, "set USE_RUNTIME=TRUE"
 	End If
 
+	Print #oStream, "rem Set TRUE to use C runtime"
+	Print #oStream, "set USE_CRUNTIME=TRUE"
+
+	Print #oStream, "rem Set TRUE to use ld linker"
+	Print #oStream, "set USE_LD_LINKER=TRUE"
+
 	Print #oStream, "rem Set FALSE to disable c-runtime libraries"
 	Print #oStream, "rem set USE_CRUNTIME=TRUE"
 
@@ -698,6 +704,7 @@ Private Sub WriteOutputFilename( _
 
 	Print #MakefileStream, "USE_RUNTIME ?= TRUE"
 	Print #MakefileStream, "USE_CRUNTIME ?= TRUE"
+	Print #MakefileStream, "USE_LD_LINKER ?= TRUE"
 	Print #MakefileStream, "FBC_VER ?= " & FBC_VER
 	Print #MakefileStream, "GCC_VER ?= " & GCC_VER
 
@@ -945,6 +952,7 @@ Private Sub WriteLinkerFlags( _
 			' --max-memory=<value>     Maximum size of the linear memory
 			' --max-memory=8388608
 
+			Print #MakefileStream, "ifeq ($(USE_LD_LINKER),TRUE)"
 			Print #MakefileStream, "LDFLAGS+=-m wasm32"
 			Print #MakefileStream, "LDFLAGS+=--allow-undefined"
 			Print #MakefileStream, "LDFLAGS+=--no-entry"
@@ -954,6 +962,8 @@ Private Sub WriteLinkerFlags( _
 			Print #MakefileStream, "LDFLAGS+=-L ""$(LIB_DIR)"""
 
 			Print #MakefileStream, "release: LDFLAGS+=--lto-O3 --gc-sections"
+			Print #MakefileStream, "else"
+			Print #MakefileStream, "endif"
 
 		Case Else
 			Print #MakefileStream, "ifeq ($(PROCESSOR_ARCHITECTURE),AMD64)"
@@ -965,7 +975,11 @@ Private Sub WriteLinkerFlags( _
 				Case LARGE_ADDRESS_UNAWARE
 
 				Case LARGE_ADDRESS_AWARE
+					Print #MakefileStream, "ifeq ($(USE_LD_LINKER),TRUE)"
+					Print #MakefileStream, "LDFLAGS+=--large-address-aware"
+					Print #MakefileStream, "else"
 					Print #MakefileStream, "LDFLAGS+=-Wl,--large-address-aware"
+					Print #MakefileStream, "endif"
 
 			End Select
 
@@ -974,23 +988,47 @@ Private Sub WriteLinkerFlags( _
 			Select Case p->FileSubsystem
 
 				Case SUBSYSTEM_CONSOLE
+					Print #MakefileStream, "ifeq ($(USE_LD_LINKER),TRUE)"
+					Print #MakefileStream, "LDFLAGS+=--subsystem console"
+					Print #MakefileStream, "else"
 					Print #MakefileStream, "LDFLAGS+=-Wl,--subsystem,console"
+					Print #MakefileStream, "endif"
 
 				Case SUBSYSTEM_WINDOW
+					Print #MakefileStream, "ifeq ($(USE_LD_LINKER),TRUE)"
+					Print #MakefileStream, "LDFLAGS+=--subsystem windows"
+					Print #MakefileStream, "else"
 					Print #MakefileStream, "LDFLAGS+=-Wl,--subsystem,windows"
+					Print #MakefileStream, "endif"
 
 				Case SUBSYSTEM_NATIVE
+					Print #MakefileStream, "ifeq ($(USE_LD_LINKER),TRUE)"
+					Print #MakefileStream, "LDFLAGS+=--subsystem native"
+					Print #MakefileStream, "else"
 					Print #MakefileStream, "LDFLAGS+=-Wl,--subsystem,native"
+					Print #MakefileStream, "endif"
 
 			End Select
 
+			Print #MakefileStream, "ifeq ($(USE_LD_LINKER),TRUE)"
+			Print #MakefileStream, "LDFLAGS+=--no-seh --nxcompat"
+			Print #MakefileStream, "else"
 			Print #MakefileStream, "LDFLAGS+=-Wl,--no-seh -Wl,--nxcompat"
-
-			Print #MakefileStream, "ifeq ($(USE_RUNTIME),TRUE)"
-			Print #MakefileStream, "LDFLAGS+=-Wl,--stack 2097152,2097152"
 			Print #MakefileStream, "endif"
 
+			Print #MakefileStream, "ifeq ($(USE_RUNTIME),TRUE)"
+			Print #MakefileStream, "ifeq ($(USE_LD_LINKER),TRUE)"
+			Print #MakefileStream, "LDFLAGS+=--stack 2097152,2097152"
+			Print #MakefileStream, "else"
+			Print #MakefileStream, "LDFLAGS+=-Wl,--stack 2097152,2097152"
+			Print #MakefileStream, "endif"
+			Print #MakefileStream, "endif"
+
+			Print #MakefileStream, "ifeq ($(USE_LD_LINKER),TRUE)"
+			Print #MakefileStream, "LDFLAGS+=-nostdlib"
+			Print #MakefileStream, "else"
 			Print #MakefileStream, "LDFLAGS+=-pipe -nostdlib"
+			Print #MakefileStream, "endif"
 
 			Print #MakefileStream, "LDFLAGS+=-L ."
 			Print #MakefileStream, "LDFLAGS+=-L ""$(LIB_DIR)"""
@@ -999,7 +1037,11 @@ Private Sub WriteLinkerFlags( _
 			Print #MakefileStream, "LDFLAGS+=-T ""$(LD_SCRIPT)"""
 			Print #MakefileStream, "endif"
 
+			Print #MakefileStream, "ifeq ($(USE_LD_LINKER),TRUE)"
+			Print #MakefileStream, "release: LDFLAGS+=-s --gc-sections"
+			Print #MakefileStream, "else"
 			Print #MakefileStream, "release: LDFLAGS+=-s -Wl,--gc-sections"
+			Print #MakefileStream, "endif"
 			Print #MakefileStream, "ifneq ($(FLTO),)"
 			Print #MakefileStream, "release: LDFLAGS+=-flto"
 			Print #MakefileStream, "endif"
@@ -1054,7 +1096,11 @@ Private Sub WriteLinkerLibraries( _
 
 			Print #MakefileStream,
 
+			Print #MakefileStream, "ifeq ($(USE_LD_LINKER),TRUE)"
+			Print #MakefileStream, "LDLIBS+=--start-group"
+			Print #MakefileStream, "else"
 			Print #MakefileStream, "LDLIBS+=-Wl,--start-group"
+			Print #MakefileStream, "endif"
 
 			' OS libraries
 			Scope
@@ -1088,7 +1134,11 @@ Private Sub WriteLinkerLibraries( _
 				Print #MakefileStream, "endif"
 			End Scope
 
+			Print #MakefileStream, "ifeq ($(USE_LD_LINKER),TRUE)"
+			Print #MakefileStream, "LDLIBS+=--end-group"
+			Print #MakefileStream, "else"
 			Print #MakefileStream, "LDLIBS+=-Wl,--end-group"
+			Print #MakefileStream, "endif"
 
 			Print #MakefileStream,
 
@@ -1176,10 +1226,10 @@ Private Sub WriteApplicationRules( _
 	)
 
 	Print #MakefileStream, "$(BIN_RELEASE_DIR)$(PATH_SEP)$(OUTPUT_FILE_NAME): $(OBJECTFILES_RELEASE)"
-	Print #MakefileStream, vbTab & "$(CC) $(LDFLAGS) $(LDLIBSBEGIN) $^ $(LDLIBS) $(LDLIBSEND) -o $@"
+	Print #MakefileStream, vbTab & "$(LD) $(LDFLAGS) $(LDLIBSBEGIN) $^ $(LDLIBS) $(LDLIBSEND) -o $@"
 	Print #MakefileStream,
 	Print #MakefileStream, "$(BIN_DEBUG_DIR)$(PATH_SEP)$(OUTPUT_FILE_NAME): $(OBJECTFILES_DEBUG)"
-	Print #MakefileStream, vbTab & "$(CC) $(LDFLAGS) $(LDLIBSBEGIN) $^ $(LDLIBS) $(LDLIBSEND) -o $@"
+	Print #MakefileStream, vbTab & "$(LD) $(LDFLAGS) $(LDLIBSBEGIN) $^ $(LDLIBS) $(LDLIBSEND) -o $@"
 	Print #MakefileStream,
 
 End Sub
@@ -1831,7 +1881,7 @@ Scope
 			PrintAllParameters(pParams)
 
 		Case PARSE_HELP
-			' We must print help and exit
+			' Just print help and exit
 			End(0)
 
 	End Select
