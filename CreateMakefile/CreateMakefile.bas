@@ -268,7 +268,7 @@ Private Function ParseCommandLine( _
 	p->IncludePath = ""
 	p->FbcCompilerName = ""
 	p->OutputFileName = "a"
-	p->MainModuleName = "a"
+	p->MainModuleName = ""
 	p->ExeType = OUTPUT_FILETYPE_EXE
 	p->FileSubsystem = SUBSYSTEM_CONSOLE
 	p->Emitter = CODE_EMITTER_GCC
@@ -278,7 +278,6 @@ Private Function ParseCommandLine( _
 	p->AddressAware = LARGE_ADDRESS_UNAWARE
 	p->ThreadingMode = DEFINE_SINGLETHREADING_RUNTIME
 	p->UseEnvironmentFile = SETTINGS_ENVIRONMENT_ALWAYS
-	' Windows NT 4.0 и Windows 95
 	p->MinimalOSVersion = WINVER_DEFAULT
 	p->UseFileSuffix = False
 	p->Pedantic = False
@@ -432,7 +431,11 @@ Private Function ParseCommandLine( _
 	End If
 
 	If Len(p->IncludePath) = 0 Then
-		BuildPath(p->CompilerPath, "inc")
+		p->IncludePath = BuildPath(p->CompilerPath, "inc")
+	End If
+
+	If Len(p->MainModuleName) = 0 Then
+		p->MainModuleName = p->OutputFileName
 	End If
 
 	Return PARSE_SUCCESS

@@ -141,7 +141,7 @@ mingw32-make all
 Создадим `Makefile` для консольной программы с поддержкой юникода и адресного пространства больше 2 гигабайт:
 
 ```bat
-"c:\FreeBASIC Projects\CreateMakefile.exe" -out HelloWorld -subsystem console -unicode true -addressaware true -fbc-path "C:\Program Files (x86)\FreeBASIC-1.10.0-winlibs-gcc-9.3.0" -fbc fbc64.exe
+"c:\FreeBASIC Projects\CreateMakefile.exe" -out HelloWorld -unicode true -addressaware true -fbc-path "C:\Program Files (x86)\FreeBASIC-1.10.0-winlibs-gcc-9.3.0" -fbc fbc64.exe
 ```
 
 ### WebAssembly
@@ -153,7 +153,7 @@ mingw32-make all
 ### Все параметры
 
 ```bat
-"c:\FreeBASIC Projects\CreateMakefile.exe" -makefile Makefile -src src -fbc-path "C:\Program Files (x86)\FreeBASIC-1.10.0-winlibs-gcc-9.3.0" -fbc fbc64.exe -out HelloWorld -module WinMain -exetype exe -subsystem console -emitter gcc -fix true -unicode true -wrt true -addressaware true -multithreading false -usefilesuffix true -pedantic true -winver 1281 -create-environment-file true
+"c:\FreeBASIC Projects\CreateMakefile.exe" -makefile Makefile -src src -fbc-path "C:\Program Files (x86)\FreeBASIC-1.10.0-winlibs-gcc-9.3.0" -fbc fbc64.exe -out HelloWorld -module WinMain -exetype exe -subsystem console -emitter gcc -fix false -unicode true -wrt false -addressaware true -multithreading false -usefilesuffix true -pedantic true -winver 1281 -create-environment-file true
 ```
 
 ## Параметры генератора Makefile
@@ -194,9 +194,9 @@ mingw32-make all
 
 ### module
 
-Главный модуль программы.
+Главный модуль программы. Указываем имя файла без расширения.
 
-По умолчанию равен названию программы (без расширения).
+По умолчанию равен названию программы (без расширения): то, что указано в параметре `-out`.
 
 ### exetype
 
