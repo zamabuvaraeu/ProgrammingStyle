@@ -513,12 +513,10 @@ Private Function WriteSetenvWin32( _
 	Print #oStream, "if %PROCESSOR_ARCHITECTURE% == AMD64 ("
 	Print #oStream, "set BinFolder=bin\win64"
 	Print #oStream, "set LibFolder=lib\win64"
-	Print #oStream, "set FBC_FILENAME=fbc64.exe"
 	Print #oStream, "set MARCH=x86-64"
 	Print #oStream, ") else ("
 	Print #oStream, "set BinFolder=bin\win32"
 	Print #oStream, "set LibFolder=lib\win32"
-	Print #oStream, "set FBC_FILENAME=fbc32.exe"
 	Print #oStream, "set MARCH=i686"
 	Print #oStream, ")"
 	Print #oStream,
