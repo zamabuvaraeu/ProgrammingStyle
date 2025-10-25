@@ -109,32 +109,6 @@ Type Parameter
 	CreateDirs As Boolean
 End Type
 
-Private Sub SplitRecursive( _
-		LinesVector() As String, _
-		ByVal strSource As String, _
-		ByVal Separator As String _
-	)
-
-	Dim u As Integer = UBound(LinesVector)
-
-	Dim Finded As Integer = InStr(strSource, Separator)
-
-	If Finded Then
-		Dim strLeft As String = Mid(strSource, 1, Finded - 1)
-
-		ReDim Preserve LinesVector(u + 1)
-		LinesVector(u) = strLeft
-
-		Dim FromLength As Integer = Len(Separator)
-		Dim strRight As String = Mid(strSource, Finded + FromLength)
-
-		SplitRecursive(LinesVector(), strRight, Separator)
-	Else
-		LinesVector(u) = strSource
-	End If
-
-End Sub
-
 Private Function Join( _
 		LinesVector() As String, _
 		ByVal Separator As String _
@@ -152,54 +126,93 @@ Private Function Join( _
 
 End Function
 
-Private Function AppendPathSeparator( _
-		ByVal strLine As String _
+Private Function CodeGenerationToString( _
+		ByVal p As Parameter Ptr _
 	) As String
 
-	var Length = Len(strLine)
+	Dim ep As String
 
-	var LastChar = Mid(strLine, Length, 1)
+	Select Case p->Emitter
 
-	If LastChar = PATH_SEPARATOR Then
-		Return strLine
-	End If
+		Case CODE_EMITTER_GCC
+			ep = "-gen gcc"
 
-	Return strLine & PATH_SEPARATOR
+		Case CODE_EMITTER_GAS
+			ep = "-gen gas"
+
+		Case CODE_EMITTER_GAS64
+			ep = "-gen gas64"
+
+		Case CODE_EMITTER_LLVM
+			ep = "-gen llvm"
+
+		Case CODE_EMITTER_WASM32
+			ep = "-gen gcc"
+
+		Case Else ' CODE_EMITTER_WASM64
+			ep = "-gen gcc"
+
+	End Select
+
+	Return ep
 
 End Function
 
-Private Function BuildPath( _
-		ByVal Directory As String, _
-		ByVal File As String _
+Private Function CreateCompilerParams( _
+		ByVal p As Parameter Ptr _
 	) As String
 
-	Dim DirLength As Integer = Len(Directory)
-	Dim DirWithPathSeparator As String
-	If DirLength Then
-		DirWithPathSeparator = AppendPathSeparator(Directory)
+	Dim ParamVector(10) As String
+
+	ParamVector(0) = CodeGenerationToString(p)
+
+	Select Case p->Unicode
+
+		Case DEFINE_ANSI
+			ParamVector(1) = ""
+
+		Case DEFINE_UNICODE
+			ParamVector(1) = "-d UNICODE"
+
+	End Select
+
+	Select Case p->UseRuntimeLibrary
+
+		Case DEFINE_RUNTIME
+			ParamVector(2) = ""
+
+		Case DEFINE_WITHOUT_RUNTIME
+			ParamVector(2) = "-d WITHOUT_RUNTIME"
+
+	End Select
+
+	If p->MinimalOSVersion Then
+		ParamVector(3) = "-d WINVER=" & p->MinimalOSVersion & " -d _WIN32_WINNT=" & p->MinimalOSVersion
+	Else
+		ParamVector(3) = ""
 	End If
 
-	Dim FirstChar As String = Mid(File, 1, 1)
-
-	If FirstChar = PATH_SEPARATOR Then
-		Return DirWithPathSeparator & Mid(File, 2)
+	If p->FileSubsystem = SUBSYSTEM_WINDOW Then
+		ParamVector(4) = "-s gui"
+	Else
+		ParamVector(4) = "-s console"
 	End If
 
-	Return DirWithPathSeparator & File
+	ParamVector(5) = "-w error -maxerr 1"
 
-End Function
+	ParamVector(6) = "-O 0"
 
-Private Function GetExtensionName( _
-		ByVal filename As String _
-	) As String
+	ParamVector(7) = "-r"
 
-	Dim DotPosition As Integer = InStrRev(filename, ".")
+	ParamVector(8) = "-showincludes"
 
-	If DotPosition Then
-		Return Mid(filename, DotPosition + 1)
-	End If
+	ParamVector(9) = "-m " & p->MainModuleName
 
-	Return ""
+	ParamVector(10) = "-i " & p->SourceFolder
+
+	Dim CompilerParam As String = Join(ParamVector(), " ")
+
+	Return CompilerParam
 
 End Function
 
@@ -259,209 +272,189 @@ Private Function ReplaceOSPathSeparatorToMovePathSeparator( _
 
 End Function
 
-Private Function ParseCommandLine( _
-		ByVal p As Parameter Ptr _
-	) As ParseResult
+Private Sub RemoveVerticalLine( _
+		LinesVector() As String _
+	)
 
-	p->MakefileFileName = "Makefile"
-	p->SourceFolder = "src"
-	p->CompilerPath = ""
-	p->IncludePath = ""
-	p->FbcCompilerName = ""
-	p->OutputFileName = "a"
-	p->MainModuleName = ""
-	p->ExeType = OUTPUT_FILETYPE_EXE
-	p->FileSubsystem = SUBSYSTEM_CONSOLE
-	p->Emitter = CODE_EMITTER_GCC
-	p->FixEmittedCode = NOT_FIX_EMITTED_CODE
-	p->Unicode = DEFINE_ANSI
-	p->UseRuntimeLibrary = DEFINE_RUNTIME
-	p->AddressAware = LARGE_ADDRESS_UNAWARE
-	p->ThreadingMode = DEFINE_SINGLETHREADING_RUNTIME
-	p->UseEnvironmentFile = SETTINGS_ENVIRONMENT_ALWAYS
-	p->MinimalOSVersion = WINVER_DEFAULT
-	p->UseFileSuffix = False
-	p->Pedantic = False
-	p->CreateDirs = False
+	' Remove all "|"
 
-	Dim i As Integer = 1
-	Dim sKey As String = Command(i)
-	Do While Len(sKey)
-		i += 1
-		Dim sValue As String = Command(i)
+	Const VSPattern = "|"
 
-		Select Case sKey
+	For i As Integer = LBound(LinesVector) To UBound(LinesVector)
+		LinesVector(i) = Replace(LinesVector(i), VSPattern, "")
+		LinesVector(i) = Trim(LinesVector(i))
+	Next
 
-			Case "-makefile"
-				p->MakefileFileName = sValue
+End Sub
 
-			Case "-src"
-				p->SourceFolder = sValue
+Private Sub RemoveOmmittedIncludes( _
+		LinesVector() As String _
+	)
 
-			Case "-fbc-path"
-				p->CompilerPath = sValue
+	' Remove all strings "(filename.bi)"
 
-			Case "-i"
-				p->IncludePath = sValue
+	For i As Integer = LBound(LinesVector) To UBound(LinesVector)
 
-			Case "-fbc"
-				p->FbcCompilerName = sValue
+		Dim First As String = Mid(LinesVector(i), 1, 1)
 
-			Case "-out"
-				p->OutputFileName = sValue
+		If First = "(" Then
+			Dim Length As Integer = Len(LinesVector(i))
+			Dim Last As String = Mid(LinesVector(i), Length, 1)
 
-			Case "-module"
-				p->MainModuleName = sValue
+			If Last = ")" Then
+				LinesVector(i) = ""
+			End If
+		End If
+	Next
 
-			Case "-exetype"
+End Sub
 
-				Select Case sValue
+Private Sub ReplaceSolidusToPathSeparatorVector( _
+		LinesVector() As String _
+	)
 
-					Case "exe"
-						p->ExeType = OUTPUT_FILETYPE_EXE
+	' Replace "\" to "$(PATH_SEP)"
 
-					Case "dll"
-						p->ExeType = OUTPUT_FILETYPE_DLL
+	For i As Integer = LBound(LinesVector) To UBound(LinesVector)
+		LinesVector(i) = ReplaceOSPathSeparatorToMakePathSeparator(LinesVector(i))
+	Next
 
-					Case "lib"
-						p->ExeType = OUTPUT_FILETYPE_LIBRARY
+End Sub
 
-					Case "wasm32"
-						p->ExeType = OUTPUT_FILETYPE_WASM32
+Private Sub AddSpaces( _
+		LinesVector() As String _
+	)
 
-					Case "wasm64"
-						p->ExeType = OUTPUT_FILETYPE_WASM64
+	' Append space to all strings
+	For i As Integer = LBound(LinesVector) To UBound(LinesVector)
+		Dim Length As Integer = Len(LinesVector(i))
+		If Length Then
+			LinesVector(i) = LinesVector(i) & " "
+		End If
+	Next
 
-				End Select
+End Sub
 
-			Case "-subsystem"
+Private Function ReadTextStream( _
+		ByVal Stream As Long _
+	) As String
 
-				Select Case sValue
+	' Read file and return strings
+	Dim Lines As String
 
-					Case "console"
-						p->FileSubsystem = SUBSYSTEM_CONSOLE
-
-					Case "windows"
-						p->FileSubsystem = SUBSYSTEM_WINDOW
-
-					Case "native"
-						p->FileSubsystem = SUBSYSTEM_NATIVE
-
-				End Select
-
-			Case "-emitter"
-
-				Select Case sValue
-
-					Case "gcc"
-						p->Emitter = CODE_EMITTER_GCC
-
-					Case "gas"
-						p->Emitter = CODE_EMITTER_GAS
-
-					Case "gas64"
-						p->Emitter = CODE_EMITTER_GAS64
-
-					Case "llvm"
-						p->Emitter = CODE_EMITTER_LLVM
-
-					Case "wasm32"
-						p->Emitter = CODE_EMITTER_WASM32
-
-					Case "wasm64"
-						p->Emitter = CODE_EMITTER_WASM64
-
-				End Select
-
-			Case "-fix"
-				If sValue = "true" Then
-					p->FixEmittedCode = FIX_EMITTED_CODE
-				End If
-
-			Case "-unicode"
-				If sValue = "true" Then
-					p->Unicode = DEFINE_UNICODE
-				End If
-
-			Case "-wrt"
-				If sValue = "true" Then
-					p->UseRuntimeLibrary = DEFINE_WITHOUT_RUNTIME
-				End If
-
-			Case "-addressaware"
-				If sValue = "true" Then
-					p->AddressAware = LARGE_ADDRESS_AWARE
-				End If
-
-			Case "-multithreading"
-				If sValue = "true" Then
-					p->ThreadingMode = DEFINE_MULTITHREADING_RUNTIME
-				End If
-
-			Case "-usefilesuffix"
-				If sValue = "true" Then
-					p->UseFileSuffix = True
-				End If
-
-			Case "-pedantic"
-				If sValue = "true" Then
-					p->Pedantic = True
-				End If
-
-			Case "-create-environment-file"
-				If sValue = "false" Then
-					p->UseEnvironmentFile = DO_NOT_USE_SETTINGS_ENVIRONMENT
-				End If
-
-			Case "-winver"
-				p->MinimalOSVersion = CInt(sValue)
-
-			Case "-createdirs"
-				If sValue = "true" Then
-					p->CreateDirs = True
-				End If
-
-		End Select
-
-		i += 1
-		sKey = Command(i)
+	Do Until EOF(Stream)
+		Dim ln As String
+		Line Input #Stream, ln
+		Lines = Lines & Trim(ln) & vbCrLf
 	Loop
 
-	If Len(p->CompilerPath) = 0 Then
-		Print "Path to compiler is not specified"
-		Return PARSE_FAIL
-	End If
-
-	If Len(p->FbcCompilerName) = 0 Then
-		Print "Compiler name is not specified"
-		Return PARSE_FAIL
-	End If
-
-	If Len(p->IncludePath) = 0 Then
-		p->IncludePath = BuildPath(p->CompilerPath, "inc")
-	End If
-
-	If Len(p->MainModuleName) = 0 Then
-		p->MainModuleName = p->OutputFileName
-	End If
-
-	Return PARSE_SUCCESS
+	Return Lines
 
 End Function
 
-Private Function WriteSetenvLinux( _
-		ByVal p As Parameter Ptr _
-	) As Integer
+Private Function AppendPathSeparator( _
+		ByVal strLine As String _
+	) As String
 
-	var oStream = Freefile()
-	var resOpen = Open(MakefileParametersFile, For Output, As oStream)
-	If resOpen Then
-		Return 1
+	var Length = Len(strLine)
+
+	var LastChar = Mid(strLine, Length, 1)
+
+	If LastChar = PATH_SEPARATOR Then
+		Return strLine
 	End If
 
-	Close(oStream)
+	Return strLine & PATH_SEPARATOR
 
-	Return 0
+End Function
+
+Private Function GetBasFileWithoutPath( _
+		ByVal BasFile As String, _
+		ByVal p As Parameter Ptr _
+	) As String
+
+	Dim ReplaceFind As String = AppendPathSeparator(p->SourceFolder)
+
+	Return Replace(BasFile, ReplaceFind, "")
+
+End Function
+
+Private Sub RemoveDefaultIncludes( _
+		LinesVector() As String, _
+		ByVal p As Parameter Ptr _
+	)
+
+	' Remove default include files
+
+	For i As Integer = LBound(LinesVector) To UBound(LinesVector)
+
+		Dim Finded As Integer = InStr(LinesVector(i), p->IncludePath)
+
+		If Finded Then
+			LinesVector(i) = ""
+		End If
+	Next
+
+End Sub
+
+Private Sub SplitRecursive( _
+		LinesVector() As String, _
+		ByVal strSource As String, _
+		ByVal Separator As String _
+	)
+
+	Dim u As Integer = UBound(LinesVector)
+
+	Dim Finded As Integer = InStr(strSource, Separator)
+
+	If Finded Then
+		Dim strLeft As String = Mid(strSource, 1, Finded - 1)
+
+		ReDim Preserve LinesVector(u + 1)
+		LinesVector(u) = strLeft
+
+		Dim FromLength As Integer = Len(Separator)
+		Dim strRight As String = Mid(strSource, Finded + FromLength)
+
+		SplitRecursive(LinesVector(), strRight, Separator)
+	Else
+		LinesVector(u) = strSource
+	End If
+
+End Sub
+
+Private Function BuildPath( _
+		ByVal Directory As String, _
+		ByVal File As String _
+	) As String
+
+	Dim DirLength As Integer = Len(Directory)
+	Dim DirWithPathSeparator As String
+	If DirLength Then
+		DirWithPathSeparator = AppendPathSeparator(Directory)
+	End If
+
+	Dim FirstChar As String = Mid(File, 1, 1)
+
+	If FirstChar = PATH_SEPARATOR Then
+		Return DirWithPathSeparator & Mid(File, 2)
+	End If
+
+	Return DirWithPathSeparator & File
+
+End Function
+
+Private Function GetExtensionName( _
+		ByVal filename As String _
+	) As String
+
+	Dim DotPosition As Integer = InStrRev(filename, ".")
+
+	If DotPosition Then
+		Return Mid(filename, DotPosition + 1)
+	End If
+
+	Return ""
 
 End Function
 
@@ -491,6 +484,38 @@ Private Function GetExtensionOutputFile( _
 	End Select
 
 	Return Extension
+
+End Function
+
+Private Function FileExists( _
+		ByVal Filepath As String _
+	) As Boolean
+
+	var Filenumber = Freefile()
+	var resOpen = Open(Filepath, For Input, As Filenumber)
+	If resOpen Then
+		Return False
+	End If
+
+	Close(Filenumber)
+
+	Return True
+
+End Function
+
+Private Function WriteSetenvLinux( _
+		ByVal p As Parameter Ptr _
+	) As Integer
+
+	var oStream = Freefile()
+	var resOpen = Open(MakefileParametersFile, For Output, As oStream)
+	If resOpen Then
+		Return 1
+	End If
+
+	Close(oStream)
+
+	Return 0
 
 End Function
 
@@ -776,38 +801,6 @@ Private Sub WriteArchSpecifiedPath( _
 	Print #MakefileStream,
 
 End Sub
-
-Private Function CodeGenerationToString( _
-		ByVal p As Parameter Ptr _
-	) As String
-
-	Dim ep As String
-
-	Select Case p->Emitter
-
-		Case CODE_EMITTER_GCC
-			ep = "-gen gcc"
-
-		Case CODE_EMITTER_GAS
-			ep = "-gen gas"
-
-		Case CODE_EMITTER_GAS64
-			ep = "-gen gas64"
-
-		Case CODE_EMITTER_LLVM
-			ep = "-gen llvm"
-
-		Case CODE_EMITTER_WASM32
-			ep = "-gen gcc"
-
-		Case Else ' CODE_EMITTER_WASM64
-			ep = "-gen gcc"
-
-	End Select
-
-	Return ep
-
-End Function
 
 Private Sub WriteFbcFlags( _
 		ByVal MakefileStream As Long, _
@@ -1325,155 +1318,6 @@ Private Sub WriteBasRule( _
 
 End Sub
 
-Private Function CreateCompilerParams( _
-		ByVal p As Parameter Ptr _
-	) As String
-
-	Dim ParamVector(10) As String
-
-	ParamVector(0) = CodeGenerationToString(p)
-
-	Select Case p->Unicode
-
-		Case DEFINE_ANSI
-			ParamVector(1) = ""
-
-		Case DEFINE_UNICODE
-			ParamVector(1) = "-d UNICODE"
-
-	End Select
-
-	Select Case p->UseRuntimeLibrary
-
-		Case DEFINE_RUNTIME
-			ParamVector(2) = ""
-
-		Case DEFINE_WITHOUT_RUNTIME
-			ParamVector(2) = "-d WITHOUT_RUNTIME"
-
-	End Select
-
-	If p->MinimalOSVersion Then
-		ParamVector(3) = "-d WINVER=" & p->MinimalOSVersion & " -d _WIN32_WINNT=" & p->MinimalOSVersion
-	Else
-		ParamVector(3) = ""
-	End If
-
-	If p->FileSubsystem = SUBSYSTEM_WINDOW Then
-		ParamVector(4) = "-s gui"
-	Else
-		ParamVector(4) = "-s console"
-	End If
-
-	ParamVector(5) = "-w error -maxerr 1"
-
-	ParamVector(6) = "-O 0"
-
-	ParamVector(7) = "-r"
-
-	ParamVector(8) = "-showincludes"
-
-	ParamVector(9) = "-m " & p->MainModuleName
-
-	ParamVector(10) = "-i " & p->SourceFolder
-
-	Dim CompilerParam As String = Join(ParamVector(), " ")
-
-	Return CompilerParam
-
-End Function
-
-Private Sub RemoveVerticalLine( _
-		LinesVector() As String _
-	)
-
-	' Remove all "|"
-
-	Const VSPattern = "|"
-
-	For i As Integer = LBound(LinesVector) To UBound(LinesVector)
-		LinesVector(i) = Replace(LinesVector(i), VSPattern, "")
-		LinesVector(i) = Trim(LinesVector(i))
-	Next
-
-End Sub
-
-Private Sub RemoveOmmittedIncludes( _
-		LinesVector() As String _
-	)
-
-	' Remove all strings "(filename.bi)"
-
-	For i As Integer = LBound(LinesVector) To UBound(LinesVector)
-
-		Dim First As String = Mid(LinesVector(i), 1, 1)
-
-		If First = "(" Then
-			Dim Length As Integer = Len(LinesVector(i))
-			Dim Last As String = Mid(LinesVector(i), Length, 1)
-
-			If Last = ")" Then
-				LinesVector(i) = ""
-			End If
-		End If
-	Next
-
-End Sub
-
-Private Sub ReplaceSolidusToPathSeparatorVector( _
-		LinesVector() As String _
-	)
-
-	' Replace "\" to "$(PATH_SEP)"
-
-	For i As Integer = LBound(LinesVector) To UBound(LinesVector)
-		LinesVector(i) = ReplaceOSPathSeparatorToMakePathSeparator(LinesVector(i))
-	Next
-
-End Sub
-
-Private Sub AddSpaces( _
-		LinesVector() As String _
-	)
-
-	' Append space to all strings
-	For i As Integer = LBound(LinesVector) To UBound(LinesVector)
-		Dim Length As Integer = Len(LinesVector(i))
-		If Length Then
-			LinesVector(i) = LinesVector(i) & " "
-		End If
-	Next
-
-End Sub
-
-Private Function ReadTextStream( _
-		ByVal Stream As Long _
-	) As String
-
-	' Read file and return strings
-	Dim Lines As String
-
-	Do Until EOF(Stream)
-		Dim ln As String
-		Line Input #Stream, ln
-		Lines = Lines & Trim(ln) & vbCrLf
-	Loop
-
-	Return Lines
-
-End Function
-
-Private Function GetBasFileWithoutPath( _
-		ByVal BasFile As String, _
-		ByVal p As Parameter Ptr _
-	) As String
-
-	Dim ReplaceFind As String = AppendPathSeparator(p->SourceFolder)
-
-	Return Replace(BasFile, ReplaceFind, "")
-
-End Function
-
 Private Sub WriteTextFile( _
 		ByVal MakefileStream As Long, _
 		ByVal BasFile As String, _
@@ -1515,40 +1359,6 @@ Private Sub WriteTextFile( _
 	Print #MakefileStream,
 
 End Sub
-
-Private Sub RemoveDefaultIncludes( _
-		LinesVector() As String, _
-		ByVal p As Parameter Ptr _
-	)
-
-	' Remove default include files
-
-	For i As Integer = LBound(LinesVector) To UBound(LinesVector)
-
-		Dim Finded As Integer = InStr(LinesVector(i), p->IncludePath)
-
-		If Finded Then
-			LinesVector(i) = ""
-		End If
-	Next
-
-End Sub
-
-Private Function FileExists( _
-		ByVal Filepath As String _
-	) As Boolean
-
-	var Filenumber = Freefile()
-	var resOpen = Open(Filepath, For Input, As Filenumber)
-	If resOpen Then
-		Return False
-	End If
-
-	Close(Filenumber)
-
-	Return True
-
-End Function
 
 Private Function GetIncludesFromBasFile( _
 		ByVal Filepath As String, _
@@ -1721,6 +1531,196 @@ Private Sub WriteDependencies( _
 	Print #MakefileStream,
 
 End Sub
+
+Private Function ParseCommandLine( _
+		ByVal p As Parameter Ptr _
+	) As ParseResult
+
+	p->MakefileFileName = "Makefile"
+	p->SourceFolder = "src"
+	p->CompilerPath = ""
+	p->IncludePath = ""
+	p->FbcCompilerName = ""
+	p->OutputFileName = "a"
+	p->MainModuleName = ""
+	p->ExeType = OUTPUT_FILETYPE_EXE
+	p->FileSubsystem = SUBSYSTEM_CONSOLE
+	p->Emitter = CODE_EMITTER_GCC
+	p->FixEmittedCode = NOT_FIX_EMITTED_CODE
+	p->Unicode = DEFINE_ANSI
+	p->UseRuntimeLibrary = DEFINE_RUNTIME
+	p->AddressAware = LARGE_ADDRESS_UNAWARE
+	p->ThreadingMode = DEFINE_SINGLETHREADING_RUNTIME
+	p->UseEnvironmentFile = SETTINGS_ENVIRONMENT_ALWAYS
+	p->MinimalOSVersion = WINVER_DEFAULT
+	p->UseFileSuffix = False
+	p->Pedantic = False
+	p->CreateDirs = False
+
+	Dim i As Integer = 1
+	Dim sKey As String = Command(i)
+	Do While Len(sKey)
+		i += 1
+		Dim sValue As String = Command(i)
+
+		Select Case sKey
+
+			Case "-makefile"
+				p->MakefileFileName = sValue
+
+			Case "-src"
+				p->SourceFolder = sValue
+
+			Case "-fbc-path"
+				p->CompilerPath = sValue
+
+			Case "-i"
+				p->IncludePath = sValue
+
+			Case "-fbc"
+				p->FbcCompilerName = sValue
+
+			Case "-out"
+				p->OutputFileName = sValue
+
+			Case "-module"
+				p->MainModuleName = sValue
+
+			Case "-exetype"
+
+				Select Case sValue
+
+					Case "exe"
+						p->ExeType = OUTPUT_FILETYPE_EXE
+
+					Case "dll"
+						p->ExeType = OUTPUT_FILETYPE_DLL
+
+					Case "lib"
+						p->ExeType = OUTPUT_FILETYPE_LIBRARY
+
+					Case "wasm32"
+						p->ExeType = OUTPUT_FILETYPE_WASM32
+
+					Case "wasm64"
+						p->ExeType = OUTPUT_FILETYPE_WASM64
+
+				End Select
+
+			Case "-subsystem"
+
+				Select Case sValue
+
+					Case "console"
+						p->FileSubsystem = SUBSYSTEM_CONSOLE
+
+					Case "windows"
+						p->FileSubsystem = SUBSYSTEM_WINDOW
+
+					Case "native"
+						p->FileSubsystem = SUBSYSTEM_NATIVE
+
+				End Select
+
+			Case "-emitter"
+
+				Select Case sValue
+
+					Case "gcc"
+						p->Emitter = CODE_EMITTER_GCC
+
+					Case "gas"
+						p->Emitter = CODE_EMITTER_GAS
+
+					Case "gas64"
+						p->Emitter = CODE_EMITTER_GAS64
+
+					Case "llvm"
+						p->Emitter = CODE_EMITTER_LLVM
+
+					Case "wasm32"
+						p->Emitter = CODE_EMITTER_WASM32
+
+					Case "wasm64"
+						p->Emitter = CODE_EMITTER_WASM64
+
+				End Select
+
+			Case "-fix"
+				If sValue = "true" Then
+					p->FixEmittedCode = FIX_EMITTED_CODE
+				End If
+
+			Case "-unicode"
+				If sValue = "true" Then
+					p->Unicode = DEFINE_UNICODE
+				End If
+
+			Case "-wrt"
+				If sValue = "true" Then
+					p->UseRuntimeLibrary = DEFINE_WITHOUT_RUNTIME
+				End If
+
+			Case "-addressaware"
+				If sValue = "true" Then
+					p->AddressAware = LARGE_ADDRESS_AWARE
+				End If
+
+			Case "-multithreading"
+				If sValue = "true" Then
+					p->ThreadingMode = DEFINE_MULTITHREADING_RUNTIME
+				End If
+
+			Case "-usefilesuffix"
+				If sValue = "true" Then
+					p->UseFileSuffix = True
+				End If
+
+			Case "-pedantic"
+				If sValue = "true" Then
+					p->Pedantic = True
+				End If
+
+			Case "-create-environment-file"
+				If sValue = "false" Then
+					p->UseEnvironmentFile = DO_NOT_USE_SETTINGS_ENVIRONMENT
+				End If
+
+			Case "-winver"
+				p->MinimalOSVersion = CInt(sValue)
+
+			Case "-createdirs"
+				If sValue = "true" Then
+					p->CreateDirs = True
+				End If
+
+		End Select
+
+		i += 1
+		sKey = Command(i)
+	Loop
+
+	If Len(p->CompilerPath) = 0 Then
+		Print "Path to compiler is not specified"
+		Return PARSE_FAIL
+	End If
+
+	If Len(p->FbcCompilerName) = 0 Then
+		Print "Compiler name is not specified"
+		Return PARSE_FAIL
+	End If
+
+	If Len(p->IncludePath) = 0 Then
+		p->IncludePath = BuildPath(p->CompilerPath, "inc")
+	End If
+
+	If Len(p->MainModuleName) = 0 Then
+		p->MainModuleName = p->OutputFileName
+	End If
+
+	Return PARSE_SUCCESS
+
+End Function
 
 Private Sub PrintAllParameters( _
 			ByVal p As Parameter Ptr _
