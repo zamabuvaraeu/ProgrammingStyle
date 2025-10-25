@@ -562,14 +562,11 @@ Private Function WriteSetenvWin32( _
 		Print #oStream, "set USE_RUNTIME=TRUE"
 	End If
 
-	Print #oStream, "rem Set TRUE to use C runtime"
-	Print #oStream, "set USE_CRUNTIME=TRUE"
+	Print #oStream, "rem Set FALSE to disable c-runtime libraries"
+	Print #oStream, "rem set USE_CRUNTIME=TRUE"
 
 	Print #oStream, "rem Set TRUE to use ld linker"
 	Print #oStream, "set USE_LD_LINKER=TRUE"
-
-	Print #oStream, "rem Set FALSE to disable c-runtime libraries"
-	Print #oStream, "rem set USE_CRUNTIME=TRUE"
 
 	Print #oStream, "rem WinAPI version"
 	Print #oStream, "set WINVER=" & p->MinimalOSVersion
