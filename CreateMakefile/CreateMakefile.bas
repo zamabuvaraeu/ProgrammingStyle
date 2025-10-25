@@ -504,6 +504,7 @@ Private Function WriteSetenvWin32( _
 		Return 1
 	End If
 
+	Print #oStream, "@echo off"
 	Print #oStream, "rem Setting up environment parameters for Makefile"
 	Print #oStream,
 
