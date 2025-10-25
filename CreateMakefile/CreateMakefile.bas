@@ -368,12 +368,12 @@ Private Function AppendPathSeparator( _
 
 End Function
 
-Private Function GetBasFileWithoutPath( _
+Private Function GetFileNameWithoutPath( _
 		ByVal BasFile As String, _
-		ByVal p As Parameter Ptr _
+		ByVal Path As String _
 	) As String
 
-	Dim ReplaceFind As String = AppendPathSeparator(p->SourceFolder)
+	Dim ReplaceFind As String = AppendPathSeparator(Path)
 
 	Return Replace(BasFile, ReplaceFind, "")
 
@@ -731,7 +731,6 @@ Private Sub WriteProcessorArch( _
 	)
 
 	Print #MakefileStream, "TARGET_TRIPLET ?="
-	Print #MakefileStream, "MARCH ?= i686"
 	Print #MakefileStream,
 
 End Sub
@@ -788,6 +787,7 @@ Private Sub WriteArchSpecifiedPath( _
 	Print #MakefileStream, "BIN_RELEASE_DIR_MOVE ?= bin$(MOVE_PATH_SEP)Release$(MOVE_PATH_SEP)x64"
 	Print #MakefileStream, "OBJ_DEBUG_DIR_MOVE ?= obj$(MOVE_PATH_SEP)Debug$(MOVE_PATH_SEP)x64"
 	Print #MakefileStream, "OBJ_RELEASE_DIR_MOVE ?= obj$(MOVE_PATH_SEP)Release$(MOVE_PATH_SEP)x64"
+	Print #MakefileStream, "MARCH ?= x86-64"
 	Print #MakefileStream, "else"
 	Print #MakefileStream, "BIN_DEBUG_DIR ?= bin$(PATH_SEP)Debug$(PATH_SEP)x86"
 	Print #MakefileStream, "BIN_RELEASE_DIR ?= bin$(PATH_SEP)Release$(PATH_SEP)x86"
@@ -797,6 +797,7 @@ Private Sub WriteArchSpecifiedPath( _
 	Print #MakefileStream, "BIN_RELEASE_DIR_MOVE ?= bin$(MOVE_PATH_SEP)Release$(MOVE_PATH_SEP)x86"
 	Print #MakefileStream, "OBJ_DEBUG_DIR_MOVE ?= obj$(MOVE_PATH_SEP)Debug$(MOVE_PATH_SEP)x86"
 	Print #MakefileStream, "OBJ_RELEASE_DIR_MOVE ?= obj$(MOVE_PATH_SEP)Release$(MOVE_PATH_SEP)x86"
+	Print #MakefileStream, "MARCH ?= i686"
 	Print #MakefileStream, "endif"
 	Print #MakefileStream,
 
@@ -1187,6 +1188,52 @@ Private Sub WriteLinkerLibraries( _
 
 End Sub
 
+Private Sub WriteObjectFiles( _
+		ByVal MakefileStream As Long, _
+		ByVal BasFile As String, _
+		ByVal DependenciesLine As String, _
+		ByVal p As Parameter Ptr _
+	)
+
+	Dim BasFileWithoutPath As String = GetFileNameWithoutPath(BasFile, p->SourceFolder)
+
+	Dim FileNameCExtenstionWitthSuffix As String
+	Dim ObjectFileName As String
+
+	Dim Finded As Integer = InStr(BasFile, ".bas")
+	If Finded Then
+		FileNameCExtenstionWitthSuffix = Replace(BasFileWithoutPath, ".bas", FileSuffix & ".c")
+		ObjectFileName = Replace(BasFileWithoutPath, ".bas", FileSuffix & ".o")
+	Else
+		FileNameCExtenstionWitthSuffix = Replace(BasFileWithoutPath, ".RC", FileSuffix & ".obj")
+		ObjectFileName = Replace(BasFileWithoutPath, ".RC", FileSuffix & ".obj")
+	End If
+
+	Dim FileNameWithPathSep As String = ReplaceOSPathSeparatorToMakePathSeparator( _
+		FileNameCExtenstionWitthSuffix _
+	)
+	Dim ObjectFileNameWithPathSep As String = ReplaceOSPathSeparatorToMakePathSeparator( _
+		ObjectFileName _
+	)
+
+	Dim FileNameWithDebug As String = DebugDirPrefix & FileNameWithPathSep
+	Dim FileNameWithRelease As String = ReleaseDirPrefix & FileNameWithPathSep
+
+	Dim ObjectFileNameWithDebug As String = "OBJECTFILES_DEBUG+=" & DebugDirPrefix & ObjectFileNameWithPathSep
+	Dim ObjectFileNameRelease As String = "OBJECTFILES_RELEASE+=" & ReleaseDirPrefix & ObjectFileNameWithPathSep
+
+	Dim ResultDebugString As String = FileNameWithDebug & ": " & DependenciesLine
+	Dim ResultReleaseString As String = FileNameWithRelease & ": " & DependenciesLine
+
+	Print #MakefileStream, ObjectFileNameWithDebug
+	Print #MakefileStream, ObjectFileNameRelease
+	Print #MakefileStream,
+	Print #MakefileStream, ResultDebugString
+	Print #MakefileStream, ResultReleaseString
+	Print #MakefileStream,
+
+End Sub
+
 Private Sub WriteApplicationTargets( _
 		ByVal MakefileStream As Long _
 	)
@@ -1318,48 +1365,6 @@ Private Sub WriteBasRule( _
 
 End Sub
 
-Private Sub WriteTextFile( _
-		ByVal MakefileStream As Long, _
-		ByVal BasFile As String, _
-		ByVal DependenciesLine As String, _
-		ByVal p As Parameter Ptr _
-	)
-
-	Dim BasFileWithoutPath As String = GetBasFileWithoutPath(BasFile, p)
-
-	Dim FileNameCExtenstionWitthSuffix As String
-	Dim ObjectFileName As String
-
-	Dim Finded As Integer = InStr(BasFile, ".bas")
-	If Finded Then
-		FileNameCExtenstionWitthSuffix = Replace(BasFileWithoutPath, ".bas", FileSuffix & ".c")
-		ObjectFileName = Replace(BasFileWithoutPath, ".bas", FileSuffix & ".o")
-	Else
-		FileNameCExtenstionWitthSuffix = Replace(BasFileWithoutPath, ".RC", FileSuffix & ".obj")
-		ObjectFileName = Replace(BasFileWithoutPath, ".RC", FileSuffix & ".obj")
-	End If
-
-	Dim FileNameWithPathSep As String = ReplaceOSPathSeparatorToMakePathSeparator(FileNameCExtenstionWitthSuffix)
-	Dim ObjectFileNameWithPathSep As String = ReplaceOSPathSeparatorToMakePathSeparator(ObjectFileName)
-
-	Dim FileNameWithDebug As String = DebugDirPrefix & FileNameWithPathSep
-	Dim FileNameWithRelease As String = ReleaseDirPrefix & FileNameWithPathSep
-
-	Dim ObjectFileNameWithDebug As String = "OBJECTFILES_DEBUG+=" & DebugDirPrefix & ObjectFileNameWithPathSep
-	Dim ObjectFileNameRelease As String = "OBJECTFILES_RELEASE+=" & ReleaseDirPrefix & ObjectFileNameWithPathSep
-
-	Dim ResultDebugString As String = FileNameWithDebug & ": " & DependenciesLine
-	Dim ResultReleaseString As String = FileNameWithRelease & ": " & DependenciesLine
-
-	Print #MakefileStream, ObjectFileNameWithDebug
-	Print #MakefileStream, ObjectFileNameRelease
-	Print #MakefileStream,
-	Print #MakefileStream, ResultDebugString
-	Print #MakefileStream, ResultReleaseString
-	Print #MakefileStream,
-
-End Sub
-
 Private Function GetIncludesFromBasFile( _
 		ByVal Filepath As String, _
 		ByVal p As Parameter Ptr _
@@ -1482,9 +1487,6 @@ Private Sub CreateDependencies( _
 	If LinesArrayCreated Then
 		Dim Original As String = LinesArray(0)
 
-		' First item is not needed
-		LinesArray(0) = ""
-
 		RemoveVerticalLine(LinesArray())
 		RemoveOmmittedIncludes(LinesArray())
 		RemoveDefaultIncludes(LinesArray(), p)
@@ -1493,7 +1495,7 @@ Private Sub CreateDependencies( _
 
 		Dim OneLine As String = Join(LinesArray(), "")
 
-		WriteTextFile(MakefileStream, Original, RTrim(OneLine), p)
+		WriteObjectFiles(MakefileStream, Original, RTrim(OneLine), p)
 	End If
 
 End Sub
