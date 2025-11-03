@@ -769,10 +769,10 @@ Private Sub WriteUtilsPathWin32( _
 	Print #MakefileStream, "PATH_SEP ?= /"
 	Print #MakefileStream, "MOVE_PATH_SEP ?= \\"
 	Print #MakefileStream,
-	Print #MakefileStream, "MOVE_COMMAND ?= cmd.exe /c move /y"
-	Print #MakefileStream, "DELETE_COMMAND ?= cmd.exe /c del /f /q"
-	Print #MakefileStream, "MKDIR_COMMAND ?= cmd.exe /c mkdir"
-	Print #MakefileStream, "CPREPROCESSOR_COMMAND ?= cmd.exe /c echo no need to fix code"
+	Print #MakefileStream, "MOVE_COMMAND ?= cmd.exe $(PARAM_SEP)c move $(PARAM_SEP)y"
+	Print #MakefileStream, "DELETE_COMMAND ?= cmd.exe $(PARAM_SEP)c del $(PARAM_SEP)f $(PARAM_SEP)q"
+	Print #MakefileStream, "MKDIR_COMMAND ?= cmd.exe $(PARAM_SEP)c mkdir"
+	Print #MakefileStream, "CPREPROCESSOR_COMMAND ?= cmd.exe $(PARAM_SEP)c echo no need to fix code"
 	Print #MakefileStream,
 
 End Sub
@@ -820,9 +820,12 @@ Private Sub WriteFbcFlags( _
 	Print #MakefileStream, "FBCFLAGS+=-d _UNICODE"
 	Print #MakefileStream, "endif"
 
-	' TODO Enable or disable WINVER macro
+	Print #MakefileStream, "ifneq ($(WINVER),)"
 	Print #MakefileStream, "FBCFLAGS+=-d WINVER=$(WINVER)"
+	Print #MakefileStream, "endif"
+	Print #MakefileStream, "ifneq ($(_WIN32_WINNT),)"
 	Print #MakefileStream, "FBCFLAGS+=-d _WIN32_WINNT=$(_WIN32_WINNT)"
+	Print #MakefileStream, "endif"
 
 	Print #MakefileStream, "FBCFLAGS+=-m " & p->MainModuleName
 
@@ -939,11 +942,25 @@ Private Sub WriteGorcFlags( _
 		ByVal MakefileStream As Long _
 	)
 
+	' object output file will be in 64-bit format
 	Print #MakefileStream, "ifeq ($(PROCESSOR_ARCHITECTURE),AMD64)"
 	Print #MakefileStream, "GORCFLAGS+=$(PARAM_SEP)machine X64"
 	Print #MakefileStream, "endif"
 
-	Print #MakefileStream, "GORCFLAGS+=$(PARAM_SEP)ni $(PARAM_SEP)o"
+	' no information messages
+	Print #MakefileStream, "GORCFLAGS+=$(PARAM_SEP)ni"
+	' create OBJ file
+	Print #MakefileStream, "GORCFLAGS+=$(PARAM_SEP)o"
+
+	' WINVER flag
+	Print #MakefileStream, "ifneq ($(WINVER),)"
+	Print #MakefileStream, "GORCFLAGS+=$(PARAM_SEP)d WINVER=$(WINVER)"
+	Print #MakefileStream, "endif"
+	Print #MakefileStream, "ifneq ($(_WIN32_WINNT),)"
+	Print #MakefileStream, "GORCFLAGS+=$(PARAM_SEP)d _WIN32_WINNT=$(_WIN32_WINNT)"
+	Print #MakefileStream, "endif"
+
+	' DEBUG flag
 	Print #MakefileStream, "GORCFLAGS_DEBUG=$(PARAM_SEP)d DEBUG"
 	Print #MakefileStream, "debug: GORCFLAGS+=$(GORCFLAGS_DEBUG)"
 	Print #MakefileStream,
