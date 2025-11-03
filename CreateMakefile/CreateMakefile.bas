@@ -564,17 +564,17 @@ Private Function WriteSetenvWin32( _
 	Print #oStream, "set DLL_TOOL=""%FBC_DIR%\%BinFolder%\dlltool.exe"""
 	Print #oStream,
 
-	Print #oStream, "set PATH_SEP=/"
 	Print #oStream, "rem Parameters separator for gnu make // or / for mingw32-make"
 	Print #oStream, "set PARAM_SEP=/"
+	Print #oStream, "set PATH_SEP=/"
 	Print #oStream, "set MOVE_PATH_SEP=\\"
-	Print #oStream, "set MOVE_COMMAND=cmd.exe /c move /y"
-	Print #oStream, "set DELETE_COMMAND=cmd.exe /c del /f /q"
-	Print #oStream, "set MKDIR_COMMAND=cmd.exe /c mkdir"
+	Print #oStream, "set MOVE_COMMAND=cmd.exe $(PARAM_SEP)c move $(PARAM_SEP)y"
+	Print #oStream, "set DELETE_COMMAND=cmd.exe $(PARAM_SEP)c del $(PARAM_SEP)f $(PARAM_SEP)q"
+	Print #oStream, "set MKDIR_COMMAND=cmd.exe $(PARAM_SEP)c mkdir"
 	If p->FixEmittedCode = FIX_EMITTED_CODE Then
-		Print #oStream, "set CPREPROCESSOR_COMMAND=cscript.exe //nologo fix-emitted-code.vbs"
+		Print #oStream, "set CPREPROCESSOR_COMMAND=cscript.exe fix-emitted-code.vbs"
 	Else
-		Print #oStream, "set CPREPROCESSOR_COMMAND=cmd.exe /c echo cscript.exe //nologo fix-emitted-code.vbs"
+		Print #oStream, "set CPREPROCESSOR_COMMAND=cmd.exe $(PARAM_SEP)c echo cscript.exe fix-emitted-code.vbs"
 	End If
 	Print #oStream,
 
