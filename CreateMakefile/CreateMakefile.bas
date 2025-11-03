@@ -568,13 +568,13 @@ Private Function WriteSetenvWin32( _
 	Print #oStream, "set PARAM_SEP=/"
 	Print #oStream, "set PATH_SEP=/"
 	Print #oStream, "set MOVE_PATH_SEP=\\"
-	Print #oStream, "set MOVE_COMMAND=cmd.exe $(PARAM_SEP)c move $(PARAM_SEP)y"
-	Print #oStream, "set DELETE_COMMAND=cmd.exe $(PARAM_SEP)c del $(PARAM_SEP)f $(PARAM_SEP)q"
-	Print #oStream, "set MKDIR_COMMAND=cmd.exe $(PARAM_SEP)c mkdir"
+	Print #oStream, "set MOVE_COMMAND=%ComSpec% $(PARAM_SEP)c move $(PARAM_SEP)y"
+	Print #oStream, "set DELETE_COMMAND=%ComSpec% $(PARAM_SEP)c del $(PARAM_SEP)f $(PARAM_SEP)q"
+	Print #oStream, "set MKDIR_COMMAND=%ComSpec% $(PARAM_SEP)c mkdir"
 	If p->FixEmittedCode = FIX_EMITTED_CODE Then
 		Print #oStream, "set CPREPROCESSOR_COMMAND=cscript.exe fix-emitted-code.vbs"
 	Else
-		Print #oStream, "set CPREPROCESSOR_COMMAND=cmd.exe $(PARAM_SEP)c echo cscript.exe fix-emitted-code.vbs"
+		Print #oStream, "set CPREPROCESSOR_COMMAND=%ComSpec% $(PARAM_SEP)c echo cscript.exe fix-emitted-code.vbs"
 	End If
 	Print #oStream,
 
@@ -769,10 +769,10 @@ Private Sub WriteUtilsPathWin32( _
 	Print #MakefileStream, "PATH_SEP ?= /"
 	Print #MakefileStream, "MOVE_PATH_SEP ?= \\"
 	Print #MakefileStream,
-	Print #MakefileStream, "MOVE_COMMAND ?= cmd.exe $(PARAM_SEP)c move $(PARAM_SEP)y"
-	Print #MakefileStream, "DELETE_COMMAND ?= cmd.exe $(PARAM_SEP)c del $(PARAM_SEP)f $(PARAM_SEP)q"
-	Print #MakefileStream, "MKDIR_COMMAND ?= cmd.exe $(PARAM_SEP)c mkdir"
-	Print #MakefileStream, "CPREPROCESSOR_COMMAND ?= cmd.exe $(PARAM_SEP)c echo no need to fix code"
+	Print #MakefileStream, "MOVE_COMMAND ?= $(ComSpec) $(PARAM_SEP)c move $(PARAM_SEP)y"
+	Print #MakefileStream, "DELETE_COMMAND ?= $(ComSpec) $(PARAM_SEP)c del $(PARAM_SEP)f $(PARAM_SEP)q"
+	Print #MakefileStream, "MKDIR_COMMAND ?= $(ComSpec) $(PARAM_SEP)c mkdir"
+	Print #MakefileStream, "CPREPROCESSOR_COMMAND ?= $(ComSpec) $(PARAM_SEP)c echo no need to fix code"
 	Print #MakefileStream,
 
 End Sub
