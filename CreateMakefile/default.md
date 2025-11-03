@@ -383,6 +383,12 @@ set DLL_TOOL="%FBC_DIR%\%BinFolder%\dlltool.exe"
 Разделители путей и команды, которые используются утилитой `make` для сборки проекта.
 
 ```bat
+rem Разделитель параметров для mingw32-make
+rem set PARAM_SEP=/
+rem Разделитель параметров для mingw32-make
+set PARAM_SEP=//
+
+rem Разделитель путей
 set PATH_SEP=/
 set MOVE_PATH_SEP=\\
 set MOVE_COMMAND=cmd.exe /c move /y

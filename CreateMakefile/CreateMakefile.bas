@@ -565,6 +565,8 @@ Private Function WriteSetenvWin32( _
 	Print #oStream,
 
 	Print #oStream, "set PATH_SEP=/"
+	Print #oStream, "rem Parameters separator for gnu make // or / for mingw32-make"
+	Print #oStream, "set PARAM_SEP=/"
 	Print #oStream, "set MOVE_PATH_SEP=\\"
 	Print #oStream, "set MOVE_COMMAND=cmd.exe /c move /y"
 	Print #oStream, "set DELETE_COMMAND=cmd.exe /c del /f /q"
@@ -763,6 +765,7 @@ Private Sub WriteUtilsPathWin32( _
 		ByVal MakefileStream As Long _
 	)
 
+	Print #MakefileStream, "PARAM_SEP ?= /"
 	Print #MakefileStream, "PATH_SEP ?= /"
 	Print #MakefileStream, "MOVE_PATH_SEP ?= \\"
 	Print #MakefileStream,
@@ -937,11 +940,11 @@ Private Sub WriteGorcFlags( _
 	)
 
 	Print #MakefileStream, "ifeq ($(PROCESSOR_ARCHITECTURE),AMD64)"
-	Print #MakefileStream, "GORCFLAGS+=/machine X64"
+	Print #MakefileStream, "GORCFLAGS+=$(PARAM_SEP)machine X64"
 	Print #MakefileStream, "endif"
 
-	Print #MakefileStream, "GORCFLAGS+=/ni /o /d FROM_MAKEFILE"
-	Print #MakefileStream, "GORCFLAGS_DEBUG=/d DEBUG"
+	Print #MakefileStream, "GORCFLAGS+=$(PARAM_SEP)ni $(PARAM_SEP)o"
+	Print #MakefileStream, "GORCFLAGS_DEBUG=$(PARAM_SEP)d DEBUG"
 	Print #MakefileStream, "debug: GORCFLAGS+=$(GORCFLAGS_DEBUG)"
 	Print #MakefileStream,
 
@@ -1323,11 +1326,11 @@ Private Sub WriteResourceRule( _
 	)
 
 	Print #MakefileStream, "$(OBJ_RELEASE_DIR)$(PATH_SEP)%$(FILE_SUFFIX).obj: src$(PATH_SEP)%.RC"
-	Print #MakefileStream, vbTab & "$(GORC) $(GORCFLAGS) /fo $@ $<"
+	Print #MakefileStream, vbTab & "$(GORC) $(GORCFLAGS) $(PARAM_SEP)fo $@ $<"
 	Print #MakefileStream,
 
 	Print #MakefileStream, "$(OBJ_DEBUG_DIR)$(PATH_SEP)%$(FILE_SUFFIX).obj: src$(PATH_SEP)%.RC"
-	Print #MakefileStream, vbTab & "$(GORC) $(GORCFLAGS) /fo $@ $<"
+	Print #MakefileStream, vbTab & "$(GORC) $(GORCFLAGS) $(PARAM_SEP)fo $@ $<"
 	Print #MakefileStream,
 
 End Sub
@@ -1341,29 +1344,34 @@ Private Sub WriteBasRule( _
 
 	Dim AnyBasFile As String = ReplaceOSPathSeparatorToMakePathSeparator(SourceFolderWithPathSep) & "%.bas"
 
-	Dim AnyCFile As String = ReplaceOSPathSeparatorToMovePathSeparator(SourceFolderWithPathSep) & "$*.c"
-
 	Scope
 		Print #MakefileStream, "$(OBJ_RELEASE_DIR)$(PATH_SEP)%$(FILE_SUFFIX).c: " & AnyBasFile
-		Print #MakefileStream, vbTab & "$(FBC) $(FBCFLAGS) $<"
+		Print #MakefileStream, vbTab & "$(FBC) $(FBCFLAGS) $< -o $(OBJ_RELEASE_DIR)$(PATH_SEP)$*$(FILE_SUFFIX).c"
+		Print #MakefileStream, vbTab & "$(CPREPROCESSOR_COMMAND) /release $(OBJ_RELEASE_DIR)$(PATH_SEP)$*$(FILE_SUFFIX).c"
 
-		Print #MakefileStream, vbTab & "$(CPREPROCESSOR_COMMAND) /release " & AnyCFile
-
-		Print #MakefileStream, vbTab & "$(MOVE_COMMAND) " & AnyCFile & " $(OBJ_RELEASE_DIR_MOVE)$(MOVE_PATH_SEP)$*$(FILE_SUFFIX).c"
 		Print #MakefileStream,
 	End Scope
 
 	Scope
 		Print #MakefileStream, "$(OBJ_DEBUG_DIR)$(PATH_SEP)%$(FILE_SUFFIX).c: " & AnyBasFile
-		Print #MakefileStream, vbTab & "$(FBC) $(FBCFLAGS) $<"
+		Print #MakefileStream, vbTab & "$(FBC) $(FBCFLAGS) $< -o $(OBJ_DEBUG_DIR)$(PATH_SEP)$*$(FILE_SUFFIX).c"
+		Print #MakefileStream, vbTab & "$(CPREPROCESSOR_COMMAND) /debug $(OBJ_DEBUG_DIR)$(PATH_SEP)$*$(FILE_SUFFIX).c"
 
-		Print #MakefileStream, vbTab & "$(CPREPROCESSOR_COMMAND) /debug " & AnyCFile
-
-		Print #MakefileStream, vbTab & "$(MOVE_COMMAND) " & AnyCFile & " $(OBJ_DEBUG_DIR_MOVE)$(MOVE_PATH_SEP)$*$(FILE_SUFFIX).c"
 		Print #MakefileStream,
 	End Scope
 
 End Sub
+
+Private Sub GetLibraries( _
+		ByVal file As String _
+	)
+
+	'static const char __attribute__((used, section(".fbctinf"))) __fbctinf[] = "-l\0kernel32\0-l\0gdi32\0-l\0msimg32\0-l\0user32\0-l\0version\0-l\0advapi32\0-l\0imm32\0-l\0comctl32";
+	' Read c-file
+	' Parse string
+	' Get Libraries list
+
+End sub
 
 Private Function GetIncludesFromBasFile( _
 		ByVal Filepath As String, _
@@ -1402,8 +1410,11 @@ Private Function GetIncludesFromBasFile( _
 
 	Close(FileNumber)
 
-	' Remove temporary "c" file
 	Dim FileC As String = Replace(Filepath, ".bas", ".c")
+
+	GetLibraries(FileC)
+
+	' Remove temporary "c" file
 	Kill(FileC)
 
 	' TODO Get error code from child process
