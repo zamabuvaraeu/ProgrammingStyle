@@ -1364,7 +1364,7 @@ Private Sub WriteBasRule( _
 	Scope
 		Print #MakefileStream, "$(OBJ_RELEASE_DIR)$(PATH_SEP)%$(FILE_SUFFIX).c: " & AnyBasFile
 		Print #MakefileStream, vbTab & "$(FBC) $(FBCFLAGS) $< -o $(OBJ_RELEASE_DIR)$(PATH_SEP)$*$(FILE_SUFFIX).c"
-		Print #MakefileStream, vbTab & "$(CPREPROCESSOR_COMMAND) /release $(OBJ_RELEASE_DIR)$(PATH_SEP)$*$(FILE_SUFFIX).c"
+		Print #MakefileStream, vbTab & "$(CPREPROCESSOR_COMMAND) -release $(OBJ_RELEASE_DIR)$(PATH_SEP)$*$(FILE_SUFFIX).c"
 
 		Print #MakefileStream,
 	End Scope
@@ -1372,7 +1372,7 @@ Private Sub WriteBasRule( _
 	Scope
 		Print #MakefileStream, "$(OBJ_DEBUG_DIR)$(PATH_SEP)%$(FILE_SUFFIX).c: " & AnyBasFile
 		Print #MakefileStream, vbTab & "$(FBC) $(FBCFLAGS) $< -o $(OBJ_DEBUG_DIR)$(PATH_SEP)$*$(FILE_SUFFIX).c"
-		Print #MakefileStream, vbTab & "$(CPREPROCESSOR_COMMAND) /debug $(OBJ_DEBUG_DIR)$(PATH_SEP)$*$(FILE_SUFFIX).c"
+		Print #MakefileStream, vbTab & "$(CPREPROCESSOR_COMMAND) -debug $(OBJ_DEBUG_DIR)$(PATH_SEP)$*$(FILE_SUFFIX).c"
 
 		Print #MakefileStream,
 	End Scope

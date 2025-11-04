@@ -195,7 +195,7 @@ Sub ParseFile()
 			InsideMainFunction = False
 		End If
 
-		If WScript.Arguments(0) = "/debug" Then
+		If WScript.Arguments(0) = "-debug" Then
 			LinesArray(i) = FixWinApiDeclaration(LinesArray(i))
 			LinesArray(i) = RemoveZeroedFunctionRetval(LinesArray(i))
 			LinesArray(i) = ReplaceFbEnd(LinesArray(i), InsideMainFunction)
