@@ -564,13 +564,15 @@ Private Function WriteSetenvWin32( _
 	Print #oStream, "set DLL_TOOL=""%FBC_DIR%\%BinFolder%\dlltool.exe"""
 	Print #oStream,
 
-	Print #oStream, "rem Parameters separator for gnu make // or / for mingw32-make"
+	Print #oStream, "rem Parameter separator for gnu make //"
+	Print #oStream, "rem or / for mingw32-make"
 	Print #oStream, "set PARAM_SEP=/"
 	Print #oStream, "set PATH_SEP=/"
 	Print #oStream, "set MOVE_PATH_SEP=\\"
 	Print #oStream, "set MOVE_COMMAND=%ComSpec% $(PARAM_SEP)c move $(PARAM_SEP)y"
 	Print #oStream, "set DELETE_COMMAND=%ComSpec% $(PARAM_SEP)c del $(PARAM_SEP)f $(PARAM_SEP)q"
 	Print #oStream, "set MKDIR_COMMAND=%ComSpec% $(PARAM_SEP)c mkdir"
+
 	If p->FixEmittedCode = FIX_EMITTED_CODE Then
 		Print #oStream, "set CPREPROCESSOR_COMMAND=cscript.exe fix-emitted-code.vbs"
 	Else
@@ -613,10 +615,11 @@ Private Function WriteSetenvWin32( _
 	Print #oStream, "set FBC_VER=" & FBC_VER
 
 	If p->UseFileSuffix Then
-		Print #oStream, "set FILE_SUFFIX=%GCC_VER%%FBC_VER%%RUNTIME%%WINVER%"
+		Print #oStream, "set FILE_SUFFIX=%GCC_VER%_%FBC_VER%_%RUNTIME%_%WINVER%"
 	Else
-		Print #oStream, "rem set FILE_SUFFIX=%GCC_VER%%FBC_VER%%RUNTIME%%WINVER%"
+		Print #oStream, "rem set FILE_SUFFIX=%GCC_VER%_%FBC_VER%_%RUNTIME%_%WINVER%"
 	End If
+
 	Dim Extension As String = GetExtensionOutputFile(p)
 	Print #oStream, "set OUTPUT_FILE_NAME=" & p->OutputFilename & "%FILE_SUFFIX%" & Extension
 	Print #oStream,
@@ -649,19 +652,8 @@ Private Function WriteSetenvWin32( _
 
 	Print #oStream, "rem Libraries list"
 
-	Dim crtLib As String
-	Dim crtDebug As String
-
-	' TODO Add profile libraries
-	Dim Profile As Boolean = False
-	If Profile Then
-		crtLib = """%LIB_DIR%\gcrt2.o"""
-		crtDebug = "-lgcc -lmingw32 -lmingwex -lmoldname -lgcc_eh -lgmon"
-	Else
-		crtLib = """%LIB_DIR%\crt2.o"""
-		crtDebug = "-lgcc -lmingw32 -lmingwex -lmoldname -lgcc_eh"
-	End If
-	Print #oStream, "set OBJ_CRT_START=" & crtLib & " ""%LIB_DIR%\crtbegin.o"" ""%LIB_DIR%\fbrt0.o"""
+	Print #oStream, "set OBJ_CRT_START=""%LIB_DIR%\crt2.o"" ""%LIB_DIR%\crtbegin.o"" ""%LIB_DIR%\fbrt0.o"""
+	Print #oStream, "set OBJ_CRT_END=""%LIB_DIR%\crtend.o"""
 
 	Print #oStream, "set LIBS_WIN95=-ladvapi32 -lcomctl32 -lcomdlg32 -lcrypt32 -lgdi32 -lkernel32 -lole32 -loleaut32 -lshell32 -lshlwapi -lwsock32 -luser32"
 	Print #oStream, "set LIBS_WINNT=-lgdiplus -lws2_32 -lmswsock"
@@ -670,18 +662,19 @@ Private Function WriteSetenvWin32( _
 
 	Print #oStream, "rem Add any FreeBASIC libraries sach as -lfbgfx"
 
-	Print #oStream, "rem Add any user libraries"
-	Print #oStream, "set LIBS_ANY="
-
 	If p->ThreadingMode = DEFINE_MULTITHREADING_RUNTIME Then
 		Print #oStream, "set LIBS_FB=-lfbmt"
 	Else
 		Print #oStream, "set LIBS_FB=-lfb"
 	End If
 
-	Print #oStream, "set LIBS_OS=%LIBS_WIN95% %LIBS_WINNT% %LIBS_GUID% %LIBS_MSVCRT% %LIBS_FB% %LIBS_ANY%"
-	Print #oStream, "set LIBS_GCC=" & crtDebug
-	Print #oStream, "set OBJ_CRT_END=""%LIB_DIR%\crtend.o"""
+	Print #oStream, "rem GCC libraries"
+	Print #oStream, "set LIBS_GCC=-lgcc -lmingw32 -lmingwex -lmoldname -lgcc_eh"
+
+	Print #oStream, "rem Add any user libraries sach as -lcards"
+	Print #oStream, "set LIBS_ANY="
+
+	Print #oStream, "set LIBS_OS=%LIBS_WIN95% %LIBS_WINNT% %LIBS_GUID% %LIBS_MSVCRT% %LIBS_FB% %LIBS_GCC% %LIBS_ANY%"
 	Print #oStream,
 
 	Print #oStream, "rem Create bin obj folders"
@@ -1100,35 +1093,7 @@ Private Sub WriteLinkerLibraries( _
 
 		Case Else
 			' mainCRTStartup libraries
-			Scope
-				Print #MakefileStream, "ifeq ($(USE_RUNTIME),TRUE)"
-
-				Print #MakefileStream, "ifeq ($(OBJ_CRT_START),)"
-
-				' TODO For profile
-				' Print #MakefileStream, "LDLIBSBEGIN+=gcrt2.o"
-
-				Print #MakefileStream, "LDLIBSBEGIN+=""$(LIB_DIR)\crt2.o"""
-				Print #MakefileStream, "LDLIBSBEGIN+=""$(LIB_DIR)\crtbegin.o"""
-				Print #MakefileStream, "LDLIBSBEGIN+=""$(LIB_DIR)\fbrt0.o"""
-
-				Print #MakefileStream, "else"
-				Print #MakefileStream, "LDLIBSBEGIN+=$(OBJ_CRT_START)"
-				Print #MakefileStream, "endif"
-
-				Print #MakefileStream, "else"
-
-				Print #MakefileStream, "ifeq ($(USE_CRUNTIME),TRUE)"
-				Print #MakefileStream, "LDLIBSBEGIN+=""$(LIB_DIR)\crt2.o"""
-				Print #MakefileStream, "LDLIBSBEGIN+=""$(LIB_DIR)\crtbegin.o"""
-				Print #MakefileStream, "LDLIBSBEGIN+=""$(LIB_DIR)\fbrt0.o"""
-				Print #MakefileStream, "else"
-				Print #MakefileStream, "endif"
-
-				Print #MakefileStream, "endif"
-			End Scope
-
-			Print #MakefileStream,
+			Print #MakefileStream, "LDLIBSBEGIN+=$(OBJ_CRT_START)"
 
 			Print #MakefileStream, "ifeq ($(USE_LD_LINKER),TRUE)"
 			Print #MakefileStream, "LDLIBS+=--start-group"
@@ -1137,57 +1102,7 @@ Private Sub WriteLinkerLibraries( _
 			Print #MakefileStream, "endif"
 
 			' OS libraries
-			Scope
-				Print #MakefileStream, "ifeq ($(LIBS_OS),)"
-
-				' Windows API libraries
-				Print #MakefileStream, "LDLIBS+=-ladvapi32 -lcomctl32 -lcomdlg32 -lcrypt32"
-				Print #MakefileStream, "LDLIBS+=-lgdi32 -lgdiplus -lkernel32 -lmswsock"
-				Print #MakefileStream, "LDLIBS+=-lole32 -loleaut32 -lshell32 -lshlwapi"
-				Print #MakefileStream, "LDLIBS+=-lwsock32 -lws2_32 -luser32 -luuid"
-				Print #MakefileStream, "LDLIBS+=-lmsvcrt"
-				Print #MakefileStream, "else"
-				Print #MakefileStream, "LDLIBS+=$(LIBS_OS)"
-				Print #MakefileStream, "endif"
-			End Scope
-
-			' Runtime libraries
-			Scope
-				Print #MakefileStream, "ifeq ($(USE_CRUNTIME),TRUE)"
-
-				Print #MakefileStream, "ifeq ($(USE_RUNTIME),TRUE)"
-				Select Case p->ThreadingMode
-
-					Case DEFINE_SINGLETHREADING_RUNTIME
-						Print #MakefileStream, "LDLIBS+=-lfb"
-
-					Case DEFINE_MULTITHREADING_RUNTIME
-						Print #MakefileStream, "LDLIBS+=-lfbmt"
-
-				End Select
-
-				Print #MakefileStream, "endif"
-
-				Print #MakefileStream, "LDLIBS+=-lgcc -lmingw32 -lmingwex -lmoldname -lgcc_eh"
-
-				Print #MakefileStream, "else"
-
-				Print #MakefileStream, "ifeq ($(USE_RUNTIME),TRUE)"
-				Select Case p->ThreadingMode
-
-					Case DEFINE_SINGLETHREADING_RUNTIME
-						Print #MakefileStream, "LDLIBS+=-lfb"
-
-					Case DEFINE_MULTITHREADING_RUNTIME
-						Print #MakefileStream, "LDLIBS+=-lfbmt"
-
-				End Select
-
-				Print #MakefileStream, "LDLIBS+=-lgcc -lmingw32 -lmingwex -lmoldname -lgcc_eh"
-				Print #MakefileStream, "endif"
-
-				Print #MakefileStream, "endif"
-			End Scope
+			Print #MakefileStream, "LDLIBS+=$(LIBS_OS)"
 
 			Print #MakefileStream, "ifeq ($(USE_LD_LINKER),TRUE)"
 			Print #MakefileStream, "LDLIBS+=--end-group"
@@ -1195,37 +1110,11 @@ Private Sub WriteLinkerLibraries( _
 			Print #MakefileStream, "LDLIBS+=-Wl,--end-group"
 			Print #MakefileStream, "endif"
 
-			Print #MakefileStream,
+			' Crtend libraries
+			Print #MakefileStream, "LDLIBSEND+=$(OBJ_CRT_END)"
 
 			' Debug libraries
-			Scope
-				Print #MakefileStream, "ifeq ($(LIBS_GCC),)"
-				' TODO For profile
-				' Print #MakefileStream, "LDLIBS_DEBUG+=-lgmon"
-
-				Print #MakefileStream, "LDLIBS_DEBUG+=-lgcc -lmingw32 -lmingwex -lmoldname -lgcc_eh"
-				Print #MakefileStream, "else"
-				Print #MakefileStream, "LDLIBS_DEBUG+=$(LIBS_GCC)"
-				Print #MakefileStream, "endif"
-			End Scope
-
-			Print #MakefileStream,
-
-			' Crtend libraries
-			Scope
-				Print #MakefileStream, "ifeq ($(USE_RUNTIME),TRUE)"
-				Print #MakefileStream, "ifeq ($(OBJ_CRT_END),)"
-				Print #MakefileStream, "LDLIBSEND+=""$(LIB_DIR)\crtend.o"""
-				Print #MakefileStream, "else"
-				Print #MakefileStream, "LDLIBSEND+=$(OBJ_CRT_END)"
-				Print #MakefileStream, "endif"
-				Print #MakefileStream, "else"
-				Print #MakefileStream, "ifeq ($(USE_CRUNTIME),TRUE)"
-				Print #MakefileStream, "LDLIBSEND+=""$(LIB_DIR)\crtend.o"""
-				Print #MakefileStream, "else"
-				Print #MakefileStream, "endif"
-				Print #MakefileStream, "endif"
-			End Scope
+			Print #MakefileStream, "LDLIBS_DEBUG+=$(LIBS_GCC)"
 
 	End Select
 
