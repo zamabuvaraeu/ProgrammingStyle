@@ -667,14 +667,18 @@ Private Function WriteSetenvWin32( _
 	Print #oStream, "set LIBS_WINNT=-lgdiplus -lws2_32 -lmswsock"
 	Print #oStream, "set LIBS_GUID=-luuid"
 	Print #oStream, "set LIBS_MSVCRT=-lmsvcrt"
+
+	Print #oStream, "rem Add any FreeBASIC libraries sach as -lfbgfx"
+
 	Print #oStream, "rem Add any user libraries"
 	Print #oStream, "set LIBS_ANY="
-	Print #oStream, "rem Add any FreeBASIC libraries sach as -lfbgfx"
+
 	If p->ThreadingMode = DEFINE_MULTITHREADING_RUNTIME Then
 		Print #oStream, "set LIBS_FB=-lfbmt"
 	Else
 		Print #oStream, "set LIBS_FB=-lfb"
 	End If
+
 	Print #oStream, "set LIBS_OS=%LIBS_WIN95% %LIBS_WINNT% %LIBS_GUID% %LIBS_MSVCRT% %LIBS_FB% %LIBS_ANY%"
 	Print #oStream, "set LIBS_GCC=" & crtDebug
 	Print #oStream, "set OBJ_CRT_END=""%LIB_DIR%\crtend.o"""
@@ -1149,6 +1153,25 @@ Private Sub WriteLinkerLibraries( _
 
 			' Runtime libraries
 			Scope
+				Print #MakefileStream, "ifeq ($(USE_CRUNTIME),TRUE)"
+
+				Print #MakefileStream, "ifeq ($(USE_RUNTIME),TRUE)"
+				Select Case p->ThreadingMode
+
+					Case DEFINE_SINGLETHREADING_RUNTIME
+						Print #MakefileStream, "LDLIBS+=-lfb"
+
+					Case DEFINE_MULTITHREADING_RUNTIME
+						Print #MakefileStream, "LDLIBS+=-lfbmt"
+
+				End Select
+
+				Print #MakefileStream, "endif"
+
+				Print #MakefileStream, "LDLIBS+=-lgcc -lmingw32 -lmingwex -lmoldname -lgcc_eh"
+
+				Print #MakefileStream, "else"
+
 				Print #MakefileStream, "ifeq ($(USE_RUNTIME),TRUE)"
 				Select Case p->ThreadingMode
 
@@ -1161,6 +1184,8 @@ Private Sub WriteLinkerLibraries( _
 				End Select
 
 				Print #MakefileStream, "LDLIBS+=-lgcc -lmingw32 -lmingwex -lmoldname -lgcc_eh"
+				Print #MakefileStream, "endif"
+
 				Print #MakefileStream, "endif"
 			End Scope
 
