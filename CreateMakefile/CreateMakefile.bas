@@ -1212,7 +1212,8 @@ Private Sub WriteObjectFiles( _
 		ByVal MakefileStream As Long, _
 		ByVal BasFile As String, _
 		ByVal DependenciesLine As String, _
-		ByVal p As Parameter Ptr _
+		ByVal p As Parameter Ptr, _
+		ByVal DependenciesNumber As Integer _
 	)
 
 	Dim BasFileWithoutPath As String = GetFileNameWithoutPath(BasFile, p->SourceFolder)
@@ -1242,14 +1243,15 @@ Private Sub WriteObjectFiles( _
 	Dim ObjectFileNameWithDebug As String = "OBJECTFILES_DEBUG+=" & DebugDirPrefix & ObjectFileNameWithPathSep
 	Dim ObjectFileNameRelease As String = "OBJECTFILES_RELEASE+=" & ReleaseDirPrefix & ObjectFileNameWithPathSep
 
-	Dim ResultDebugString As String = FileNameWithDebug & ": " & DependenciesLine
-	Dim ResultReleaseString As String = FileNameWithRelease & ": " & DependenciesLine
+	Dim DepsVariable As String = "DEPENDENCIES" & "_" & Str(DependenciesNumber) & "=" & DependenciesLine
 
 	Print #MakefileStream, ObjectFileNameWithDebug
 	Print #MakefileStream, ObjectFileNameRelease
 	Print #MakefileStream,
-	Print #MakefileStream, ResultDebugString
-	Print #MakefileStream, ResultReleaseString
+	Print #MakefileStream, DepsVariable
+	Print #MakefileStream,
+	Print #MakefileStream, FileNameWithDebug & ": " & "$(" & "DEPENDENCIES" & "_" & Str(DependenciesNumber) & ")"
+	Print #MakefileStream, FileNameWithRelease & ": " & "$(" & "DEPENDENCIES" & "_" & Str(DependenciesNumber) & ")"
 	Print #MakefileStream,
 
 End Sub
@@ -1483,7 +1485,8 @@ Private Sub CreateDependencies( _
 		ByVal MakefileStream As Long, _
 		ByVal oFile As String, _
 		ByVal FileExtension As String, _
-		ByVal p As Parameter Ptr _
+		ByVal p As Parameter Ptr, _
+		ByVal DependenciesNumber As Integer _
 	)
 
 	ReDim LinesArray(0) As String
@@ -1523,7 +1526,7 @@ Private Sub CreateDependencies( _
 
 		Dim OneLine As String = Join(LinesArray(), "")
 
-		WriteObjectFiles(MakefileStream, Original, RTrim(OneLine), p)
+		WriteObjectFiles(MakefileStream, Original, RTrim(OneLine), p, DependenciesNumber)
 	End If
 
 End Sub
@@ -1554,7 +1557,7 @@ Private Sub WriteDependencies( _
 		If Len(FilesVector(i)) Then
 			Dim ext As String = GetExtensionName(FilesVector(i))
 			Dim FullFileName As String = BuildPath(p->SourceFolder, FilesVector(i))
-			CreateDependencies(MakefileStream, FullFileName, ext, p)
+			CreateDependencies(MakefileStream, FullFileName, ext, p, i)
 		End If
 	Next
 
