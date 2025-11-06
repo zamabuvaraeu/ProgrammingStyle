@@ -15,7 +15,7 @@
 				/* Main module filename */
 				"-module", "WinMain",
 				"-exetype", "exe",
-				/* console, windows, native*/
+				/* console, windows, native */
 				"-subsystem", "windows",
 				"-emitter", "gcc",
 				"-fix", "true",

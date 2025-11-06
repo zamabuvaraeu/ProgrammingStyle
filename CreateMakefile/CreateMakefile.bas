@@ -1307,22 +1307,12 @@ Private Sub GetLibraries( _
 End sub
 
 Private Function GetIncludesFromBasFile( _
+		ByVal CompilerFullName As String, _
 		ByVal Filepath As String, _
 		ByVal p As Parameter Ptr _
 	) As String
 
 	Dim FbcParam As String = CreateCompilerParams(p)
-
-	Dim CompilerFullName As String = BuildPath( _
-		p->CompilerPath, _
-		p->FbcCompilerName _
-	)
-
-	Dim bExists As Boolean = FileExists(CompilerFullName)
-	If bExists = False Then
-		Print "FreeBASIC not exists in path " & CompilerFullName
-		End(1)
-	End If
 
 	' TODO Find a way to use parameters with spaces
 
@@ -1372,6 +1362,7 @@ Private Function GetIncludesFromResFile( _
 		"*.ico", _
 		"*.dib", _
 		"*.cur", _
+		"*.ani", _
 		"*.rh", _
 		"*.xml" _
 	}
@@ -1396,6 +1387,7 @@ Private Function GetIncludesFromResFile( _
 End Function
 
 Private Sub CreateDependencies( _
+		ByVal CompilerFullName As String, _
 		ByVal MakefileStream As Long, _
 		ByVal oFile As String, _
 		ByVal FileExtension As String, _
@@ -1419,7 +1411,7 @@ Private Sub CreateDependencies( _
 		Case "BAS"
 			SplitRecursive( _
 				LinesArray(), _
-				GetIncludesFromBasFile(oFile, p), _
+				GetIncludesFromBasFile(CompilerFullName, oFile, p), _
 				vbCrLf _
 			)
 			LinesArrayCreated = True
@@ -1467,11 +1459,22 @@ Private Sub WriteDependencies( _
 		ByVal p As Parameter Ptr _
 	)
 
+	Dim CompilerFullName As String = BuildPath( _
+		p->CompilerPath, _
+		p->FbcCompilerName _
+	)
+
+	Dim bExists As Boolean = FileExists(CompilerFullName)
+	If bExists = False Then
+		Print "FreeBASIC not exists in path " & CompilerFullName
+		End(1)
+	End If
+
 	For i As Integer = LBound(FilesVector) To UBound(FilesVector)
 		If Len(FilesVector(i)) Then
 			Dim ext As String = GetExtensionName(FilesVector(i))
 			Dim FullFileName As String = BuildPath(p->SourceFolder, FilesVector(i))
-			CreateDependencies(MakefileStream, FullFileName, ext, p, i)
+			CreateDependencies(CompilerFullName, MakefileStream, FullFileName, ext, p, i)
 		End If
 	Next
 
