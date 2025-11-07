@@ -153,7 +153,7 @@ mingw32-make all
 ### Все параметры
 
 ```bat
-"c:\FreeBASIC Projects\CreateMakefile.exe" -makefile Makefile -src src -fbc-path "C:\Program Files (x86)\FreeBASIC-1.10.0-winlibs-gcc-9.3.0" -fbc fbc64.exe -out HelloWorld -module WinMain -exetype exe -subsystem console -emitter gcc -fix false -unicode true -wrt false -addressaware true -multithreading false -usefilesuffix true -pedantic true -winver 1281 -create-environment-file true -createdirs false
+"c:\FreeBASIC Projects\CreateMakefile.exe" -makefile Makefile -src src -fbc-path "C:\Program Files (x86)\FreeBASIC-1.10.0-winlibs-gcc-9.3.0" -fbc fbc64.exe -out HelloWorld -module WinMain -exetype exe -subsystem console -emitter gcc -fix false -unicode true -wrt false -wcrt false -addressaware true -multithreading false -usefilesuffix true -pedantic true -winver 1281 -create-environment-file true -createdirs false
 ```
 
 ## Параметры генератора Makefile
@@ -270,6 +270,12 @@ mingw32-make all
 
 По умолчанию равен `false`.
 
+### wcrt
+
+Выключает библиотеки языка си. Чтобы выключить библиотеки, установите этот параметр в `true`.
+
+По умолчанию равен `false`.
+
 ### addressaware
 
 Включает использование адресного пространства больше 2 гигабайт.
@@ -356,9 +362,9 @@ set FBC_FILENAME=fbc32.exe
 
 ```bat
 rem Add compiler directory to PATH
+rem Without quotes:
 set FBC_DIR=C:\Program Files (x86)\FreeBASIC-1.10.1-winlibs-gcc-9.3.0
 set PATH=%FBC_DIR%\%BinFolder%;%PATH%
-rem Without quotes:
 set LIB_DIR=%FBC_DIR%\%LibFolder%
 set INC_DIR=%FBC_DIR%\inc
 ```
@@ -413,6 +419,9 @@ set SRC_DIR=src
 ```bat
 rem Set to TRUE for use runtime libraries
 set USE_RUNTIME=FALSE
+
+rem Set to TRUE for use runtime libraries
+set USE_CRUNTIME=FALSE
 ```
 
 ### Юникод и версия операционной системы
@@ -446,7 +455,7 @@ set LDFLAGS=
 ```bat
 set GCC_VER=_GCC0930
 set FBC_VER=_FBC1101
-set FILE_SUFFIX=%GCC_VER%%FBC_VER%%RUNTIME%%WINVER%
+set FILE_SUFFIX=%GCC_VER%_%FBC_VER%_%RUNTIME%_%WINVER%
 set OUTPUT_FILE_NAME=HelloWorld%FILE_SUFFIX%.exe
 ```
 
@@ -494,14 +503,14 @@ rem set FLTO=-flto
 | Переменная    | Описание                          |
 |---------------|-----------------------------------|
 | OBJ_CRT_START | Стартовые библиотеки языка Си |
+| OBJ_CRT_END   | Заключительные библиотеки языка Си |
 | LIBS_WIN95    | Библиотеки для Win95 |
 | LIBS_WINNT    | Библиотеки для Windows NT |
 | LIBS_GUID     | Библиотека с GUID |
 | LIBS_MSVCRT   | Динамическая библиотека языка Си |
-| LIBS_ANY      | Любые дополнительные библиотеки, например `-lfbgfx` |
-| LIBS_FB       | Библиотеки языка FreeBASIC |
-| OBJ_CRT_END   | Заключительные библиотеки языка Си |
-| LIBS_GCC      | Библиотеки компилятора языка Си и отладчика |
+| LIBS_FB       | Библиотеки языка FreeBASIC, например `-lfbgfx` |
+| LIBS_GCC      | Библиотеки языка Си и отладчика |
+| LIBS_ANY      | Любые дополнительные библиотеки, например `lcards` |
 | LIBS_OS       | Комбинация всех библиотеки операционной системы |
 
 ```bat

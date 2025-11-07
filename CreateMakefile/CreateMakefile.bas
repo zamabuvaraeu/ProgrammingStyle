@@ -35,9 +35,14 @@ Enum UseUnicode
 	DEFINE_UNICODE
 End Enum
 
-Enum UseRuntime
-	DEFINE_RUNTIME
-	DEFINE_WITHOUT_RUNTIME
+Enum UseFbRuntime
+	DEFINE_FB_RUNTIME
+	DEFINE_WITHOUT_FB_RUNTIME
+End Enum
+
+Enum UseCRuntime
+	DEFINE_C_RUNTIME
+	DEFINE_WITHOUT_C_RUNTIME
 End Enum
 
 Enum ProcessAddressSpace
@@ -99,7 +104,8 @@ Type Parameter
 	Emitter As CodeEmitter
 	FixEmittedCode As FixCode
 	Unicode As UseUnicode
-	UseRuntimeLibrary As UseRuntime
+	UseFbRuntimeLibrary As UseFbRuntime
+	UseCRuntimeLibrary As UseCRuntime
 	AddressAware As ProcessAddressSpace
 	ThreadingMode As MultiThreading
 	UseEnvironmentFile As UseSettingsEnvironment
@@ -176,12 +182,12 @@ Private Function CreateCompilerParams( _
 
 	End Select
 
-	Select Case p->UseRuntimeLibrary
+	Select Case p->UseFbRuntimeLibrary
 
-		Case DEFINE_RUNTIME
+		Case DEFINE_FB_RUNTIME
 			ParamVector(2) = ""
 
-		Case DEFINE_WITHOUT_RUNTIME
+		Case DEFINE_WITHOUT_FB_RUNTIME
 			ParamVector(2) = "-d WITHOUT_RUNTIME"
 
 	End Select
@@ -585,7 +591,7 @@ Private Function WriteSetenvWin32( _
 	Print #oStream,
 
 	Print #oStream, "rem Set TRUE to use runtime libraries"
-	If p->UseRuntimeLibrary = DEFINE_WITHOUT_RUNTIME Then
+	If p->UseFbRuntimeLibrary = DEFINE_WITHOUT_FB_RUNTIME Then
 		Print #oStream, "set USE_RUNTIME=FALSE"
 	Else
 		Print #oStream, "set USE_RUNTIME=TRUE"
@@ -674,7 +680,17 @@ Private Function WriteSetenvWin32( _
 	Print #oStream, "rem Add any user libraries sach as -lcards"
 	Print #oStream, "set LIBS_ANY="
 
-	Print #oStream, "set LIBS_OS=%LIBS_WIN95% %LIBS_WINNT% %LIBS_GUID% %LIBS_MSVCRT% %LIBS_FB% %LIBS_GCC% %LIBS_ANY%"
+	Print #oStream, "rem All libraries"
+
+	If p->UseFbRuntimeLibrary = DEFINE_WITHOUT_FB_RUNTIME Then
+		If p->UseCRuntimeLibrary = DEFINE_WITHOUT_C_RUNTIME Then
+			Print #oStream, "set LIBS_OS=%LIBS_WIN95% %LIBS_WINNT% %LIBS_GUID% %LIBS_MSVCRT% %LIBS_ANY%"
+		Else
+			Print #oStream, "set LIBS_OS=%LIBS_WIN95% %LIBS_WINNT% %LIBS_GUID% %LIBS_MSVCRT% %LIBS_GCC% %LIBS_ANY%"
+		End If
+	Else
+		Print #oStream, "set LIBS_OS=%LIBS_WIN95% %LIBS_WINNT% %LIBS_GUID% %LIBS_MSVCRT% %LIBS_FB% %LIBS_GCC% %LIBS_ANY%"
+	End If
 	Print #oStream,
 
 	Print #oStream, "rem Create bin obj folders"
@@ -1498,7 +1514,8 @@ Private Function ParseCommandLine( _
 	p->Emitter = CODE_EMITTER_GCC
 	p->FixEmittedCode = NOT_FIX_EMITTED_CODE
 	p->Unicode = DEFINE_ANSI
-	p->UseRuntimeLibrary = DEFINE_RUNTIME
+	p->UseFbRuntimeLibrary = DEFINE_FB_RUNTIME
+	p->UseCRuntimeLibrary = DEFINE_C_RUNTIME
 	p->AddressAware = LARGE_ADDRESS_UNAWARE
 	p->ThreadingMode = DEFINE_SINGLETHREADING_RUNTIME
 	p->UseEnvironmentFile = SETTINGS_ENVIRONMENT_ALWAYS
@@ -1608,7 +1625,12 @@ Private Function ParseCommandLine( _
 
 			Case "-wrt"
 				If sValue = "true" Then
-					p->UseRuntimeLibrary = DEFINE_WITHOUT_RUNTIME
+					p->UseFbRuntimeLibrary = DEFINE_WITHOUT_FB_RUNTIME
+				End If
+
+			Case "-wcrt"
+				If sValue = "true" Then
+					p->UseCRuntimeLibrary = DEFINE_WITHOUT_C_RUNTIME
 				End If
 
 			Case "-addressaware"
@@ -1758,10 +1780,10 @@ Private Sub PrintAllParameters( _
 
 	Scope
 		Dim sRuntime As String
-		Select Case p->UseRuntimeLibrary
-			Case DEFINE_RUNTIME
+		Select Case p->UseFbRuntimeLibrary
+			Case DEFINE_FB_RUNTIME
 				sRuntime = "true"
-			Case DEFINE_WITHOUT_RUNTIME
+			Case DEFINE_WITHOUT_FB_RUNTIME
 				sRuntime = "false"
 		End Select
 		Print "Use runtime libraries", sRuntime
