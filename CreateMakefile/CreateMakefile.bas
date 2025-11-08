@@ -1317,10 +1317,47 @@ Private Sub GetLibraries( _
 		ByVal file As String _
 	)
 
-	'static const char __attribute__((used, section(".fbctinf"))) __fbctinf[] = "-l\0kernel32\0-l\0gdi32\0-l\0msimg32\0-l\0user32\0-l\0version\0-l\0advapi32\0-l\0imm32\0-l\0comctl32";
-	' Read c-file
-	' Parse string
-	' Get Libraries list
+	Dim FileNumber As Long = Freefile()
+
+	Dim resOpen As Long = Open(file, For Input, As FileNumber)
+	If resOpen Then
+		Exit Sub
+	End If
+
+	Do Until EOF(FileNumber)
+		Dim ln As String
+		Line Input #FileNumber, ln
+
+		Const Attribute = "__attribute__((used, section("".fbctinf""))"
+		Dim AttributeIndex As Integer = InStr(ln, Attribute)
+
+		If AttributeIndex Then
+			ReDim Libs(0) As String
+
+			Scope
+				Dim FirstQuoteIndex As Integer = InStr(AttributeIndex + Len(Attribute) + 1, ln, """")
+				Dim LastQuoteIndex As Integer = InStr(FirstQuoteIndex + 1, ln, """")
+
+				Dim nFirst As Integer = FirstQuoteIndex + 1
+				Dim nCount As Integer = LastQuoteIndex - FirstQuoteIndex - 1
+
+				Dim Middle As String = Mid(ln, nFirst, nCount)
+
+				SplitRecursive( _
+					Libs(), _
+					Middle, _
+					"\0" _
+				)
+			End Scope
+
+			For i As Integer = LBound(Libs) To UBound(Libs)
+				Print Libs(i)
+			Next
+
+		End If
+	Loop
+
+	Close FileNumber
 
 End sub
 
