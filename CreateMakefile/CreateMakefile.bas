@@ -134,16 +134,19 @@ Dim Shared LibsWi95(0 To ...) As LibraryItem = { _
 	Type("-lcomdlg32", True), _
 	Type("-lcrypt32", True), _
 	Type("-lgdi32", True), _
+	Type("-limm32", True), _
 	Type("-lkernel32", True), _
 	Type("-lole32", True), _
 	Type("-loleaut32", True), _
 	Type("-lshell32", True), _
 	Type("-lshlwapi", True), _
+	Type("-lversion", True), _
 	Type("-lwsock32", True), _
 	Type("-luser32", True) _
 }
 Dim Shared LibsWinNT(0 To ...) As LibraryItem = { _
 	Type("-lgdiplus", True), _
+	Type("-lmsimg32", True), _
 	Type("-lws2_32", True), _
 	Type("-lmswsock", True) _
 }
@@ -1364,6 +1367,26 @@ Private Sub WriteBasRule( _
 
 End Sub
 
+Private Function LibExists( _
+		ByVal LibName As String _
+	) As Boolean
+
+	For i As Integer = LBound(LibsWi95) To UBound(LibsWi95)
+		If LibsWi95(i).LibName = LibName Then
+			Return True
+		End If
+	Next
+
+	For i As Integer = LBound(LibsWinNT) To UBound(LibsWinNT)
+		If LibsWinNT(i).LibName = LibName Then
+			Return True
+		End If
+	Next
+
+	Return False
+
+End Function
+
 Private Sub GetLibraries( _
 		ByVal file As String _
 	)
@@ -1401,8 +1424,11 @@ Private Sub GetLibraries( _
 				)
 			End Scope
 
-			For i As Integer = LBound(Libs) To UBound(Libs)
-				Print Libs(i)
+			For i As Integer = LBound(Libs) To UBound(Libs) - 1 Step 2
+				Dim LibName As String = Libs(i) & Libs(i + 1)
+				If LibExists(LibName) = False Then
+					Print LibName
+				End If
 			Next
 
 		End If
