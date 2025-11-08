@@ -1914,17 +1914,24 @@ If pParams->UseEnvironmentFile = SETTINGS_ENVIRONMENT_ALWAYS Then
 		End(2)
 	End If
 End If
+Print "Done"
 
 ReDim FilesVector(0) As String
 Scope
 	Print "Find source files in folder", pParams->SourceFolder
-	Dim filespec As String = BuildPath(pParams->SourceFolder, "*.*")
-	GetFiles(FilesVector(), filespec)
+
+	Dim FileSpecs(0 To ...) As String = {"*.bas", "*.RC"}
+
+	For i As Integer = LBound(FileSpecs) To UBound(FileSpecs)
+		Dim filespec As String = BuildPath(pParams->SourceFolder, FileSpecs(i))
+		GetFiles(FilesVector(), filespec)
+	Next
 
 	For i As Integer = LBound(FilesVector) To UBound(FilesVector)
 		Print FilesVector(i)
 	Next
 End Scope
+Print "Done"
 
 Print "Create Makefile..."
 var MakefileNumber = Freefile()
