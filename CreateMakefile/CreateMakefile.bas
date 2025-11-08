@@ -1390,14 +1390,16 @@ Private Function GetIncludesFromResFile( _
 
 		Dim filename As String = Dir(filespec)
 
-		If Len(filename) Then
+		Do While Len(filename)
 			Dim ext As String = GetExtensionName(filename)
 			Dim FullFileName As String = BuildPath(p->SourceFolder, filename)
 
 			If FileExists(FullFileName) Then
 				ResourceIncludes = ResourceIncludes & vbCrLf & FullFileName
 			End If
-		End If
+
+			filename = Dir(filespec)
+		Loop
 	Next
 
 	Return ResourceIncludes
@@ -1501,6 +1503,8 @@ Private Sub WriteDependencies( _
 End Sub
 
 Private Function ParseCommandLine( _
+		ByVal ArgC As Integer, _
+		ByVal ArgV As ZString Ptr Ptr, _
 		ByVal p As Parameter Ptr _
 	) As ParseResult
 
@@ -1526,11 +1530,9 @@ Private Function ParseCommandLine( _
 	p->Pedantic = False
 	p->CreateDirs = False
 
-	Dim i As Integer = 1
-	Dim sKey As String = Command(i)
-	Do While Len(sKey)
-		i += 1
-		Dim sValue As String = Command(i)
+	For i As Integer = 1 To ArgC - 1 Step 2
+		Dim sKey As String = *ArgV[i]
+		Dim sValue As String = *ArgV[i + 1]
 
 		Select Case sKey
 
@@ -1670,9 +1672,7 @@ Private Function ParseCommandLine( _
 
 		End Select
 
-		i += 1
-		sKey = Command(i)
-	Loop
+	Next
 
 	If Len(p->CompilerPath) = 0 Then
 		Print "Path to compiler is not specified"
@@ -1685,7 +1685,10 @@ Private Function ParseCommandLine( _
 	End If
 
 	If Len(p->IncludePath) = 0 Then
-		p->IncludePath = BuildPath(p->CompilerPath, "inc")
+		Dim CompPath As String = p->CompilerPath
+		Dim IncStr As String = "inc"
+		Dim IncPath As String = BuildPath(CompPath, IncStr)
+		p->IncludePath = IncPath
 	End If
 
 	If Len(p->MainModuleName) = 0 Then
@@ -1869,7 +1872,11 @@ If pParams = 0 Then
 End If
 
 Scope
-	var resParse = ParseCommandLine(pParams)
+	var resParse = ParseCommandLine( _
+		__FB_ARGC__, _
+		__FB_ARGV__, _
+		pParams _
+	)
 
 	Select Case resParse
 
