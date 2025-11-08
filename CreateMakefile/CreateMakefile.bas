@@ -120,6 +120,52 @@ Type Parameter
 	CreateDirs As Boolean
 End Type
 
+Dim Shared ObjCrtStart(0 To ...) As LibraryItem = { _
+	Type("crt2.o", True), _
+	Type("crtbegin.o", True), _
+	Type("fbrt0.o", True) _
+}
+Dim Shared ObjCrtEnd(0 To ...) As LibraryItem = { _
+	Type("crtend.o", True) _
+}
+Dim Shared LibsWi95(0 To ...) As LibraryItem = { _
+	Type("-ladvapi32", True), _
+	Type("-lcomctl32", True), _
+	Type("-lcomdlg32", True), _
+	Type("-lcrypt32", True), _
+	Type("-lgdi32", True), _
+	Type("-lkernel32", True), _
+	Type("-lole32", True), _
+	Type("-loleaut32", True), _
+	Type("-lshell32", True), _
+	Type("-lshlwapi", True), _
+	Type("-lwsock32", True), _
+	Type("-luser32", True) _
+}
+Dim Shared LibsWinNT(0 To ...) As LibraryItem = { _
+	Type("-lgdiplus", True), _
+	Type("-lws2_32", True), _
+	Type("-lmswsock", True) _
+}
+Dim Shared LibsGuid(0 To ...) As LibraryItem = { _
+	Type("-luuid", True) _
+}
+Dim Shared LibsMsvcrt(0 To ...) As LibraryItem = { _
+	Type("-lmsvcrt", True) _
+}
+Dim Shared LibsFb(0 To ...) As LibraryItem = { _
+	Type("-lfb", True), _
+	Type("-lfbmt", False), _
+	Type("-lfbgfx", False) _
+}
+Dim Shared LibsGcc(0 To ...) As LibraryItem = { _
+	Type("-lgcc", True), _
+	Type("-lmingw32", True), _
+	Type("-lmingwex", True), _
+	Type("-lmoldname", True), _
+	Type("-lgcc_eh", True) _
+}
+
 Private Function Join( _
 		LinesVector() As String, _
 		ByVal Separator As String _
@@ -1906,52 +1952,6 @@ Private Sub PrintAllParameters( _
 	Print ""
 
 End Sub
-
-Dim ObjCrtStart(0 To ...) As LibraryItem = { _
-	Type("%LIB_DIR%\crt2.o", True), _
-	Type("%LIB_DIR%\crtbegin.o", True), _
-	Type("%LIB_DIR%\fbrt0.o", True) _
-}
-Dim ObjCrtEnd(0 To ...) As LibraryItem = { _
-	Type("%LIB_DIR%\crtend.o", True) _
-}
-Dim LibsWi95(0 To ...) As LibraryItem = { _
-	Type("-ladvapi32", True), _
-	Type("-lcomctl32", True), _
-	Type("-lcomdlg32", True), _
-	Type("-lcrypt32", True), _
-	Type("-lgdi32", True), _
-	Type("-lkernel32", True), _
-	Type("-lole32", True), _
-	Type("-loleaut32", True), _
-	Type("-lshell32", True), _
-	Type("-lshlwapi", True), _
-	Type("-lwsock32", True), _
-	Type("-luser32", True) _
-}
-Dim LibsWinNT(0 To ...) As LibraryItem = { _
-	Type("-lgdiplus", True), _
-	Type("-lws2_32", True), _
-	Type("-lmswsock", True) _
-}
-Dim LibsGuid(0 To ...) As LibraryItem = { _
-	Type("-luuid", True) _
-}
-Dim LibsMsvcrt(0 To ...) As LibraryItem = { _
-	Type("-lmsvcrt", True) _
-}
-Dim LibsFb(0 To ...) As LibraryItem = { _
-	Type("-lfb", True), _
-	Type("-lfbmt", False), _
-	Type("-lfbgfx", False) _
-}
-Dim LibsGcc(0 To ...) As LibraryItem = { _
-	Type("-lgcc", True), _
-	Type("-lmingw32", True), _
-	Type("-lmingwex", True), _
-	Type("-lmoldname", True), _
-	Type("-lgcc_eh", True) _
-}
 
 Dim pParams As Parameter Ptr = Allocate(SizeOf(Parameter))
 If pParams = 0 Then
