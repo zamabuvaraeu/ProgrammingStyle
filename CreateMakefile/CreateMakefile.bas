@@ -1398,7 +1398,7 @@ Private Function GetIncludesFromResFile( _
 				ResourceIncludes = ResourceIncludes & vbCrLf & FullFileName
 			End If
 
-			filename = Dir(filespec)
+			filename = Dir()
 		Loop
 	Next
 
