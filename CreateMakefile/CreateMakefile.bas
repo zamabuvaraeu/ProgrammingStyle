@@ -1293,19 +1293,21 @@ Private Sub WriteBasRule( _
 
 	Dim AnyBasFile As String = ReplaceOSPathSeparatorToMakePathSeparator(SourceFolderWithPathSep) & "%.bas"
 
+	Dim AnyCFile As String = ReplaceOSPathSeparatorToMovePathSeparator(SourceFolderWithPathSep) & "$*.c"
+
 	Scope
 		Print #MakefileStream, "$(OBJ_RELEASE_DIR)$(PATH_SEP)%$(FILE_SUFFIX).c: " & AnyBasFile
-		Print #MakefileStream, vbTab & "$(FBC) $(FBCFLAGS) $< -o $(OBJ_RELEASE_DIR)$(PATH_SEP)$*$(FILE_SUFFIX).c"
-		Print #MakefileStream, vbTab & "$(CPREPROCESSOR_COMMAND) -release $(OBJ_RELEASE_DIR)$(PATH_SEP)$*$(FILE_SUFFIX).c"
-
+		Print #MakefileStream, vbTab & "$(FBC) $(FBCFLAGS) $<"
+		Print #MakefileStream, vbTab & "$(CPREPROCESSOR_COMMAND) -release " & AnyCFile
+		Print #MakefileStream, vbTab & "$(MOVE_COMMAND) " & AnyCFile & " $(OBJ_RELEASE_DIR_MOVE)$(MOVE_PATH_SEP)$*$(FILE_SUFFIX).c"
 		Print #MakefileStream,
 	End Scope
 
 	Scope
 		Print #MakefileStream, "$(OBJ_DEBUG_DIR)$(PATH_SEP)%$(FILE_SUFFIX).c: " & AnyBasFile
-		Print #MakefileStream, vbTab & "$(FBC) $(FBCFLAGS) $< -o $(OBJ_DEBUG_DIR)$(PATH_SEP)$*$(FILE_SUFFIX).c"
-		Print #MakefileStream, vbTab & "$(CPREPROCESSOR_COMMAND) -debug $(OBJ_DEBUG_DIR)$(PATH_SEP)$*$(FILE_SUFFIX).c"
-
+		Print #MakefileStream, vbTab & "$(FBC) $(FBCFLAGS) $<"
+		Print #MakefileStream, vbTab & "$(CPREPROCESSOR_COMMAND) -debug " & AnyCFile
+		Print #MakefileStream, vbTab & "$(MOVE_COMMAND) " & AnyCFile & " $(OBJ_DEBUG_DIR_MOVE)$(MOVE_PATH_SEP)$*$(FILE_SUFFIX).c"
 		Print #MakefileStream,
 	End Scope
 
