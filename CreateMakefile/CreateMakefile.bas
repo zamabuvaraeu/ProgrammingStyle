@@ -627,7 +627,7 @@ Private Function WriteSetenvWin32( _
 	End If
 
 	Dim Extension As String = GetExtensionOutputFile(p)
-	Print #oStream, "set OUTPUT_FILE_NAME=" & p->OutputFilename & "%FILE_SUFFIX%" & Extension
+	Print #oStream, "set OUTPUT_FILE_NAME=" & p->OutputFileName & "%FILE_SUFFIX%" & Extension
 	Print #oStream,
 
 	Print #oStream, "rem Add any flags to compiler"
@@ -769,7 +769,7 @@ Private Sub WriteOutputFilename( _
 	Print #MakefileStream, "RUNTIME = _WRT"
 	Print #MakefileStream, "endif"
 
-	Print #MakefileStream, "OUTPUT_FILE_NAME ?= " & p->OutputFilename & "$(FILE_SUFFIX)" & Extension
+	Print #MakefileStream, "OUTPUT_FILE_NAME ?= " & p->OutputFileName & "$(FILE_SUFFIX)" & Extension
 	Print #MakefileStream,
 
 End Sub
