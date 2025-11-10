@@ -132,29 +132,29 @@ Dim Shared LibsWi95(0 To ...) As LibraryItem = { _
 	Type("-ladvapi32", True), _
 	Type("-lcomctl32", True), _
 	Type("-lcomdlg32", True), _
-	Type("-lcrypt32", True), _
+	Type("-lcrypt32", False), _
 	Type("-lgdi32", True), _
 	Type("-limm32", True), _
 	Type("-lkernel32", True), _
-	Type("-lole32", True), _
-	Type("-loleaut32", True), _
-	Type("-lshell32", True), _
-	Type("-lshlwapi", True), _
+	Type("-lole32", False), _
+	Type("-loleaut32", False), _
+	Type("-lshell32", False), _
+	Type("-lshlwapi", False), _
 	Type("-lversion", True), _
-	Type("-lwsock32", True), _
+	Type("-lwsock32", False), _
 	Type("-luser32", True) _
 }
 Dim Shared LibsWinNT(0 To ...) As LibraryItem = { _
-	Type("-lgdiplus", True), _
+	Type("-lgdiplus", False), _
 	Type("-lmsimg32", True), _
-	Type("-lws2_32", True), _
-	Type("-lmswsock", True) _
+	Type("-lws2_32", False), _
+	Type("-lmswsock", False) _
 }
 Dim Shared LibsGuid(0 To ...) As LibraryItem = { _
-	Type("-luuid", True) _
+	Type("-luuid", False) _
 }
 Dim Shared LibsMsvcrt(0 To ...) As LibraryItem = { _
-	Type("-lmsvcrt", True) _
+	Type("-lmsvcrt", False) _
 }
 Dim Shared LibsFb(0 To ...) As LibraryItem = { _
 	Type("-lfb", True), _
@@ -1426,13 +1426,10 @@ Private Sub GetLibraries( _
 			ReDim Libs(0) As String
 
 			Scope
-				Dim FirstQuoteIndex As Integer = InStr(AttributeIndex + Len(Attribute) + 1, ln, """")
-				Dim LastQuoteIndex As Integer = InStr(FirstQuoteIndex + 1, ln, """")
-
-				Dim nFirst As Integer = FirstQuoteIndex + 1
-				Dim nCount As Integer = LastQuoteIndex - FirstQuoteIndex - 1
-
-				Dim Middle As String = Mid(ln, nFirst, nCount)
+				Dim Middle As String = GetStringBetweenQuotes( _
+					ln, _
+					AttributeIndex + Len(Attribute) + 1 _
+				)
 
 				SplitRecursive( _
 					Libs(), _
