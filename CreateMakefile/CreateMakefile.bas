@@ -1534,56 +1534,31 @@ Private Function GetIncludesFromResFile( _
 
 End Function
 
-Private Sub CreateDependencies( _
+Private Function GetDependencies( _
 		ByVal CompilerFullName As String, _
-		ByVal MakefileStream As Long, _
 		ByVal oFile As String, _
 		ByVal FileExtension As String, _
-		ByVal p As Parameter Ptr, _
-		ByVal DependenciesNumber As Integer _
-	)
+		ByVal p As Parameter Ptr _
+	)As String
 
-	ReDim LinesArray(0) As String
-	Dim LinesArrayCreated As Boolean = Any
+	Dim DepsLine As String
 
 	Select Case UCase(FileExtension)
 
 		Case "RC"
-			SplitRecursive( _
-				LinesArray(), _
-				GetIncludesFromResFile(oFile, p), _
-				vbCrLf _
-			)
-			LinesArrayCreated = True
+			DepsLine = GetIncludesFromResFile(oFile, p)
 
 		Case "BAS"
-			SplitRecursive( _
-				LinesArray(), _
-				GetIncludesFromBasFile(CompilerFullName, oFile, p), _
-				vbCrLf _
-			)
-			LinesArrayCreated = True
+			DepsLine = GetIncludesFromBasFile(CompilerFullName, oFile, p)
 
 		Case Else
-			LinesArrayCreated = False
+			DepsLine = ""
 
 	End Select
 
-	If LinesArrayCreated Then
-		Dim Original As String = LinesArray(0)
+	Return DepsLine
 
-		RemoveVerticalLine(LinesArray())
-		RemoveOmmittedIncludes(LinesArray())
-		RemoveDefaultIncludes(LinesArray(), p)
-		ReplaceSolidusToPathSeparatorVector(LinesArray())
-		AddSpaces(LinesArray())
-
-		Dim OneLine As String = Join(LinesArray(), "")
-
-		WriteObjectFiles(MakefileStream, Original, RTrim(OneLine), p, DependenciesNumber)
-	End If
-
-End Sub
+End Function
 
 Private Sub GetFiles( _
 		FilesVector() As String, _
@@ -1602,31 +1577,39 @@ Private Sub GetFiles( _
 End Sub
 
 Private Sub WriteDependencies( _
-		FilesVector() As String, _
+		DepsVector() As String, _
 		ByVal MakefileStream As Long, _
 		ByVal p As Parameter Ptr _
 	)
 
-	Dim CompilerFullName As String = BuildPath( _
-		p->CompilerPath, _
-		p->FbcCompilerName _
-	)
+	For i As Integer = LBound(DepsVector) To UBound(DepsVector)
+		If Len(DepsVector(i)) Then
+			ReDim LinesVector(0) As String
+			SplitRecursive( _
+				LinesVector(), _
+				DepsVector(i), _
+				vbCrLf _
+			)
 
-	Dim bExists As Boolean = FileExists(CompilerFullName)
-	If bExists = False Then
-		Print "FreeBASIC not exists in path " & CompilerFullName
-		End(1)
-	End If
+			Dim Original As String = LinesVector(0)
 
-	For i As Integer = LBound(FilesVector) To UBound(FilesVector)
-		If Len(FilesVector(i)) Then
-			Dim ext As String = GetExtensionName(FilesVector(i))
-			Dim FullFileName As String = BuildPath(p->SourceFolder, FilesVector(i))
-			CreateDependencies(CompilerFullName, MakefileStream, FullFileName, ext, p, i)
+			RemoveVerticalLine(LinesVector())
+			RemoveOmmittedIncludes(LinesVector())
+			RemoveDefaultIncludes(LinesVector(), p)
+			ReplaceSolidusToPathSeparatorVector(LinesVector())
+			AddSpaces(LinesVector())
+
+			Dim OneLine As String = Join(LinesVector(), "")
+
+			WriteObjectFiles( _
+				MakefileStream, _
+				Original, _
+				RTrim(OneLine), _
+				p, _
+				i + 1 _
+			)
 		End If
 	Next
-
-	Print #MakefileStream,
 
 End Sub
 
@@ -2022,6 +2005,18 @@ Scope
 	End Select
 End Scope
 
+Dim CompilerFullName As String = BuildPath( _
+	pParams->CompilerPath, _
+	pParams->FbcCompilerName _
+)
+Scope
+	Dim bExists As Boolean = FileExists(CompilerFullName)
+	If bExists = False Then
+		Print "FreeBASIC not exists in path " & CompilerFullName
+		End(1)
+	End If
+End Scope
+
 If pParams->CreateDirs Then
 	Print "Create bin obj directories..."
 	MkDir("bin")
@@ -2043,19 +2038,11 @@ If pParams->CreateDirs Then
 	MkDir("obj" & PATH_SEPARATOR & "Release" & PATH_SEPARATOR  & "x86")
 End If
 
-If pParams->UseEnvironmentFile = SETTINGS_ENVIRONMENT_ALWAYS Then
-	Print "Create environment file..."
-	var resSetenv = WriteSetenv(pParams)
-	If resSetenv Then
-		Print "Can not create environment file"
-		End(2)
-	End If
-End If
-Print "Done"
-
-ReDim FilesVector(0) As String
+ReDim DepsVector() As String
 Scope
-	Print "Find source files in folder", pParams->SourceFolder
+	ReDim FilesVector(0) As String
+
+	Print "Find source files {""*.bas"", ""*.RC""} in folder "; pParams->SourceFolder & "..."
 
 	Dim FileSpecs(0 To ...) As String = {"*.bas", "*.RC"}
 
@@ -2067,48 +2054,84 @@ Scope
 	For i As Integer = LBound(FilesVector) To UBound(FilesVector)
 		Print FilesVector(i)
 	Next
-End Scope
-Print "Done"
 
-Print "Create Makefile..."
-var MakefileNumber = Freefile()
-var resOpen = Open(pParams->MakefileFileName, For Output, As MakefileNumber)
-If resOpen Then
-	Print "Can not create Makefile file"
-	End(3)
+	Print "Done"
+
+	Print "Get Dependencies..."
+
+	ReDim DepsVector(LBound(FilesVector) To UBound(FilesVector)) As String
+	For i As Integer = LBound(DepsVector) To UBound(DepsVector)
+		Dim FullFileName As String = BuildPath( _
+			pParams->SourceFolder, _
+			FilesVector(i) _
+		)
+
+		Dim ext As String = GetExtensionName(FilesVector(i))
+
+		DepsVector(i) = GetDependencies( _
+			CompilerFullName, _
+			FullFileName, _
+			ext, _
+			pParams _
+		)
+	Next
+
+	Print "Done"
+End Scope
+
+If pParams->UseEnvironmentFile = SETTINGS_ENVIRONMENT_ALWAYS Then
+	Print "Write environment file..."
+
+	var resSetenv = WriteSetenv(pParams)
+
+	If resSetenv Then
+		Print "Can not write environment file"
+		End(2)
+	End If
+
+	Print "Done"
 End If
 
-WriteHeader(MakefileNumber)
+Scope
+	Print "Write Makefile..."
+	var MakefileNumber = Freefile()
+	var resOpen = Open(pParams->MakefileFileName, For Output, As MakefileNumber)
+	If resOpen Then
+		Print "Can not write Makefile file"
+		End(3)
+	End If
 
-WriteCompilerToolChain(MakefileNumber)
-WriteProcessorArch(MakefileNumber)
-WriteOutputFilename(MakefileNumber, pParams)
-WriteUtilsPathWin32(MakefileNumber)
-WriteArchSpecifiedPath(MakefileNumber)
+	WriteHeader(MakefileNumber)
 
-WriteFbcFlags(MakefileNumber, pParams)
-WriteGccFlags(MakefileNumber, pParams)
-WriteAsmFlags(MakefileNumber)
-WriteGorcFlags(MakefileNumber)
-WriteLinkerFlags(MakefileNumber, pParams)
-WriteLinkerLibraries(MakefileNumber, pParams)
+	WriteCompilerToolChain(MakefileNumber)
+	WriteProcessorArch(MakefileNumber)
+	WriteOutputFilename(MakefileNumber, pParams)
+	WriteUtilsPathWin32(MakefileNumber)
+	WriteArchSpecifiedPath(MakefileNumber)
 
-Print "Get Dependencies..."
-WriteDependencies(FilesVector(), MakefileNumber, pParams)
+	WriteFbcFlags(MakefileNumber, pParams)
+	WriteGccFlags(MakefileNumber, pParams)
+	WriteAsmFlags(MakefileNumber)
+	WriteGorcFlags(MakefileNumber)
+	WriteLinkerFlags(MakefileNumber, pParams)
+	WriteLinkerLibraries(MakefileNumber, pParams)
 
-WriteApplicationTargets(MakefileNumber)
-WriteCleanTarget(MakefileNumber)
-WriteCreateDirsTarget(MakefileNumber)
+	WriteDependencies(DepsVector(), MakefileNumber, pParams)
 
-' bas -> c -> asm -> o + obj -> exe
-' rc -> obj -> exe
-WriteApplicationRules(MakefileNumber)
-WriteAsmRule(MakefileNumber)
-WriteCRule(MakefileNumber)
-WriteBasRule(MakefileNumber, pParams)
-WriteResourceRule(MakefileNumber)
+	WriteApplicationTargets(MakefileNumber)
+	WriteCleanTarget(MakefileNumber)
+	WriteCreateDirsTarget(MakefileNumber)
 
-Close(MakefileNumber)
-Deallocate(pParams)
+	' bas -> c -> asm -> o + obj -> exe
+	' rc -> obj -> exe
+	WriteApplicationRules(MakefileNumber)
+	WriteAsmRule(MakefileNumber)
+	WriteCRule(MakefileNumber)
+	WriteBasRule(MakefileNumber, pParams)
+	WriteResourceRule(MakefileNumber)
 
-Print "Done"
+	Close(MakefileNumber)
+	Deallocate(pParams)
+
+	Print "Done"
+End Scope
