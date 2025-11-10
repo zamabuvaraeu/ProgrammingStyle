@@ -1387,6 +1387,23 @@ Private Function LibExists( _
 
 End Function
 
+Private Function GetStringBetweenQuotes( _
+		ByVal ln As String, _
+		ByVal StartIndex As Integer _
+	) As String
+
+	Dim FirstQuoteIndex As Integer = InStr(StartIndex, ln, """")
+	Dim LastQuoteIndex As Integer = InStr(FirstQuoteIndex + 1, ln, """")
+
+	Dim nFirst As Integer = FirstQuoteIndex + 1
+	Dim nCount As Integer = LastQuoteIndex - FirstQuoteIndex - 1
+
+	Dim Middle As String = Mid(ln, nFirst, nCount)
+
+	Return Middle
+
+End Function
+
 Private Sub GetLibraries( _
 		ByVal file As String _
 	)
