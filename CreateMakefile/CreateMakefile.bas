@@ -129,24 +129,24 @@ Dim Shared ObjCrtEnd(0 To ...) As LibraryItem = { _
 	Type("crtend.o", True) _
 }
 Dim Shared LibsWi95(0 To ...) As LibraryItem = { _
-	Type("-ladvapi32", True), _
-	Type("-lcomctl32", True), _
-	Type("-lcomdlg32", True), _
+	Type("-ladvapi32", False), _
+	Type("-lcomctl32", False), _
+	Type("-lcomdlg32", False), _
 	Type("-lcrypt32", False), _
-	Type("-lgdi32", True), _
-	Type("-limm32", True), _
-	Type("-lkernel32", True), _
+	Type("-lgdi32", False), _
+	Type("-limm32", False), _
+	Type("-lkernel32", False), _
 	Type("-lole32", False), _
 	Type("-loleaut32", False), _
 	Type("-lshell32", False), _
 	Type("-lshlwapi", False), _
-	Type("-lversion", True), _
+	Type("-lversion", False), _
 	Type("-lwsock32", False), _
-	Type("-luser32", True) _
+	Type("-luser32", False) _
 }
 Dim Shared LibsWinNT(0 To ...) As LibraryItem = { _
 	Type("-lgdiplus", False), _
-	Type("-lmsimg32", True), _
+	Type("-lmsimg32", False), _
 	Type("-lws2_32", False), _
 	Type("-lmswsock", False) _
 }
