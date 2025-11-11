@@ -1248,13 +1248,6 @@ Private Sub WriteApplicationTargets( _
 	Print #MakefileStream,
 	Print #MakefileStream, "debug: $(BIN_DEBUG_DIR)$(PATH_SEP)$(OUTPUT_FILE_NAME)"
 	Print #MakefileStream,
-
-End Sub
-
-Private Sub WriteCleanTarget( _
-		ByVal MakefileStream As Long _
-	)
-
 	Print #MakefileStream, "clean:"
 	Print #MakefileStream, vbTab & "$(DELETE_COMMAND) $(OBJ_RELEASE_DIR_MOVE)$(MOVE_PATH_SEP)*$(FILE_SUFFIX).c"
 	Print #MakefileStream, vbTab & "$(DELETE_COMMAND) $(OBJ_DEBUG_DIR_MOVE)$(MOVE_PATH_SEP)*$(FILE_SUFFIX).c"
@@ -1267,13 +1260,6 @@ Private Sub WriteCleanTarget( _
 	Print #MakefileStream, vbTab & "$(DELETE_COMMAND) $(BIN_RELEASE_DIR_MOVE)$(MOVE_PATH_SEP)$(OUTPUT_FILE_NAME)"
 	Print #MakefileStream, vbTab & "$(DELETE_COMMAND) $(BIN_DEBUG_DIR_MOVE)$(MOVE_PATH_SEP)$(OUTPUT_FILE_NAME)"
 	Print #MakefileStream,
-
-End Sub
-
-Private Sub WriteCreateDirsTarget( _
-		ByVal MakefileStream As Long _
-	)
-
 	Print #MakefileStream, "createdirs:"
 	Print #MakefileStream, vbTab & "$(MKDIR_COMMAND) $(BIN_DEBUG_DIR_MOVE)"
 	Print #MakefileStream, vbTab & "$(MKDIR_COMMAND) $(BIN_RELEASE_DIR_MOVE)"
@@ -1284,7 +1270,8 @@ Private Sub WriteCreateDirsTarget( _
 End Sub
 
 Private Sub WriteApplicationRules( _
-		ByVal MakefileStream As Long _
+		ByVal MakefileStream As Long, _
+		ByVal p As Parameter Ptr _
 	)
 
 	Print #MakefileStream, "$(BIN_RELEASE_DIR)$(PATH_SEP)$(OUTPUT_FILE_NAME): $(OBJECTFILES_RELEASE)"
@@ -1293,13 +1280,6 @@ Private Sub WriteApplicationRules( _
 	Print #MakefileStream, "$(BIN_DEBUG_DIR)$(PATH_SEP)$(OUTPUT_FILE_NAME): $(OBJECTFILES_DEBUG)"
 	Print #MakefileStream, vbTab & "$(LD) $(LDFLAGS) $(LDLIBSBEGIN) $^ $(LDLIBS) $(LDLIBSEND) -o $@"
 	Print #MakefileStream,
-
-End Sub
-
-Private Sub WriteAsmRule( _
-		ByVal MakefileStream As Long _
-	)
-
 	Print #MakefileStream, "$(OBJ_RELEASE_DIR)$(PATH_SEP)%$(FILE_SUFFIX).o: $(OBJ_RELEASE_DIR)$(PATH_SEP)%$(FILE_SUFFIX).asm"
 	Print #MakefileStream, vbTab & "$(AS) $(ASFLAGS) -o $@ $<"
 	Print #MakefileStream,
@@ -1308,12 +1288,6 @@ Private Sub WriteAsmRule( _
 	Print #MakefileStream, vbTab & "$(AS) $(ASFLAGS) -o $@ $<"
 	Print #MakefileStream,
 
-End Sub
-
-Private Sub WriteCRule( _
-		ByVal MakefileStream As Long _
-	)
-
 	Print #MakefileStream, "$(OBJ_RELEASE_DIR)$(PATH_SEP)%$(FILE_SUFFIX).asm: $(OBJ_RELEASE_DIR)$(PATH_SEP)%$(FILE_SUFFIX).c"
 	Print #MakefileStream, vbTab & "$(CC) $(EXTRA_CFLAGS) $(CFLAGS) -o $@ $<"
 	Print #MakefileStream,
@@ -1321,13 +1295,6 @@ Private Sub WriteCRule( _
 	Print #MakefileStream, "$(OBJ_DEBUG_DIR)$(PATH_SEP)%$(FILE_SUFFIX).asm: $(OBJ_DEBUG_DIR)$(PATH_SEP)%$(FILE_SUFFIX).c"
 	Print #MakefileStream, vbTab & "$(CC) $(EXTRA_CFLAGS) $(CFLAGS) -o $@ $<"
 	Print #MakefileStream,
-
-End Sub
-
-Private Sub WriteResourceRule( _
-		ByVal MakefileStream As Long _
-	)
-
 	Print #MakefileStream, "$(OBJ_RELEASE_DIR)$(PATH_SEP)%$(FILE_SUFFIX).obj: src$(PATH_SEP)%.RC"
 	Print #MakefileStream, vbTab & "$(GORC) $(GORCFLAGS) $(PARAM_SEP)fo $@ $<"
 	Print #MakefileStream,
@@ -1335,13 +1302,6 @@ Private Sub WriteResourceRule( _
 	Print #MakefileStream, "$(OBJ_DEBUG_DIR)$(PATH_SEP)%$(FILE_SUFFIX).obj: src$(PATH_SEP)%.RC"
 	Print #MakefileStream, vbTab & "$(GORC) $(GORCFLAGS) $(PARAM_SEP)fo $@ $<"
 	Print #MakefileStream,
-
-End Sub
-
-Private Sub WriteBasRule( _
-		ByVal MakefileStream As Long, _
-		ByVal p As Parameter Ptr _
-	)
 
 	Dim SourceFolderWithPathSep As String = AppendPathSeparator(p->SourceFolder)
 
@@ -2119,16 +2079,10 @@ Scope
 	WriteDependencies(DepsVector(), MakefileNumber, pParams)
 
 	WriteApplicationTargets(MakefileNumber)
-	WriteCleanTarget(MakefileNumber)
-	WriteCreateDirsTarget(MakefileNumber)
 
 	' bas -> c -> asm -> o + obj -> exe
 	' rc -> obj -> exe
-	WriteApplicationRules(MakefileNumber)
-	WriteAsmRule(MakefileNumber)
-	WriteCRule(MakefileNumber)
-	WriteBasRule(MakefileNumber, pParams)
-	WriteResourceRule(MakefileNumber)
+	WriteApplicationRules(MakefileNumber, pParams)
 
 	Close(MakefileNumber)
 	Deallocate(pParams)
