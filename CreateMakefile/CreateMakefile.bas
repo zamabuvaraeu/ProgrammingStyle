@@ -1408,7 +1408,7 @@ Private Sub GetLibraries( _
 		End If
 	Loop
 
-	Close FileNumber
+	Close(FileNumber)
 
 End sub
 
