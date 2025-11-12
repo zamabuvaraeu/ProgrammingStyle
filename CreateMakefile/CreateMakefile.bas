@@ -1405,6 +1405,7 @@ Private Sub GetLibraries( _
 				End If
 			Next
 
+			Exit Do
 		End If
 	Loop
 
