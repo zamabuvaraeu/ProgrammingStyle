@@ -128,7 +128,7 @@ Dim Shared ObjCrtStart(0 To ...) As LibraryItem = { _
 Dim Shared ObjCrtEnd(0 To ...) As LibraryItem = { _
 	Type("crtend.o", True) _
 }
-Dim Shared LibsWi95(0 To ...) As LibraryItem = { _
+Dim Shared LibsWin95(0 To ...) As LibraryItem = { _
 	Type("-ladvapi32", False), _
 	Type("-lcomctl32", False), _
 	Type("-lcomdlg32", False), _
@@ -142,19 +142,15 @@ Dim Shared LibsWi95(0 To ...) As LibraryItem = { _
 	Type("-lshlwapi", False), _
 	Type("-lversion", False), _
 	Type("-lwsock32", False), _
-	Type("-luser32", False) _
+	Type("-luser32", False), _
+	Type("-luuid", False), _
+	Type("-lmsvcrt", False) _
 }
 Dim Shared LibsWinNT(0 To ...) As LibraryItem = { _
 	Type("-lgdiplus", False), _
 	Type("-lmsimg32", False), _
 	Type("-lws2_32", False), _
 	Type("-lmswsock", False) _
-}
-Dim Shared LibsGuid(0 To ...) As LibraryItem = { _
-	Type("-luuid", False) _
-}
-Dim Shared LibsMsvcrt(0 To ...) As LibraryItem = { _
-	Type("-lmsvcrt", False) _
 }
 Dim Shared LibsFb(0 To ...) As LibraryItem = { _
 	Type("-lfb", True), _
@@ -439,6 +435,23 @@ Private Function GetFileNameWithoutPath( _
 
 End Function
 
+Private Function GetStringBetweenQuotes( _
+		ByVal ln As String, _
+		ByVal StartIndex As Integer _
+	) As String
+
+	Dim FirstQuoteIndex As Integer = InStr(StartIndex, ln, """")
+	Dim LastQuoteIndex As Integer = InStr(FirstQuoteIndex + 1, ln, """")
+
+	Dim nFirst As Integer = FirstQuoteIndex + 1
+	Dim nCount As Integer = LastQuoteIndex - FirstQuoteIndex - 1
+
+	Dim Middle As String = Mid(ln, nFirst, nCount)
+
+	Return Middle
+
+End Function
+
 Private Sub RemoveDefaultIncludes( _
 		LinesVector() As String, _
 		ByVal p As Parameter Ptr _
@@ -707,7 +720,6 @@ Private Function WriteSetenvWin32( _
 
 	Print #oStream, "rem Only for wasm"
 	Print #oStream, "set TARGET_TRIPLET=wasm32"
-
 	Print #oStream,
 
 	Print #oStream, "rem Libraries list"
@@ -715,10 +727,25 @@ Private Function WriteSetenvWin32( _
 	Print #oStream, "set OBJ_CRT_START=""%LIB_DIR%\crt2.o"" ""%LIB_DIR%\crtbegin.o"" ""%LIB_DIR%\fbrt0.o"""
 	Print #oStream, "set OBJ_CRT_END=""%LIB_DIR%\crtend.o"""
 
-	Print #oStream, "set LIBS_WIN95=-ladvapi32 -lcomctl32 -lcomdlg32 -lcrypt32 -lgdi32 -lkernel32 -lole32 -loleaut32 -lshell32 -lshlwapi -lwsock32 -luser32"
-	Print #oStream, "set LIBS_WINNT=-lgdiplus -lws2_32 -lmswsock"
-	Print #oStream, "set LIBS_GUID=-luuid"
-	Print #oStream, "set LIBS_MSVCRT=-lmsvcrt"
+	Scope
+		Dim Libs As String
+		For i As Integer = LBound(LibsWin95) To UBound(LibsWin95)
+			If LibsWin95(i).Used Then
+				Libs &= LibsWin95(i).LibName & " "
+			End If
+		Next
+		Print #oStream, "set LIBS_WIN95=" & Libs
+	End Scope
+
+	Scope
+		Dim Libs As String
+		For i As Integer = LBound(LibsWinNT) To UBound(LibsWinNT)
+			If LibsWinNT(i).Used Then
+				Libs &= LibsWinNT(i).LibName & " "
+			End If
+		Next
+		Print #oStream, "set LIBS_WINNT=" & Libs
+	End Scope
 
 	Print #oStream, "rem Add any FreeBASIC libraries sach as -lfbgfx"
 
@@ -738,12 +765,12 @@ Private Function WriteSetenvWin32( _
 
 	If p->UseFbRuntimeLibrary = DEFINE_WITHOUT_FB_RUNTIME Then
 		If p->UseCRuntimeLibrary = DEFINE_WITHOUT_C_RUNTIME Then
-			Print #oStream, "set LIBS_OS=%LIBS_WIN95% %LIBS_WINNT% %LIBS_GUID% %LIBS_MSVCRT% %LIBS_ANY%"
+			Print #oStream, "set LIBS_OS=%LIBS_WIN95% %LIBS_WINNT% %LIBS_ANY%"
 		Else
-			Print #oStream, "set LIBS_OS=%LIBS_WIN95% %LIBS_WINNT% %LIBS_GUID% %LIBS_MSVCRT% %LIBS_GCC% %LIBS_ANY%"
+			Print #oStream, "set LIBS_OS=%LIBS_WIN95% %LIBS_WINNT% %LIBS_GCC% %LIBS_ANY%"
 		End If
 	Else
-		Print #oStream, "set LIBS_OS=%LIBS_WIN95% %LIBS_WINNT% %LIBS_GUID% %LIBS_MSVCRT% %LIBS_FB% %LIBS_GCC% %LIBS_ANY%"
+		Print #oStream, "set LIBS_OS=%LIBS_WIN95% %LIBS_WINNT% %LIBS_FB% %LIBS_GCC% %LIBS_ANY%"
 	End If
 	Print #oStream,
 
@@ -1327,18 +1354,27 @@ Private Sub WriteApplicationRules( _
 
 End Sub
 
-Private Function LibExists( _
+Private Function AddLibrary( _
 		ByVal LibName As String _
 	) As Boolean
 
-	For i As Integer = LBound(LibsWi95) To UBound(LibsWi95)
-		If LibsWi95(i).LibName = LibName Then
+	For i As Integer = LBound(LibsWin95) To UBound(LibsWin95)
+		If LibsWin95(i).LibName = LibName Then
+			LibsWin95(i).Used = True
 			Return True
 		End If
 	Next
 
 	For i As Integer = LBound(LibsWinNT) To UBound(LibsWinNT)
 		If LibsWinNT(i).LibName = LibName Then
+			LibsWinNT(i).Used = True
+			Return True
+		End If
+	Next
+
+	For i As Integer = LBound(LibsFb) To UBound(LibsFb)
+		If LibsFb(i).LibName = LibName Then
+			LibsFb(i).Used = True
 			Return True
 		End If
 	Next
@@ -1347,24 +1383,7 @@ Private Function LibExists( _
 
 End Function
 
-Private Function GetStringBetweenQuotes( _
-		ByVal ln As String, _
-		ByVal StartIndex As Integer _
-	) As String
-
-	Dim FirstQuoteIndex As Integer = InStr(StartIndex, ln, """")
-	Dim LastQuoteIndex As Integer = InStr(FirstQuoteIndex + 1, ln, """")
-
-	Dim nFirst As Integer = FirstQuoteIndex + 1
-	Dim nCount As Integer = LastQuoteIndex - FirstQuoteIndex - 1
-
-	Dim Middle As String = Mid(ln, nFirst, nCount)
-
-	Return Middle
-
-End Function
-
-Private Sub GetLibraries( _
+Private Sub AddLibraries( _
 		ByVal file As String _
 	)
 
@@ -1400,9 +1419,7 @@ Private Sub GetLibraries( _
 
 			For i As Integer = LBound(Libs) To UBound(Libs) - 1 Step 2
 				Dim LibName As String = Libs(i) & Libs(i + 1)
-				If LibExists(LibName) = False Then
-					Print LibName
-				End If
+				AddLibrary(LibName)
 			Next
 
 			Exit Do
@@ -1411,7 +1428,7 @@ Private Sub GetLibraries( _
 
 	Close(FileNumber)
 
-End sub
+End Sub
 
 Private Function GetIncludesFromBasFile( _
 		ByVal CompilerFullName As String, _
@@ -1442,7 +1459,7 @@ Private Function GetIncludesFromBasFile( _
 
 	Dim FileC As String = Replace(Filepath, ".bas", ".c")
 
-	GetLibraries(FileC)
+	AddLibraries(FileC)
 
 	' Remove temporary "c" file
 	Kill(FileC)
@@ -1997,6 +2014,8 @@ If pParams->CreateDirs Then
 	MkDir("obj" & PATH_SEPARATOR & "Release")
 	MkDir("obj" & PATH_SEPARATOR & "Release" & PATH_SEPARATOR  & "x64")
 	MkDir("obj" & PATH_SEPARATOR & "Release" & PATH_SEPARATOR  & "x86")
+
+	Print "Done"
 End If
 
 ReDim DepsVector() As String
