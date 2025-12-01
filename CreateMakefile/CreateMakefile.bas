@@ -96,6 +96,11 @@ Type LibraryItem
 	Used As Boolean
 End Type
 
+Type LibraryNode
+	pNext As LibraryNode Ptr
+	LibName As ZString Ptr
+End Type
+
 Type Parameter
 	MakefileFileName As ZString * (MAX_PATH + 1)
 	SourceFolder As ZString * (MAX_PATH + 1)
@@ -140,17 +145,17 @@ Dim Shared LibsWin95(0 To ...) As LibraryItem = { _
 	Type("-loleaut32", False), _
 	Type("-lshell32", False), _
 	Type("-lshlwapi", False), _
-	Type("-lversion", False), _
-	Type("-lwsock32", False), _
 	Type("-luser32", False), _
 	Type("-luuid", False), _
-	Type("-lmsvcrt", False) _
+	Type("-lversion", False), _
+	Type("-lwsock32", False) _
 }
 Dim Shared LibsWinNT(0 To ...) As LibraryItem = { _
 	Type("-lgdiplus", False), _
 	Type("-lmsimg32", False), _
 	Type("-lws2_32", False), _
-	Type("-lmswsock", False) _
+	Type("-lmswsock", False), _
+	Type("-lmsvcrt", False) _
 }
 Dim Shared LibsFb(0 To ...) As LibraryItem = { _
 	Type("-lfb", True), _
@@ -164,6 +169,7 @@ Dim Shared LibsGcc(0 To ...) As LibraryItem = { _
 	Type("-lmoldname", True), _
 	Type("-lgcc_eh", True) _
 }
+Dim Shared LibsWinAPI As LibraryNode Ptr
 
 Private Function Join( _
 		LinesVector() As String, _
@@ -739,11 +745,14 @@ Private Function WriteSetenvWin32( _
 
 	Scope
 		Dim Libs As String
-		For i As Integer = LBound(LibsWinNT) To UBound(LibsWinNT)
-			If LibsWinNT(i).Used Then
-				Libs &= LibsWinNT(i).LibName & " "
-			End If
-		Next
+		Dim pNode As LibraryNode Ptr = LibsWinAPI
+
+		Do While pNode
+			Libs &= *(pNode->LibName) & " "
+
+			pNode = pNode->pNext
+		Loop
+
 		Print #oStream, "set LIBS_WINNT=" & Libs
 	End Scope
 
@@ -1354,6 +1363,64 @@ Private Sub WriteApplicationRules( _
 
 End Sub
 
+Private Function CreateLibraryNode( _
+		ByVal LibName As String _
+	)As LibraryNode Ptr
+
+	Dim pNode As LibraryNode Ptr = Allocate(SizeOf(LibraryNode))
+
+	If pNode Then
+
+		pNode->pNext = 0
+		pNode->LibName = Allocate(Len(LibName) + SizeOf(ZString))
+
+		If pNode->LibName Then
+
+			*(pNode->LibName) = LibName
+
+			Return pNode
+		End If
+
+		Deallocate(pNode)
+	End If
+
+	Return 0
+
+End Function
+
+Private Function AddLibraryRecursive( _
+		ByVal ppNode As LibraryNode Ptr Ptr, _
+		ByVal LibName As String _
+	)As Boolean
+
+	If *ppNode Then
+		Dim pNode As LibraryNode Ptr = *ppNode
+
+		If *(pNode->LibName) = LibName Then
+			Return True
+		Else
+			Dim resAdd As Boolean = AddLibraryRecursive( _
+				@(pNode->pNext), _
+				LibName _
+			)
+
+			Return resAdd
+		End If
+	Else
+		Dim pNode As LibraryNode Ptr = CreateLibraryNode(LibName)
+
+		If pNode Then
+
+			*ppNode = pNode
+
+			Return True
+		End If
+	End If
+
+	Return False
+
+End Function
+
 Private Function AddLibrary( _
 		ByVal LibName As String _
 	) As Boolean
@@ -1365,19 +1432,21 @@ Private Function AddLibrary( _
 		End If
 	Next
 
-	For i As Integer = LBound(LibsWinNT) To UBound(LibsWinNT)
-		If LibsWinNT(i).LibName = LibName Then
-			LibsWinNT(i).Used = True
-			Return True
-		End If
-	Next
-
 	For i As Integer = LBound(LibsFb) To UBound(LibsFb)
 		If LibsFb(i).LibName = LibName Then
 			LibsFb(i).Used = True
 			Return True
 		End If
 	Next
+
+	Dim resAdd As Boolean = AddLibraryRecursive( _
+		@LibsWinAPI, _
+		LibName _
+	)
+
+	If resAdd Then
+		Return True
+	End If
 
 	Return False
 
@@ -2017,6 +2086,8 @@ If pParams->CreateDirs Then
 
 	Print "Done"
 End If
+
+LibsWinAPI = 0
 
 ReDim DepsVector() As String
 Scope

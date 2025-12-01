@@ -1,4 +1,4 @@
-"C:\Program Files (x86)\FreeBASIC-1.10.1-winlibs-gcc-9.3.0\fbc64_mod.exe" -i "C:\Program Files (x86)\FreeBASIC-1.10.1-winlibs-gcc-9.3.0\inc" -m CreateMakefile -x CreateMakefile.exe -gen gcc -O 0 -g -v -r CreateMakefile\CreateMakefile.bas
+"C:\Program Files (x86)\FreeBASIC-1.10.1-winlibs-gcc-9.3.0\fbc64_mod.exe" -i "C:\Program Files (x86)\FreeBASIC-1.10.1-winlibs-gcc-9.3.0\inc" -m CreateMakefile -x CreateMakefile.exe -gen gcc -O 0 -g -v -r -w error -maxerr 1 CreateMakefile\CreateMakefile.bas
 IF %ERRORLEVEL% GEQ 1 goto lastline
 rem cscript.exe fix-emitted-code.vbs -debug "CreateMakefile\CreateMakefile.c"
 "C:\Program Files (x86)\FreeBASIC-1.10.1-winlibs-gcc-9.3.0\bin\win64\gcc.exe" -m64 -march=x86-64 -S -nostdlib -nostdinc -Wall -Wno-unused -Wno-main -Werror-implicit-function-declaration -O0 -fno-strict-aliasing -fno-ident -frounding-math -fno-math-errno -fwrapv -fno-exceptions -fno-asynchronous-unwind-tables -funwind-tables -Wno-format -g -masm=intel "CreateMakefile\CreateMakefile.c" -o "CreateMakefile\CreateMakefile.asm"
