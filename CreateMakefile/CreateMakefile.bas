@@ -758,11 +758,16 @@ Private Function WriteSetenvWin32( _
 
 	Print #oStream, "rem Add any FreeBASIC libraries sach as -lfbgfx"
 
-	If p->ThreadingMode = DEFINE_MULTITHREADING_RUNTIME Then
-		Print #oStream, "set LIBS_FB=-lfbmt"
-	Else
-		Print #oStream, "set LIBS_FB=-lfb"
-	End If
+	Scope
+		Dim Libs As String
+		For i As Integer = LBound(LibsFb) To UBound(LibsFb)
+			If LibsFb(i).Used Then
+				Libs &= LibsFb(i).LibName & " "
+			End If
+		Next
+		Print #oStream, "set LIBS_FB=" & Libs
+	End Scope
+
 
 	Print #oStream, "rem GCC libraries"
 	Print #oStream, "set LIBS_GCC=-lgcc -lmingw32 -lmingwex -lmoldname -lgcc_eh"
