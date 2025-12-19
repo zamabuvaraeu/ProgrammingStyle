@@ -43,7 +43,7 @@
             "name": "debug CreateMakefile Windows",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/CreateMakefile.exe",
+            "program": "${workspaceFolder}/bin/Debug/x64/CreateMakefile.exe",
             "args": [
 				/* "-makefile", "Makefile", */
 				"-src", "src",

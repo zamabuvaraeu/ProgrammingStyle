@@ -756,9 +756,9 @@ Private Function WriteSetenvWin32( _
 		Print #oStream, "set LIBS_WINNT=" & Libs
 	End Scope
 
-	Print #oStream, "rem Add any FreeBASIC libraries sach as -lfbgfx"
-
 	Scope
+		Print #oStream, "rem Add any FreeBASIC libraries sach as -lfbgfx"
+
 		Dim Libs As String
 		For i As Integer = LBound(LibsFb) To UBound(LibsFb)
 			If LibsFb(i).Used Then
