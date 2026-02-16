@@ -4,7 +4,7 @@
 		{
 			"label": "Run CreateMakefile Windows",
 			"type": "process",
-			"command": "C:\\Programming\\FreeBASIC Projects\\ProgrammingStyle\\CreateMakefile.exe",
+			"command": "C:\\Programming\\FreeBASIC Projects\\ProgrammingStyle\\bin\\Debug\\x64\\CreateMakefile.exe",
 			"args": [
 				/* "-makefile", "Makefile", */
 				"-src", "src",
