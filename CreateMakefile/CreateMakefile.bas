@@ -671,9 +671,9 @@ Private Function WriteSetenvWin32( _
 	End If
 
 	Print #oStream, "rem Set FALSE to disable c-runtime libraries"
-	Print #oStream, "rem set USE_CRUNTIME=TRUE"
+	Print #oStream, "set USE_CRUNTIME=TRUE"
 
-	Print #oStream, "rem Set TRUE to use ld linker"
+	Print #oStream, "rem Set TRUE to use default ld linker"
 	Print #oStream, "set USE_LD_LINKER=TRUE"
 
 	Print #oStream, "rem WinAPI version"
@@ -889,25 +889,28 @@ Private Sub WriteArchSpecifiedPath( _
 		ByVal MakefileStream As Long _
 	)
 
+	Print #MakefileStream, "BIN_DIR ?= bin"
+	Print #MakefileStream, "OBJ_DIR ?= obj"
+	Print #MakefileStream, "SRC_DIR ?= src"
 	Print #MakefileStream, "ifeq ($(PROCESSOR_ARCHITECTURE),AMD64)"
-	Print #MakefileStream, "BIN_DEBUG_DIR ?= bin$(PATH_SEP)Debug$(PATH_SEP)x64"
-	Print #MakefileStream, "BIN_RELEASE_DIR ?= bin$(PATH_SEP)Release$(PATH_SEP)x64"
-	Print #MakefileStream, "OBJ_DEBUG_DIR ?= obj$(PATH_SEP)Debug$(PATH_SEP)x64"
-	Print #MakefileStream, "OBJ_RELEASE_DIR ?= obj$(PATH_SEP)Release$(PATH_SEP)x64"
-	Print #MakefileStream, "BIN_DEBUG_DIR_MOVE ?= bin$(MOVE_PATH_SEP)Debug$(MOVE_PATH_SEP)x64"
-	Print #MakefileStream, "BIN_RELEASE_DIR_MOVE ?= bin$(MOVE_PATH_SEP)Release$(MOVE_PATH_SEP)x64"
-	Print #MakefileStream, "OBJ_DEBUG_DIR_MOVE ?= obj$(MOVE_PATH_SEP)Debug$(MOVE_PATH_SEP)x64"
-	Print #MakefileStream, "OBJ_RELEASE_DIR_MOVE ?= obj$(MOVE_PATH_SEP)Release$(MOVE_PATH_SEP)x64"
+	Print #MakefileStream, "BIN_DEBUG_DIR ?= $(BIN_DIR)$(PATH_SEP)Debug$(PATH_SEP)x64"
+	Print #MakefileStream, "BIN_RELEASE_DIR ?= $(BIN_DIR)$(PATH_SEP)Release$(PATH_SEP)x64"
+	Print #MakefileStream, "OBJ_DEBUG_DIR ?= $(OBJ_DIR)$(PATH_SEP)Debug$(PATH_SEP)x64"
+	Print #MakefileStream, "OBJ_RELEASE_DIR ?= $(OBJ_DIR)$(PATH_SEP)Release$(PATH_SEP)x64"
+	Print #MakefileStream, "BIN_DEBUG_DIR_MOVE ?= $(BIN_DIR)$(MOVE_PATH_SEP)Debug$(MOVE_PATH_SEP)x64"
+	Print #MakefileStream, "BIN_RELEASE_DIR_MOVE ?= $(BIN_DIR)$(MOVE_PATH_SEP)Release$(MOVE_PATH_SEP)x64"
+	Print #MakefileStream, "OBJ_DEBUG_DIR_MOVE ?= $(OBJ_DIR)$(MOVE_PATH_SEP)Debug$(MOVE_PATH_SEP)x64"
+	Print #MakefileStream, "OBJ_RELEASE_DIR_MOVE ?= $(OBJ_DIR)$(MOVE_PATH_SEP)Release$(MOVE_PATH_SEP)x64"
 	Print #MakefileStream, "MARCH ?= x86-64"
 	Print #MakefileStream, "else"
-	Print #MakefileStream, "BIN_DEBUG_DIR ?= bin$(PATH_SEP)Debug$(PATH_SEP)x86"
-	Print #MakefileStream, "BIN_RELEASE_DIR ?= bin$(PATH_SEP)Release$(PATH_SEP)x86"
-	Print #MakefileStream, "OBJ_DEBUG_DIR ?= obj$(PATH_SEP)Debug$(PATH_SEP)x86"
-	Print #MakefileStream, "OBJ_RELEASE_DIR ?= obj$(PATH_SEP)Release$(PATH_SEP)x86"
-	Print #MakefileStream, "BIN_DEBUG_DIR_MOVE ?= bin$(MOVE_PATH_SEP)Debug$(MOVE_PATH_SEP)x86"
-	Print #MakefileStream, "BIN_RELEASE_DIR_MOVE ?= bin$(MOVE_PATH_SEP)Release$(MOVE_PATH_SEP)x86"
-	Print #MakefileStream, "OBJ_DEBUG_DIR_MOVE ?= obj$(MOVE_PATH_SEP)Debug$(MOVE_PATH_SEP)x86"
-	Print #MakefileStream, "OBJ_RELEASE_DIR_MOVE ?= obj$(MOVE_PATH_SEP)Release$(MOVE_PATH_SEP)x86"
+	Print #MakefileStream, "BIN_DEBUG_DIR ?= $(BIN_DIR)$(PATH_SEP)Debug$(PATH_SEP)x86"
+	Print #MakefileStream, "BIN_RELEASE_DIR ?= $(BIN_DIR)$(PATH_SEP)Release$(PATH_SEP)x86"
+	Print #MakefileStream, "OBJ_DEBUG_DIR ?= $(OBJ_DIR)$(PATH_SEP)Debug$(PATH_SEP)x86"
+	Print #MakefileStream, "OBJ_RELEASE_DIR ?= $(OBJ_DIR)$(PATH_SEP)Release$(PATH_SEP)x86"
+	Print #MakefileStream, "BIN_DEBUG_DIR_MOVE ?= $(BIN_DIR)$(MOVE_PATH_SEP)Debug$(MOVE_PATH_SEP)x86"
+	Print #MakefileStream, "BIN_RELEASE_DIR_MOVE ?= $(BIN_DIR)$(MOVE_PATH_SEP)Release$(MOVE_PATH_SEP)x86"
+	Print #MakefileStream, "OBJ_DEBUG_DIR_MOVE ?= $(OBJ_DIR)$(MOVE_PATH_SEP)Debug$(MOVE_PATH_SEP)x86"
+	Print #MakefileStream, "OBJ_RELEASE_DIR_MOVE ?= $(OBJ_DIR)$(MOVE_PATH_SEP)Release$(MOVE_PATH_SEP)x86"
 	Print #MakefileStream, "MARCH ?= i686"
 	Print #MakefileStream, "endif"
 	Print #MakefileStream,
@@ -947,7 +950,7 @@ Private Sub WriteFbcFlags( _
 	Print #MakefileStream, "ifneq ($(INC_DIR),)"
 	Print #MakefileStream, "FBCFLAGS+=-i ""$(INC_DIR)"""
 	Print #MakefileStream, "endif"
-	Print #MakefileStream, "FBCFLAGS+=-i " & p->SourceFolder
+	Print #MakefileStream, "FBCFLAGS+=-i ""$(SRC_DIR)"""
 
 	Print #MakefileStream, "FBCFLAGS+=-r"
 
@@ -1011,6 +1014,7 @@ Private Sub WriteGccFlags( _
 	Print #MakefileStream, "CFLAGS+=-Wno-dollar-in-identifier-extension"
 	Print #MakefileStream, "CFLAGS+=-Wno-language-extension-token"
 	Print #MakefileStream, "CFLAGS+=-Wno-parentheses-equality"
+	Print #MakefileStream, "CFLAGS+=-Wno-builtin-declaration-mismatch"
 
 	Print #MakefileStream, "CFLAGS_DEBUG+=-g -O0"
 
